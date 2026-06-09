@@ -1,0 +1,150 @@
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
+
+const prisma = new PrismaClient();
+
+async function main() {
+  console.log('Seeding KoliGo database…');
+
+  // Admin user
+  const adminPw = await bcrypt.hash('admin1234', 10);
+  const admin = await prisma.user.upsert({
+    where: { phone: '+237600000001' },
+    update: {},
+    create: {
+      phone: '+237600000001',
+      name: 'Admin KoliGo',
+      passwordHash: adminPw,
+      role: 'ADMIN',
+      status: 'ACTIVE',
+      kycStatus: 'VERIFIED',
+    },
+  });
+
+  // Vendor users
+  const vendorPw = await bcrypt.hash('vendor123', 10);
+  const vendors = await Promise.all([
+    prisma.user.upsert({
+      where: { phone: '+237655111222' },
+      update: {},
+      create: { phone: '+237655111222', name: 'Marie Ngono', passwordHash: vendorPw, role: 'VENDOR', status: 'ACTIVE', kycStatus: 'VERIFIED' },
+    }),
+    prisma.user.upsert({
+      where: { phone: '+237677333444' },
+      update: {},
+      create: { phone: '+237677333444', name: 'Cécile Biya', passwordHash: vendorPw, role: 'VENDOR', status: 'ACTIVE', kycStatus: 'VERIFIED' },
+    }),
+    prisma.user.upsert({
+      where: { phone: '+237690555666' },
+      update: {},
+      create: { phone: '+237690555666', name: 'Boutique Mado', passwordHash: vendorPw, role: 'VENDOR', status: 'ACTIVE', kycStatus: 'VERIFIED' },
+    }),
+  ]);
+
+  // Deliverer users
+  const delivererPw = await bcrypt.hash('delivery123', 10);
+  const deliverers = await Promise.all([
+    prisma.user.upsert({
+      where: { phone: '+237677234567' },
+      update: {},
+      create: { phone: '+237677234567', name: 'Hervé Nkouamba', passwordHash: delivererPw, role: 'DELIVERER', status: 'ACTIVE', kycStatus: 'VERIFIED' },
+    }),
+    prisma.user.upsert({
+      where: { phone: '+237655456789' },
+      update: {},
+      create: { phone: '+237655456789', name: 'Marc Tchioffo', passwordHash: delivererPw, role: 'DELIVERER', status: 'ACTIVE', kycStatus: 'VERIFIED' },
+    }),
+    prisma.user.upsert({
+      where: { phone: '+237677567890' },
+      update: {},
+      create: { phone: '+237677567890', name: 'Paul Kamga', passwordHash: delivererPw, role: 'DELIVERER', status: 'ACTIVE', kycStatus: 'VERIFIED' },
+    }),
+  ]);
+
+  // Wallets for deliverers
+  await Promise.all(
+    deliverers.map(d =>
+      prisma.wallet.upsert({
+        where: { userId: d.id },
+        update: {},
+        create: { userId: d.id, balance: Math.floor(Math.random() * 30000 + 5000) },
+      })
+    )
+  );
+
+  // Zones
+  const zones = await Promise.all([
+    prisma.zone.upsert({
+      where: { name: 'Centre-Ville' },
+      update: {},
+      create: {
+        name: 'Centre-Ville',
+        quartiers: ['Bonanjo', 'Akwa', 'Deïdo'],
+        active: true,
+        pricing: {
+          create: { courierType: 'temporaire', basePrice: 500, pricePerKm: 150, multiplier: 1.0, weightSurcharges: { lt1: 0, lt3: 100, lt5: 250, lt10: 500 } },
+        },
+      },
+    }),
+    prisma.zone.upsert({
+      where: { name: 'Résidentiel Nord' },
+      update: {},
+      create: {
+        name: 'Résidentiel Nord',
+        quartiers: ['Bonapriso', 'Bali', 'Bastos'],
+        active: true,
+        pricing: {
+          create: { courierType: 'temporaire', basePrice: 600, pricePerKm: 170, multiplier: 1.0, weightSurcharges: {} },
+        },
+      },
+    }),
+  ]);
+
+  // Sample deliveries
+  const collectCode = '4821';
+  const deliverCode = '7359';
+  await prisma.delivery.createMany({
+    skipDuplicates: true,
+    data: [
+      {
+        vendorId: vendors[0].id,
+        delivererId: deliverers[0].id,
+        fromQuartier: 'Bonapriso',
+        toQuartier: 'Logpom',
+        recipientName: 'Client Test',
+        recipientPhone: '+237699000001',
+        weight: 2,
+        distance: 4.2,
+        courierType: 'express',
+        price: 2125,
+        collectCode,
+        deliverCode,
+        status: 'EN_ROUTE',
+      },
+      {
+        vendorId: vendors[1].id,
+        delivererId: null,
+        fromQuartier: 'Bali',
+        toQuartier: 'PK14',
+        recipientName: 'Client Test 2',
+        recipientPhone: '+237699000002',
+        weight: 5,
+        distance: 8.7,
+        courierType: 'vvip',
+        price: 4865,
+        collectCode: '1234',
+        deliverCode: '5678',
+        status: 'EN_ATTENTE',
+      },
+    ],
+  });
+
+  console.log('✅ Seed complete.');
+  console.log('📱 Vendor test: +237655111222 / vendor123');
+  console.log('🏍️  Deliverer test: +237677234567 / delivery123');
+  console.log('🔑 Admin: +237600000001 / admin1234');
+}
+
+main()
+  .catch(e => { console.error(e); process.exit(1); })
+  .finally(() => prisma.$disconnect());
