@@ -7,187 +7,149 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ── Enums ─────────────────────────────────────────────────────────────────────
-
-enum Role {
-  VENDOR
-  DELIVERER
-  ADMIN
-}
-
-enum KycStatus {
-  NONE
-  PENDING
-  VERIFIED
-  REJECTED
-}
-
-enum DelivererType {
-  TEMPORAIRE
-  PERMANENT
-  EXPRESS
-  VVIP
-  INTERURBAIN
-  FROID_FRAGILE
-}
-
-enum DeliveryStatus {
-  EN_ATTENTE
-  ACCEPTE
-  EN_ROUTE
-  LIVRE
-  ANNULE
-}
-
-enum PaymentProvider {
-  MTN
-  ORANGE
-}
-
-enum TransactionType {
-  EARNING
-  WITHDRAWAL
-  COMMISSION
-  REFUND
-}
-
-// ── Models ────────────────────────────────────────────────────────────────────
+// SQLite does not support enums — all enum-like fields use String with validated values at app layer.
+// Role:            VENDOR | DELIVERER | ADMIN
+// KycStatus:       NONE | PENDING | VERIFIED | REJECTED
+// DelivererType:   TEMPORAIRE | PERMANENT | EXPRESS | VVIP | INTERURBAIN | FROID_FRAGILE
+// DeliveryStatus:  EN_ATTENTE | ACCEPTE | EN_ROUTE | LIVRE | ANNULE
+// PaymentProvider: MTN | ORANGE
+// TransactionType: EARNING | WITHDRAWAL | COMMISSION | REFUND
 
 model User {
-  id              String        @id @default(cuid())
-  phone           String        @unique
+  id              String    @id @default(cuid())
+  phone           String    @unique
   name            String
   pinHash         String
-  roles           String        @default("VENDOR")   // JSON array stored as string in SQLite
-  activeRole      Role          @default(VENDOR)
-  kycStatus       KycStatus     @default(NONE)
-  biometryEnabled Boolean       @default(false)
-  language        String        @default("fr")
-  theme           String        @default("light")
-  isBlocked       Boolean       @default(false)
-  isOnline        Boolean       @default(false)
+  roles           String    @default("VENDOR")   // JSON array: ["VENDOR"]
+  activeRole      String    @default("VENDOR")
+  kycStatus       String    @default("NONE")
+  biometryEnabled Boolean   @default(false)
+  language        String    @default("fr")
+  theme           String    @default("light")
+  isBlocked       Boolean   @default(false)
+  isOnline        Boolean   @default(false)
   expoPushToken   String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  kycDocuments    KycDocument[]
-  vendorDeliveries    Delivery[]   @relation("VendorDeliveries")
-  delivererDeliveries Delivery[]   @relation("DelivererDeliveries")
-  wallet          Wallet?
-  ratingsGiven    Rating[]      @relation("RatingsGiven")
-  ratingsReceived Rating[]      @relation("RatingsReceived")
-  issues          Issue[]
+  kycDocuments        KycDocument[]
+  vendorDeliveries    Delivery[]    @relation("VendorDeliveries")
+  delivererDeliveries Delivery[]    @relation("DelivererDeliveries")
+  wallet              Wallet?
+  ratingsGiven        Rating[]      @relation("RatingsGiven")
+  ratingsReceived     Rating[]      @relation("RatingsReceived")
+  issues              Issue[]
 }
 
 model KycDocument {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
-  type      String    // ID_FRONT | ID_BACK | SELFIE
+  type      String   // ID_FRONT | ID_BACK | SELFIE
   filePath  String
-  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
 
-  user      User      @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model Delivery {
-  id              String         @id @default(cuid())
-  vendorId        String
-  delivererId     String?
-  pickupAddress   String
-  dropoffAddress  String
-  weightKg        Float
-  description     String?
-  delivererType   DelivererType  @default(TEMPORAIRE)
-  status          DeliveryStatus @default(EN_ATTENTE)
-  collectCode     String
-  deliverCode     String
-  clientToken     String         @unique
-  priceXAF        Int
-  commissionXAF   Int
+  id               String   @id @default(cuid())
+  vendorId         String
+  delivererId      String?
+  pickupAddress    String
+  dropoffAddress   String
+  weightKg         Float
+  description      String?
+  delivererType    String   @default("TEMPORAIRE")
+  status           String   @default("EN_ATTENTE")
+  collectCode      String
+  deliverCode      String
+  clientToken      String   @unique
+  priceXAF         Int
+  commissionXAF    Int
   delivererEarning Int
-  momoRef         String?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  momoRef          String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  vendor          User           @relation("VendorDeliveries", fields: [vendorId], references: [id])
-  deliverer       User?          @relation("DelivererDeliveries", fields: [delivererId], references: [id])
-  escrow          EscrowEntry?
-  locations       GpsLocation[]
-  ratings         Rating[]
-  issues          Issue[]
+  vendor    User          @relation("VendorDeliveries",   fields: [vendorId],    references: [id])
+  deliverer User?         @relation("DelivererDeliveries", fields: [delivererId], references: [id])
+  escrow    EscrowEntry?
+  locations GpsLocation[]
+  ratings   Rating[]
+  issues    Issue[]
 }
 
 model EscrowEntry {
-  id          String    @id @default(cuid())
-  deliveryId  String    @unique
-  amountXAF   Int
-  lockedAt    DateTime  @default(now())
-  releasedAt  DateTime?
+  id         String    @id @default(cuid())
+  deliveryId String    @unique
+  amountXAF  Int
+  lockedAt   DateTime  @default(now())
+  releasedAt DateTime?
 
-  delivery    Delivery  @relation(fields: [deliveryId], references: [id])
+  delivery Delivery @relation(fields: [deliveryId], references: [id])
 }
 
 model GpsLocation {
-  id          String   @id @default(cuid())
-  deliveryId  String
-  latitude    Float
-  longitude   Float
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  deliveryId String
+  latitude   Float
+  longitude  Float
+  createdAt  DateTime @default(now())
 
-  delivery    Delivery @relation(fields: [deliveryId], references: [id])
+  delivery Delivery @relation(fields: [deliveryId], references: [id])
 }
 
 model Wallet {
-  id              String        @id @default(cuid())
-  userId          String        @unique
-  balanceXAF      Int           @default(0)
-  paymentProvider PaymentProvider @default(MTN)
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  balanceXAF      Int       @default(0)
+  paymentProvider String    @default("MTN")
   paymentPhone    String?
-  updatedAt       DateTime      @updatedAt
+  updatedAt       DateTime  @updatedAt
 
-  user            User          @relation(fields: [userId], references: [id])
-  transactions    Transaction[]
-  withdrawals     Withdrawal[]
+  user         User          @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+  withdrawals  Withdrawal[]
 }
 
 model Transaction {
-  id          String          @id @default(cuid())
+  id          String   @id @default(cuid())
   walletId    String
-  type        TransactionType
+  type        String   // EARNING | WITHDRAWAL | COMMISSION | REFUND
   amountXAF   Int
   description String?
   deliveryId  String?
-  createdAt   DateTime        @default(now())
+  createdAt   DateTime @default(now())
 
-  wallet      Wallet          @relation(fields: [walletId], references: [id])
+  wallet Wallet @relation(fields: [walletId], references: [id])
 }
 
 model Withdrawal {
   id          String   @id @default(cuid())
   walletId    String
   amountXAF   Int
-  provider    PaymentProvider
+  provider    String   // MTN | ORANGE
   phone       String
-  status      String   @default("PENDING")   // PENDING | SUCCESS | FAILED
+  status      String   @default("PENDING") // PENDING | SUCCESS | FAILED
   externalRef String?
   createdAt   DateTime @default(now())
 
-  wallet      Wallet   @relation(fields: [walletId], references: [id])
+  wallet Wallet @relation(fields: [walletId], references: [id])
 }
 
 model Rating {
-  id          String   @id @default(cuid())
-  deliveryId  String
-  fromUserId  String
-  toUserId    String
-  score       Int      // 1-5
-  tags        String?  // JSON array: ["Rapide", "Pro"]
-  comment     String?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  deliveryId String
+  fromUserId String
+  toUserId   String
+  score      Int
+  tags       String?  // JSON array: ["Rapide","Pro"]
+  comment    String?
+  createdAt  DateTime @default(now())
 
-  delivery    Delivery @relation(fields: [deliveryId], references: [id])
-  from        User     @relation("RatingsGiven", fields: [fromUserId], references: [id])
-  to          User     @relation("RatingsReceived", fields: [toUserId], references: [id])
+  delivery Delivery @relation(fields: [deliveryId], references: [id])
+  from     User     @relation("RatingsGiven",    fields: [fromUserId], references: [id])
+  to       User     @relation("RatingsReceived", fields: [toUserId],   references: [id])
 }
 
 model Issue {
@@ -197,11 +159,11 @@ model Issue {
   type        String   // DAMAGED | MISSING | WRONG_ADDRESS
   description String?
   photoPaths  String?  // JSON array
-  status      String   @default("OPEN")  // OPEN | IN_PROGRESS | RESOLVED
+  status      String   @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED
   createdAt   DateTime @default(now())
 
-  delivery    Delivery @relation(fields: [deliveryId], references: [id])
-  user        User     @relation(fields: [userId], references: [id])
+  delivery Delivery @relation(fields: [deliveryId], references: [id])
+  user     User     @relation(fields: [userId],     references: [id])
 }
 
 model OtpCode {

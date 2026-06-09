@@ -4,11 +4,13 @@ const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
 
 export function signAccess(payload: object): string {
-  return jwt.sign(payload, ACCESS_SECRET, { expiresIn: process.env.JWT_ACCESS_EXPIRES ?? '15m' });
+  const expiresIn = (process.env.JWT_ACCESS_EXPIRES ?? '15m') as any;
+  return jwt.sign(payload, ACCESS_SECRET, { expiresIn });
 }
 
 export function signRefresh(payload: object): string {
-  return jwt.sign(payload, REFRESH_SECRET, { expiresIn: process.env.JWT_REFRESH_EXPIRES ?? '7d' });
+  const expiresIn = (process.env.JWT_REFRESH_EXPIRES ?? '7d') as any;
+  return jwt.sign(payload, REFRESH_SECRET, { expiresIn });
 }
 
 export function verifyAccess(token: string) {

@@ -1,4 +1,5 @@
 import { prisma } from '../models/prisma';
+import type { Prisma } from '@prisma/client';
 import { calculatePrice, DEFAULT_PRICING, DelivererType } from '../utils/pricing';
 import { generate4DigitCode } from '../utils/codes';
 import { signClientToken } from '../utils/jwt';
@@ -77,7 +78,7 @@ export const deliveryService = {
     if (d.deliverCode !== deliverCode) throw new Error('Wrong delivery code');
 
     // Release escrow + credit wallets
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.escrowEntry.update({ where: { deliveryId }, data: { releasedAt: new Date() } });
 
       // Credit deliverer
