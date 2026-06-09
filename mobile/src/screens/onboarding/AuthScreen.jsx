@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+﻿import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as LocalAuthentication from 'expo-local-authentication';
-import * as SecureStore from 'expo-secure-store';
-import { colors, fonts } from '../constants/colors';
-import KGTopBar from '../components/KGTopBar';
-import KGButton from '../components/KGButton';
-import KGInput from '../components/KGInput'; // Assuming KGInput is a component, not a helper
-import Icon from '../components/Icon';
-import { useApp, getInitials } from '../context/AppContext';
-import { TEST_ACCOUNTS, TEST_OTP } from '../constants/testAccounts';
-import { apiFetch } from '../services/api';
+import { storage as SecureStore } from '../../utils/storage';
+import { colors, fonts } from '../../constants/colors';
+import KGTopBar from '../../components/KGTopBar';
+import KGButton from '../../components/KGButton';
+import KGInput from '../../components/KGInput'; // Assuming KGInput is a component, not a helper
+import Icon from '../../components/Icon';
+import { useApp, getInitials } from '../../context/AppContext';
+import { TEST_ACCOUNTS, TEST_OTP } from '../../constants/testAccounts';
+import { apiFetch } from '../../services/api';
 
 const NUMPAD = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [null, 0, 'del']];
 
@@ -19,9 +19,9 @@ const TEST_PHONES = {
   [TEST_ACCOUNTS.deliverer.phone]: TEST_ACCOUNTS.deliverer,
 };
 
-// Étape 1 : Saisie téléphone + nom (signup) ou téléphone (signin)
-// Étape 2 : OTP reçu par SMS/WhatsApp (signup) ou directement PIN (signin)
-// Étape 3 : Création PIN (signup uniquement)
+// Ã‰tape 1 : Saisie tÃ©lÃ©phone + nom (signup) ou tÃ©lÃ©phone (signin)
+// Ã‰tape 2 : OTP reÃ§u par SMS/WhatsApp (signup) ou directement PIN (signin)
+// Ã‰tape 3 : CrÃ©ation PIN (signup uniquement)
 
 export default function AuthScreen({ navigation, route }) {
   const { loginAs, setPendingUser, biometricEnabled, lang } = useApp();
@@ -37,7 +37,7 @@ export default function AuthScreen({ navigation, route }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Terms acceptance handshake — TermsScreen navigates back with termsAccepted:true
+  // Terms acceptance handshake â€” TermsScreen navigates back with termsAccepted:true
   useEffect(() => {
     if (route?.params?.termsAccepted) {
       setAgreed(true);
@@ -67,11 +67,11 @@ export default function AuthScreen({ navigation, route }) {
     });
   };
 
-  // Step 1 → Step 2 : send OTP (signup) or go directly to PIN (signin)
+  // Step 1 â†’ Step 2 : send OTP (signup) or go directly to PIN (signin)
   const handleContinue = async () => {
     setError(null);
     if (mode === 'signup' && !name.trim()) { setError('Entre ton nom complet.'); return; }
-    if (!phoneNorm || phoneNorm.length < 9) { setError('Numéro invalide (format : 6XXXXXXXX).'); return; }
+    if (!phoneNorm || phoneNorm.length < 9) { setError('NumÃ©ro invalide (format : 6XXXXXXXX).'); return; }
     if (mode === 'signup' && !agreed) { setError('Accepte les conditions pour continuer.'); return; }
 
     // Test account shortcut
@@ -95,7 +95,7 @@ export default function AuthScreen({ navigation, route }) {
     }
   };
 
-  // Step 2 OTP verified → Step 3 (signup) or login (signin)
+  // Step 2 OTP verified â†’ Step 3 (signup) or login (signin)
   const handleOtpVerify = async () => {
     const code = otp.join('');
     setError(null);
@@ -166,13 +166,13 @@ export default function AuthScreen({ navigation, route }) {
 
   const handleBiometricLogin = async () => {
     const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: 'Connecte-toi avec ta biométrie',
+      promptMessage: 'Connecte-toi avec ta biomÃ©trie',
       cancelLabel: 'Annuler',
       fallbackLabel: 'Utiliser le PIN',
     });
     if (!result.success) return;
-    const storedToken = await SecureStore.getItemAsync('kg_token').catch(() => null);
-    if (!storedToken) { setError('Session expirée — saisis ton PIN.'); return; }
+    const storedToken = await SecureStore.getItem('kg_token').catch(() => null);
+    if (!storedToken) { setError('Session expirÃ©e â€” saisis ton PIN.'); return; }
     setLoading(true);
     try {
       const u = await apiFetch('/api/users/me', {}, storedToken);
@@ -180,7 +180,7 @@ export default function AuthScreen({ navigation, route }) {
       loginAs({ ...u, role: roleNorm, avatar: getInitials(u.name) }, storedToken);
       navigation.replace(roleNorm === 'vendor' ? 'VendorHome' : 'DelivererHome');
     } catch {
-      setError('Session expirée — saisis ton PIN.');
+      setError('Session expirÃ©e â€” saisis ton PIN.');
     } finally {
       setLoading(false);
     }
@@ -194,9 +194,9 @@ export default function AuthScreen({ navigation, route }) {
   };
 
   const getTitle = () => {
-    if (step === 1) return mode === 'signup' ? (isEn ? 'Create account' : 'Créer un compte') : (isEn ? 'Sign in' : 'Connexion');
-    if (step === 2) return mode === 'signup' ? (isEn ? 'Verification code' : 'Code de vérification') : (isEn ? 'Your PIN code' : 'Ton code PIN');
-    return isEn ? 'Create your PIN' : 'Crée ton PIN';
+    if (step === 1) return mode === 'signup' ? (isEn ? 'Create account' : 'CrÃ©er un compte') : (isEn ? 'Sign in' : 'Connexion');
+    if (step === 2) return mode === 'signup' ? (isEn ? 'Verification code' : 'Code de vÃ©rification') : (isEn ? 'Your PIN code' : 'Ton code PIN');
+    return isEn ? 'Create your PIN' : 'CrÃ©e ton PIN';
   };
 
   const currentDigits = step === 2 ? otp : pin;
@@ -211,7 +211,7 @@ export default function AuthScreen({ navigation, route }) {
         {step === 1 && (
           <View style={styles.step1Container}>
             <View style={styles.modeToggleContainer}>
-              {[['signup', t('Créer un compte')], ['signin', t('Se connecter')]].map(([id, label]) => (
+              {[['signup', t('CrÃ©er un compte')], ['signin', t('Se connecter')]].map(([id, label]) => (
                 <TouchableOpacity key={id} onPress={() => { setMode(id); setError(null); }}
                   style={[styles.modeToggleButton, mode === id && styles.modeToggleButtonActive]}>
                   <Text style={[styles.modeToggleButtonText, mode === id && styles.modeToggleButtonTextActive]}>{label}</Text>
@@ -224,10 +224,10 @@ export default function AuthScreen({ navigation, route }) {
                 <KGInput label={t('Nom complet')} placeholder="Mama Africa" value={name} onChangeText={v => { setName(v); setError(null); }} icon="user" />
               )}
               <KGInput
-                label={t('Numéro de téléphone')} placeholder="6 XX XX XX XX"
+                label={t('NumÃ©ro de tÃ©lÃ©phone')} placeholder="6 XX XX XX XX"
                 value={phone} onChangeText={v => { setPhone(v); setError(null); }}
-                icon="bell" suffix="🇨🇲 +237" keyboardType="phone-pad"
-                hint={mode === 'signup' ? t('Un code de vérification sera généré pour ce numéro.') : t('Saisis ensuite ton code PIN à 4 chiffres.')}
+                icon="bell" suffix="ðŸ‡¨ðŸ‡² +237" keyboardType="phone-pad"
+                hint={mode === 'signup' ? t('Un code de vÃ©rification sera gÃ©nÃ©rÃ© pour ce numÃ©ro.') : t('Saisis ensuite ton code PIN Ã  4 chiffres.')}
               />
             </View>
 
@@ -246,7 +246,7 @@ export default function AuthScreen({ navigation, route }) {
                     {t(' et la ')}
                     <Text style={styles.termsLink}
                       onPress={() => navigation.navigate('Privacy')}>
-                      {t('Politique de confidentialité')}
+                      {t('Politique de confidentialitÃ©')}
                     </Text>.
                   </Text>
                 </TouchableOpacity>
@@ -255,10 +255,10 @@ export default function AuthScreen({ navigation, route }) {
                     <Icon name="link" size={12} color={colors.green} />
                     <Text style={styles.termsLinkButtonText}>{t('Lire les CGU')}</Text>
                   </TouchableOpacity>
-                  <Text style={styles.termsLinkSeparator}>·</Text>
+                  <Text style={styles.termsLinkSeparator}>Â·</Text>
                   <TouchableOpacity onPress={() => navigation.navigate('Privacy')} style={styles.termsLinkButton}>
                     <Icon name="shield" size={12} color={colors.green} />
-                    <Text style={styles.termsLinkButtonText}>{t('Confidentialité')}</Text>
+                    <Text style={styles.termsLinkButtonText}>{t('ConfidentialitÃ©')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -272,9 +272,9 @@ export default function AuthScreen({ navigation, route }) {
 
             {mode === 'signin' && biometricEnabled && (
               <TouchableOpacity onPress={handleBiometricLogin} style={styles.biometricButton}>
-                <Text style={{ fontSize: 22 }}>👆</Text>
+                <Text style={{ fontSize: 22 }}>ðŸ‘†</Text>
                 <Text style={styles.biometricButtonText}>
-                  {t('Se connecter avec biométrie')}
+                  {t('Se connecter avec biomÃ©trie')}
                 </Text>
               </TouchableOpacity>
             )}
@@ -285,9 +285,9 @@ export default function AuthScreen({ navigation, route }) {
         {step === 2 && mode === 'signup' && ( // Assuming this block is for signup only
           <View style={styles.step2SignupContainer}>
             <View style={styles.titleGroup}>
-              <Text style={styles.title}>{t('Ton code de vérification')}</Text>
+              <Text style={styles.title}>{t('Ton code de vÃ©rification')}</Text>
               <Text style={styles.subtitle}>
-                {t("Le code à 4 chiffres a été transmis directement dans l'application pour le +237 {{phone}}.", { phone: phoneNorm })}
+                {t("Le code Ã  4 chiffres a Ã©tÃ© transmis directement dans l'application pour le +237 {{phone}}.", { phone: phoneNorm })}
               </Text>
             </View>
 
@@ -325,7 +325,7 @@ export default function AuthScreen({ navigation, route }) {
               />
 
               <Text style={styles.otpHintText}>
-                {t('Tu peux le modifier si besoin · valide 10 minutes')}
+                {t('Tu peux le modifier si besoin Â· valide 10 minutes')}
               </Text>
             </View>
 
@@ -358,7 +358,7 @@ export default function AuthScreen({ navigation, route }) {
             <View style={styles.pinDisplayContainer}>
               {otp.map((d, i) => (
                 <View key={i} style={{ width: 64, height: 76, borderRadius: 14, borderWidth: 2, borderColor: d ? colors.green : colors.ink12, backgroundColor: d ? colors.greenLight : colors.cream, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 32, color: colors.ink }}>{d ? '●' : ''}</Text>
+                  <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 32, color: colors.ink }}>{d ? 'â—' : ''}</Text>
                 </View>
               ))}
             </View>
@@ -404,24 +404,24 @@ export default function AuthScreen({ navigation, route }) {
           <View style={styles.step3Container}>
             <View style={{ gap: 6 }}>
               <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 26, letterSpacing: -0.5, color: colors.ink }}>
-                Crée ton code PIN
+                CrÃ©e ton code PIN
               </Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink70, lineHeight: 20 }}>
-                Ce code à 4 chiffres est ton mot de passe KoliGo. Mémorise-le bien — il te servira à chaque connexion.
+                Ce code Ã  4 chiffres est ton mot de passe KoliGo. MÃ©morise-le bien â€” il te servira Ã  chaque connexion.
               </Text>
             </View>
 
             <View style={{ backgroundColor: colors.greenLight, borderRadius: 12, padding: 14, flexDirection: 'row', gap: 10, alignItems: 'center' }}>
               <Icon name="shield" size={16} color={colors.greenDark} />
               <Text style={{ flex: 1, fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12.5, color: colors.greenDark }}>
-                Numéro vérifié ✓ +237 {phoneNorm} · {name}
+                NumÃ©ro vÃ©rifiÃ© âœ“ +237 {phoneNorm} Â· {name}
               </Text>
             </View>
 
             <View style={{ flexDirection: 'row', gap: 12, justifyContent: 'center', marginTop: 8 }}>
               {pin.map((d, i) => (
                 <View key={i} style={{ width: 64, height: 76, borderRadius: 14, borderWidth: 2, borderColor: d ? colors.green : colors.ink12, backgroundColor: d ? colors.greenLight : colors.cream, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 32, color: colors.ink }}>{d ? '●' : ''}</Text>
+                  <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 32, color: colors.ink }}>{d ? 'â—' : ''}</Text>
                 </View>
               ))}
             </View>
@@ -458,7 +458,7 @@ export default function AuthScreen({ navigation, route }) {
               size="lg" icon={loading ? undefined : 'check'}
               onPress={handleCreateAccount}
             >
-              {loading ? <ActivityIndicator color={colors.green} /> : t('Créer mon compte')}
+              {loading ? <ActivityIndicator color={colors.green} /> : t('CrÃ©er mon compte')}
             </KGButton>
 
             <TouchableOpacity onPress={() => setPin(['', '', '', ''])} style={styles.clearPinButton}>

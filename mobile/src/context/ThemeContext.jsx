@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import * as SecureStore from 'expo-secure-store';
+import { storage as SecureStore } from '../utils/storage';
 import { colors, THEMES } from '../constants/colors';
 
 const ThemeContext = createContext(null);
@@ -14,7 +14,7 @@ export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState('light');
 
   useEffect(() => {
-    SecureStore.getItemAsync('kg_theme').then(saved => {
+    SecureStore.getItem('kg_theme').then(saved => {
       if (saved && THEMES[saved]) applyTheme(saved, false);
     }).catch(() => {});
   }, []);
@@ -24,7 +24,7 @@ export function ThemeProvider({ children }) {
     // Mutate in-place so every screen importing `colors` picks up the new values on next render
     Object.assign(colors, THEMES[key]);
     setThemeState(key);
-    if (persist) SecureStore.setItemAsync('kg_theme', key).catch(() => {});
+    if (persist) SecureStore.setItem('kg_theme', key).catch(() => {});
   }
 
   return (

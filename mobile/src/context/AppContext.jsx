@@ -4,7 +4,7 @@ import * as Device from 'expo-device';
 import * as Network from 'expo-network';
 import * as Application from 'expo-application';
 import * as Location from 'expo-location';
-import * as SecureStore from 'expo-secure-store';
+import { storage as SecureStore } from '../utils/storage';
 import { apiFetch } from '../services/api';
 import { setCurrentLang } from '../i18n/translations.js';
 import { getInitials } from '../utils/helpers';
@@ -75,9 +75,9 @@ export function AppProvider({ children, initialLang = 'fr' }) {
   // Restore persisted session + lang + biometric flag on startup
   useEffect(() => {
     Promise.all([
-      SecureStore.getItemAsync('kg_token').catch(() => null),
-      SecureStore.getItemAsync('kg_lang').catch(() => null),
-      SecureStore.getItemAsync('kg_biometric').catch(() => null),
+      SecureStore.getItem('kg_token').catch(() => null),
+      SecureStore.getItem('kg_lang').catch(() => null),
+      SecureStore.getItem('kg_biometric').catch(() => null),
     ]).then(([storedToken, storedLang, storedBio]) => {
       if (storedLang) {
         setCurrentLang(storedLang);
@@ -89,7 +89,7 @@ export function AppProvider({ children, initialLang = 'fr' }) {
         apiFetch('/api/users/me', {}, storedToken).then(u => {
           if (u?.id) loginAs({ ...u, role: u.role?.toLowerCase() || 'vendor' }, storedToken);
         }).catch(() => {
-          SecureStore.deleteItemAsync('kg_token').catch(() => {});
+          SecureStore.deleteItem('kg_token').catch(() => {});
         });
       }
     }).finally(() => setSessionRestored(true));
@@ -98,12 +98,12 @@ export function AppProvider({ children, initialLang = 'fr' }) {
   const setLang = (l) => {
     setCurrentLang(l);
     setLangState(l);
-    SecureStore.setItemAsync('kg_lang', l).catch(() => {});
+    SecureStore.setItem('kg_lang', l).catch(() => {});
   };
 
   const enableBiometric = (enabled) => {
     setBiometricEnabled(enabled);
-    SecureStore.setItemAsync('kg_biometric', enabled ? '1' : '0').catch(() => {});
+    SecureStore.setItem('kg_biometric', enabled ? '1' : '0').catch(() => {});
   };
 
   const showToast = (message, kind = 'success') => {
@@ -167,7 +167,7 @@ export function AppProvider({ children, initialLang = 'fr' }) {
       setToken(jwt);
       if (!account.isTest) {
         collectDeviceSession(jwt);
-        SecureStore.setItemAsync('kg_token', jwt).catch(() => {});
+        SecureStore.setItem('kg_token', jwt).catch(() => {});
       }
     }
     if (account.isTest) {
@@ -183,7 +183,7 @@ export function AppProvider({ children, initialLang = 'fr' }) {
     setPendingUser(null);
     setRole('vendor');
     setConversations({});
-    SecureStore.deleteItemAsync('kg_token').catch(() => {});
+    SecureStore.deleteItem('kg_token').catch(() => {});
   };
 
   // Authenticated API shortcut

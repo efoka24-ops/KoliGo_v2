@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../utils/storage';
 import { strings } from './strings';
 
 type Lang = 'fr' | 'en';
@@ -12,14 +12,14 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>('fr');
 
   useEffect(() => {
-    SecureStore.getItemAsync('koligo_lang').then((v) => {
-      if (v === 'fr' || v === 'en') setLangState(v);
-    });
+    storage.getItem('koligo_lang').then((v) => {
+      if (v === 'fr' || v === 'en') setLangState(v as Lang);
+    }).catch(() => {});
   }, []);
 
   const setLang = (l: Lang) => {
     setLangState(l);
-    SecureStore.setItemAsync('koligo_lang', l).catch(() => {});
+    storage.setItem('koligo_lang', l).catch(() => {});
   };
 
   const t = (key: string): string => {

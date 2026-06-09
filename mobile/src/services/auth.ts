@@ -1,4 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../utils/storage';
 import { api } from './api';
 
 export const authService = {
@@ -19,19 +19,19 @@ export const authService = {
 
   async signin(phone: string, pin: string) {
     const { data } = await api.post('/auth/signin', { phone, pin });
-    await SecureStore.setItemAsync('access_token', data.accessToken);
-    await SecureStore.setItemAsync('refresh_token', data.refreshToken);
+    await storage.setItem('access_token', data.accessToken);
+    await storage.setItem('refresh_token', data.refreshToken);
     return data;
   },
 
   async switchRole(role: 'VENDOR' | 'DELIVERER') {
     const { data } = await api.post('/auth/switch-role', { role });
-    await SecureStore.setItemAsync('access_token', data.accessToken);
+    await storage.setItem('access_token', data.accessToken);
     return data;
   },
 
   async logout() {
-    await SecureStore.deleteItemAsync('access_token');
-    await SecureStore.deleteItemAsync('refresh_token');
+    await storage.deleteItem('access_token');
+    await storage.deleteItem('refresh_token');
   },
 };
