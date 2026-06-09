@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fonts } from '../constants/colors';
-import { useApp } from '../context/AppContext';
-import { getInitials } from '../utils/helpers';
-import Icon from '../components/Icon';
-import KGTabBar from '../components/KGTabBar';
+import { colors, fonts } from '../../constants/colors';
+import { useApp } from '../../context/AppContext';
+import { getInitials } from '../../utils/helpers';
+import Icon from '../../components/Icon';
+import KGTabBar from '../../components/KGTabBar';
 
 const ROLE_LABELS = { vendor: 'Vendeur', deliverer: 'Livreur', client: 'Client' };
 const ROLE_COLORS = {
@@ -16,14 +16,14 @@ const ROLE_COLORS = {
 
 // Demo contacts the current user can start a conversation with
 const NEW_CONTACTS_VENDOR = [
-  { id: 'herve_nk',   name: 'Hervé Nkouamba',  initials: 'HN', role: 'deliverer' },
-  { id: 'aicha_mb',   name: 'Aïcha Mballa',    initials: 'AM', role: 'client' },
+  { id: 'herve_nk',   name: 'HervÃ© Nkouamba',  initials: 'HN', role: 'deliverer' },
+  { id: 'aicha_mb',   name: 'AÃ¯cha Mballa',    initials: 'AM', role: 'client' },
   { id: 'paul_et',    name: 'Paul Etoundi',     initials: 'PE', role: 'deliverer' },
 ];
 const NEW_CONTACTS_DELIVERER = [
   { id: 'marie_ng',     name: 'Marie Ngono',      initials: 'MN', role: 'vendor' },
   { id: 'alphonse_mb',  name: 'Alphonse Mboa',    initials: 'AM', role: 'client' },
-  { id: 'cecile_nd',    name: 'Maman Cécile',     initials: 'MC', role: 'vendor' },
+  { id: 'cecile_nd',    name: 'Maman CÃ©cile',     initials: 'MC', role: 'vendor' },
 ];
 
 export default function ChatInboxScreen({ navigation }) {
@@ -105,7 +105,7 @@ export default function ChatInboxScreen({ navigation }) {
             Nouvelle conversation
           </Text>
           {loadingContacts && (
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55, textAlign: 'center', paddingVertical: 8 }}>Chargement…</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55, textAlign: 'center', paddingVertical: 8 }}>Chargementâ€¦</Text>
           )}
           {!loadingContacts && contacts.length === 0 && (
             <View style={{ paddingVertical: 14, alignItems: 'center', gap: 4 }}>
@@ -146,7 +146,7 @@ export default function ChatInboxScreen({ navigation }) {
             </View>
             <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 17, color: colors.ink }}>Aucun message</Text>
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55, textAlign: 'center', maxWidth: 260, lineHeight: 19 }}>
-              Tes conversations avec les {role === 'vendor' ? 'livreurs et clients' : 'vendeurs et clients'} apparaîtront ici.
+              Tes conversations avec les {role === 'vendor' ? 'livreurs et clients' : 'vendeurs et clients'} apparaÃ®tront ici.
             </Text>
             <TouchableOpacity
               onPress={() => setShowPicker(true)}
@@ -188,7 +188,7 @@ export default function ChatInboxScreen({ navigation }) {
                       <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 10, color: rc.text }}>{ROLE_LABELS[conv.contactRole]}</Text>
                     </View>
                     <Text numberOfLines={1} style={{ flex: 1, fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: conv.unread > 0 ? colors.ink70 : colors.ink35 }}>
-                      {conv.lastMessage || 'Démarrer la conversation…'}
+                      {conv.lastMessage || 'DÃ©marrer la conversationâ€¦'}
                     </Text>
                   </View>
                 </View>

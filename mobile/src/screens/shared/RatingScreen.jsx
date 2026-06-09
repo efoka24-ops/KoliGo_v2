@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fonts } from '../constants/colors';
-import { useApp } from '../context/AppContext';
-import { getInitials } from '../utils/helpers';
-import KGTopBar from '../components/KGTopBar';
-import KGButton from '../components/KGButton';
-import KGCard from '../components/KGCard';
-import KGChip from '../components/KGChip';
-import KGSectionTitle from '../components/KGSectionTitle';
-import KGTextarea from '../components/KGTextarea';
-import Icon from '../components/Icon';
+import { colors, fonts } from '../../constants/colors';
+import { useApp } from '../../context/AppContext';
+import { getInitials } from '../../utils/helpers';
+import KGTopBar from '../../components/KGTopBar';
+import KGButton from '../../components/KGButton';
+import KGCard from '../../components/KGCard';
+import KGChip from '../../components/KGChip';
+import KGSectionTitle from '../../components/KGSectionTitle';
+import KGTextarea from '../../components/KGTextarea';
+import Icon from '../../components/Icon';
 
 const ALL_TAGS = ['Rapide', 'Souriant', 'Pro', 'Soigneux', 'Ponctuel', 'Communique bien'];
-const STAR_LABELS = ['', 'Pas top', 'Bof', 'Correct', 'Bien', 'Excellent 🔥'];
+const STAR_LABELS = ['', 'Pas top', 'Bof', 'Correct', 'Bien', 'Excellent ðŸ”¥'];
 
 export default function RatingScreen({ navigation, route }) {
   const { showToast, api, token } = useApp();
@@ -42,13 +42,13 @@ export default function RatingScreen({ navigation, route }) {
         });
       } else if (deliveryId) {
         // Unauthenticated client rating deliverer
-        const { apiFetch } = require('../services/api');
+        const { apiFetch } = require('../../services/api');
         await apiFetch(`/api/ratings/client/${deliveryId}`, {
           method: 'POST',
           body: JSON.stringify({ stars, comment: comment.trim() || null, tags: [...tags] }),
         });
       }
-      showToast('Merci pour ta note ⭐');
+      showToast('Merci pour ta note â­');
     } catch (err) {
       showToast(err?.message || 'Erreur', 'error');
     } finally {
@@ -73,7 +73,7 @@ export default function RatingScreen({ navigation, route }) {
             <Icon name="check" size={42} color={colors.green} strokeWidth={2.4} />
           </View>
           <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 24, color: colors.ink, letterSpacing: -0.02 * 24 }}>Livraison terminée !</Text>
+            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 24, color: colors.ink, letterSpacing: -0.02 * 24 }}>Livraison terminÃ©e !</Text>
           </View>
         </View>
 
@@ -84,7 +84,7 @@ export default function RatingScreen({ navigation, route }) {
               <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 12, color: colors.ink }}>{partnerInitials}</Text>
             </View>
             <View>
-              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: colors.ink55 }}>Comment c'était avec</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: colors.ink55 }}>Comment c'Ã©tait avec</Text>
               <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 14, color: colors.ink }}>{partnerName} ?</Text>
             </View>
           </View>
@@ -99,17 +99,17 @@ export default function RatingScreen({ navigation, route }) {
         </KGCard>
 
         <View style={{ gap: 10 }}>
-          <KGSectionTitle>Ce que tu as aimé</KGSectionTitle>
+          <KGSectionTitle>Ce que tu as aimÃ©</KGSectionTitle>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {ALL_TAGS.map(t => (
               <KGChip key={t} active={tags.has(t)} color={tags.has(t) ? 'orange' : 'ink'} onPress={() => toggleTag(t)}>
-                {tags.has(t) ? '✓ ' : ''}{t}
+                {tags.has(t) ? 'âœ“ ' : ''}{t}
               </KGChip>
             ))}
           </View>
         </View>
 
-        <KGTextarea label="Commentaire (facultatif)" placeholder="Écris quelques mots…" value={comment} onChangeText={setComment} rows={3} />
+        <KGTextarea label="Commentaire (facultatif)" placeholder="Ã‰cris quelques motsâ€¦" value={comment} onChangeText={setComment} rows={3} />
 
         <KGButton kind="primary" size="lg" onPress={handleSend} disabled={loading}>
           {loading ? <ActivityIndicator color="#fff" /> : 'Envoyer la note'}
@@ -120,7 +120,7 @@ export default function RatingScreen({ navigation, route }) {
             style={{ alignItems: 'center' }}
             onPress={() => navigation.navigate('ReportIssue', { deliveryId })}
           >
-            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.orange }}>Signaler un problème</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.orange }}>Signaler un problÃ¨me</Text>
           </TouchableOpacity>
         )}
       </ScrollView>

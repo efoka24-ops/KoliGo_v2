@@ -78,7 +78,8 @@ function FieldError({ msg }) {
 }
 
 export default function PostDeliveryScreen({ navigation }) {
-  const { api, token, showToast, pricing, lang } = useApp();`n  const { t } = useI18n();
+  const { api, token, showToast, pricing, lang } = useApp();
+  const { t } = useI18n();
   const isEn = lang === 'en';
 
   // Step 1 fields

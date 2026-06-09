@@ -1,23 +1,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fonts } from '../constants/colors';
-import { KG_DEMO_DELIVERIES } from '../constants/data';
-import { normalizeDelivery } from '../services/api';
-import { useApp } from '../context/AppContext';
-import KGTopBar from '../components/KGTopBar';
-import KGCard from '../components/KGCard';
-import KGChip from '../components/KGChip';
-import KGStatusPill from '../components/KGStatusPill';
-import KGTabBar from '../components/KGTabBar';
-import Icon from '../components/Icon';
+import { colors, fonts } from '../../constants/colors';
+import { KG_DEMO_DELIVERIES } from '../../constants/data';
+import { normalizeDelivery } from '../../services/api';
+import { useApp } from '../../context/AppContext';
+import KGTopBar from '../../components/KGTopBar';
+import KGCard from '../../components/KGCard';
+import KGChip from '../../components/KGChip';
+import KGStatusPill from '../../components/KGStatusPill';
+import KGTabBar from '../../components/KGTabBar';
+import Icon from '../../components/Icon';
 
 const FILTERS = [
   { id: 'all', label: 'Toutes' },
-  { id: 'livre', label: 'Livré' },
+  { id: 'livre', label: 'LivrÃ©' },
   { id: 'en_route', label: 'En route' },
-  { id: 'accepte', label: 'Accepté' },
-  { id: 'annule', label: 'Annulé' },
+  { id: 'accepte', label: 'AcceptÃ©' },
+  { id: 'annule', label: 'AnnulÃ©' },
 ];
 
 const STATUS_ICON_COLOR = {
@@ -93,7 +93,7 @@ export default function HistoryScreen({ navigation }) {
                 </View>
                 <View style={{ width: 1, height: 30, backgroundColor: 'rgba(255,255,255,0.15)' }} />
                 <View>
-                  <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 0.04 }}>Dépensé</Text>
+                  <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 0.04 }}>DÃ©pensÃ©</Text>
                   <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 24, color: '#fff', letterSpacing: -0.02 }}>82 350 <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>XAF</Text></Text>
                 </View>
               </View>
@@ -107,7 +107,7 @@ export default function HistoryScreen({ navigation }) {
               </View>
               <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: colors.ink }}>Aucune livraison pour le moment</Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55, textAlign: 'center', maxWidth: 240, lineHeight: 18 }}>
-                Tes livraisons apparaîtront ici dès que tu en auras créé une.
+                Tes livraisons apparaÃ®tront ici dÃ¨s que tu en auras crÃ©Ã© une.
               </Text>
             </View>
           )}
@@ -123,7 +123,7 @@ export default function HistoryScreen({ navigation }) {
                     <Icon name="package" size={20} color={sc.color} />
                   </View>
                   <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 14, color: colors.ink }} numberOfLines={1}>{d.from} → {d.to}</Text>
+                    <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 14, color: colors.ink }} numberOfLines={1}>{d.from} â†’ {d.to}</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
                       <KGStatusPill status={d.status} />
                       <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11.5, color: colors.ink55 }}>{d.posted || d.time}</Text>

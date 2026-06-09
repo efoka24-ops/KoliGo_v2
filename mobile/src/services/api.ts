@@ -31,6 +31,42 @@ api.interceptors.response.use(
   }
 );
 
+// Maps backend Delivery model fields to the flat UI shape expected by screens
+export function normalizeDelivery(d: any) {
+  if (!d) return d;
+  const statusMap: Record<string, string> = {
+    EN_ATTENTE: 'en_attente', ACCEPTE: 'accepte', EN_ROUTE: 'en_route', LIVRE: 'livre',
+  };
+  const typeMap: Record<string, string> = {
+    TEMPORAIRE: 'temporaire', PERMANENT: 'permanent', EXPRESS: 'express', VVIP: 'vvip',
+  };
+  return {
+    id: d.id,
+    from: d.pickupAddress ?? d.from,
+    to: d.dropoffAddress ?? d.to,
+    weight: d.weightKg ?? d.weight,
+    type: typeMap[d.delivererType] ?? d.delivererType?.toLowerCase() ?? d.type ?? 'temporaire',
+    status: statusMap[d.status] ?? d.status?.toLowerCase() ?? 'en_attente',
+    price: d.priceXAF ?? d.price ?? 0,
+    code: d.deliverCode ?? d.code,
+    collectCode: d.collectCode,
+    recipient: d.recipientName ?? d.recipient ?? null,
+    recipientId: d.recipientId ?? null,
+    vendor: d.vendor?.name ?? d.vendorName ?? d.vendor ?? null,
+    vendorRating: d.vendor?.rating ?? d.vendorRating ?? null,
+    delivererEarning: d.delivererEarning ?? null,
+    distance: d.distanceKm ?? d.distance ?? null,
+    description: d.description ?? null,
+    time: d.createdAt
+      ? new Date(d.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+      : (d.time ?? null),
+    posted: d.posted ?? null,
+    momoRef: d.momoRef ?? null,
+    convIdDeliverer: d.convIdDeliverer ?? null,
+    convIdClient: d.convIdClient ?? null,
+  };
+}
+
 // Compatibility shim for prototype screens that call apiFetch(path, options?, token?)
 export async function apiFetch(path: string, options: RequestInit = {}, token?: string | null): Promise<any> {
   const headers: Record<string, string> = {

@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fonts } from '../constants/colors';
-import KGTopBar from '../components/KGTopBar';
-import KGButton from '../components/KGButton';
-import KGCard from '../components/KGCard';
-import KGInput from '../components/KGInput';
-import Icon from '../components/Icon';
-import { useApp } from '../context/AppContext';
+import { colors, fonts } from '../../constants/colors';
+import KGTopBar from '../../components/KGTopBar';
+import KGButton from '../../components/KGButton';
+import KGCard from '../../components/KGCard';
+import KGInput from '../../components/KGInput';
+import Icon from '../../components/Icon';
+import { useApp } from '../../context/AppContext';
 
 const PROVIDERS = [
-  { id: 'mtn',    label: 'MTN MoMo',      sub: 'Numéros 65x-67x, 68x', bg: '#FFCC00', textColor: '#1A1A1A' },
-  { id: 'orange', label: 'Orange Money',   sub: 'Numéros 69x, 65x',     bg: colors.orange, textColor: '#fff' },
+  { id: 'mtn',    label: 'MTN MoMo',      sub: 'NumÃ©ros 65x-67x, 68x', bg: '#FFCC00', textColor: '#1A1A1A' },
+  { id: 'orange', label: 'Orange Money',   sub: 'NumÃ©ros 69x, 65x',     bg: colors.orange, textColor: '#fff' },
 ];
 
 export default function PaymentAccountScreen({ navigation }) {
@@ -35,7 +35,7 @@ export default function PaymentAccountScreen({ navigation }) {
 
   const handleSave = async () => {
     if (!number.trim() || !name.trim()) {
-      showToast('Remplis le numéro et le nom du titulaire.', 'error');
+      showToast('Remplis le numÃ©ro et le nom du titulaire.', 'error');
       return;
     }
     setSaving(true);
@@ -45,7 +45,7 @@ export default function PaymentAccountScreen({ navigation }) {
         body: JSON.stringify({ paymentProvider: provider, paymentNumber: number.trim(), paymentName: name.trim() }),
       });
       setUser(prev => ({ ...prev, ...updated }));
-      showToast('Compte de paiement enregistré ✓', 'success');
+      showToast('Compte de paiement enregistrÃ© âœ“', 'success');
       navigation.navigate('ProfileChoice');
     } catch (err) {
       showToast(err.message || 'Erreur lors de la sauvegarde.', 'error');
@@ -66,10 +66,10 @@ export default function PaymentAccountScreen({ navigation }) {
 
         <View style={{ gap: 8 }}>
           <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 26, letterSpacing: -0.02 * 26, color: colors.ink }}>
-            Où on t'envoie l'argent ?
+            OÃ¹ on t'envoie l'argent ?
           </Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink70, lineHeight: 21 }}>
-            Choisis ton compte Mobile Money. C'est là que KoliGo verse automatiquement tes paiements après chaque livraison.
+            Choisis ton compte Mobile Money. C'est lÃ  que KoliGo verse automatiquement tes paiements aprÃ¨s chaque livraison.
           </Text>
         </View>
 
@@ -94,7 +94,7 @@ export default function PaymentAccountScreen({ navigation }) {
                 {on && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <Icon name="check" size={12} color={colors.green} />
-                    <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.green }}>Sélectionné</Text>
+                    <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.green }}>SÃ©lectionnÃ©</Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -105,11 +105,11 @@ export default function PaymentAccountScreen({ navigation }) {
         {/* Account details */}
         <KGCard padding={14} style={{ gap: 14 }}>
           <KGInput
-            label="Numéro du compte"
+            label="NumÃ©ro du compte"
             value={number}
             onChangeText={setNumber}
             icon="bell"
-            suffix="🇨🇲 +237"
+            suffix="ðŸ‡¨ðŸ‡² +237"
             keyboardType="phone-pad"
           />
           <KGInput
@@ -128,7 +128,7 @@ export default function PaymentAccountScreen({ navigation }) {
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 13.5, color: colors.greenDark }}>Paiement automatique</Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: colors.greenDark, marginTop: 4, lineHeight: 18, opacity: 0.85 }}>
-                Chaque transaction est répartie en direct : marchandise + livraison + frais. Tu reçois ta part sans cliquer.
+                Chaque transaction est rÃ©partie en direct : marchandise + livraison + frais. Tu reÃ§ois ta part sans cliquer.
               </Text>
             </View>
           </View>

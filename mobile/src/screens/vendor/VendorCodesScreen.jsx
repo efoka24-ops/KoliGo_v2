@@ -2,15 +2,15 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Share, Linking, ActivityIndicator } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fonts } from '../constants/colors'; // Assuming colors and fonts are constants
-import { useApp } from '../context/AppContext';
-import { getInitials } from '../utils/helpers';
-import { API_BASE } from '../config';
-import KGTopBar from '../components/KGTopBar';
-import KGButton from '../components/KGButton';
-import KGCard from '../components/KGCard';
-import KGStatusPill from '../components/KGStatusPill';
-import Icon from '../components/Icon';
+import { colors, fonts } from '../../constants/colors'; // Assuming colors and fonts are constants
+import { useApp } from '../../context/AppContext';
+import { getInitials } from '../../utils/helpers';
+import { API_BASE } from '../../config';
+import KGTopBar from '../../components/KGTopBar';
+import KGButton from '../../components/KGButton';
+import KGCard from '../../components/KGCard';
+import KGStatusPill from '../../components/KGStatusPill';
+import Icon from '../../components/Icon';
 
 const POLL_INTERVAL = 5000;
 
@@ -110,10 +110,10 @@ export default function VendorCodesScreen({ navigation, route }) {
       // Notify vendor when deliverer accepts
       const prev = prevStatusRef.current;
       if (prev && prev !== newStatus && newStatus === 'accepte') {
-        showToast(isEn ? '🚴 A deliverer accepted your order!' : '🚴 Un livreur a accepté ta commande !');
+        showToast(isEn ? 'ðŸš´ A deliverer accepted your order!' : 'ðŸš´ Un livreur a acceptÃ© ta commande !');
       }
       if (prev && prev !== newStatus && newStatus === 'en_route') {
-        showToast(isEn ? '📦 Pickup code validated — trust invoice generated!' : '📦 Le livreur a validé le code collecte — facture générée !');
+        showToast(isEn ? 'ðŸ“¦ Pickup code validated â€” trust invoice generated!' : 'ðŸ“¦ Le livreur a validÃ© le code collecte â€” facture gÃ©nÃ©rÃ©e !');
       }
       prevStatusRef.current = newStatus;
       setStatus(newStatus);
@@ -137,38 +137,38 @@ export default function VendorCodesScreen({ navigation, route }) {
     const d = trustDoc?.deliverer;
     const today = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
     return (
-      `📄 *${isEn ? 'TRUST INVOICE' : 'FACTURE DE CONFIANCE'} — KoliGo*\n` +
-      `────────────────\n` +
+      `ðŸ“„ *${isEn ? 'TRUST INVOICE' : 'FACTURE DE CONFIANCE'} â€” KoliGo*\n` +
+      `â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€\n` +
       `Commande : ${orderId}\n` +
-      `Trajet : ${fromQ} → ${toQ}\n` +
+      `Trajet : ${fromQ} â†’ ${toQ}\n` +
       `Date : ${today}\n\n` +
-      `👤 *LIVREUR*\n` +
-      `Nom : ${d?.name || '—'}\n` +
-      `Téléphone : +237 ${d?.phone || '—'}\n` +
-      `N° CNI : ${d?.cniNumber || 'Non renseigné'}\n` +
-      `Statut KYC : ${d?.kycStatus === 'VERIFIED' ? 'Vérifié ✓' : d?.kycStatus === 'REJECTED' ? 'Rejeté' : 'En attente'}\n\n` +
-      `📦 *CLIENT / DESTINATAIRE*\n` +
-      `Nom : ${trustDoc?.recipientName || recipientName || '—'}\n` +
-      (trustDoc?.recipientPhone ? `Téléphone : +237 ${trustDoc.recipientPhone}\n` : '') +
-      `Adresse : ${trustDoc?.recipientAddress || recipientAddress || toQ || '—'}\n\n` +
-      `🔗 *SUIVI DU COLIS*\n` +
+      `ðŸ‘¤ *LIVREUR*\n` +
+      `Nom : ${d?.name || 'â€”'}\n` +
+      `TÃ©lÃ©phone : +237 ${d?.phone || 'â€”'}\n` +
+      `NÂ° CNI : ${d?.cniNumber || 'Non renseignÃ©'}\n` +
+      `Statut KYC : ${d?.kycStatus === 'VERIFIED' ? 'VÃ©rifiÃ© âœ“' : d?.kycStatus === 'REJECTED' ? 'RejetÃ©' : 'En attente'}\n\n` +
+      `ðŸ“¦ *CLIENT / DESTINATAIRE*\n` +
+      `Nom : ${trustDoc?.recipientName || recipientName || 'â€”'}\n` +
+      (trustDoc?.recipientPhone ? `TÃ©lÃ©phone : +237 ${trustDoc.recipientPhone}\n` : '') +
+      `Adresse : ${trustDoc?.recipientAddress || recipientAddress || toQ || 'â€”'}\n\n` +
+      `ðŸ”— *SUIVI DU COLIS*\n` +
       `${trackingUrl}\n` +
-      `Code réception : _${codeReception}_ (confidentiel)\n\n` +
-      `Ce livreur est vérifié par KoliGo.\n` +
+      `Code rÃ©ception : _${codeReception}_ (confidentiel)\n\n` +
+      `Ce livreur est vÃ©rifiÃ© par KoliGo.\n` +
       `Conservez ce document en cas de litige.\n` +
-      `— KoliGo`
+      `â€” KoliGo`
     );
   };
 
   // Message to send to the client (WhatsApp/SMS)
   const buildClientMessage = () =>
-    `${isEn ? 'Hello' : 'Salut'} ${trustDoc?.recipientName || recipientName || ''} ! ${isEn ? 'Your parcel from' : 'Ton colis de'} *${shopName || 'KoliGo'}* ${isEn ? 'is on the way' : 'est en route'} 📦\n\n` +
-    (fromQ && toQ ? `${isEn ? 'Route' : 'Trajet'} : ${fromQ} → ${toQ}\n` : '') +
+    `${isEn ? 'Hello' : 'Salut'} ${trustDoc?.recipientName || recipientName || ''} ! ${isEn ? 'Your parcel from' : 'Ton colis de'} *${shopName || 'KoliGo'}* ${isEn ? 'is on the way' : 'est en route'} ðŸ“¦\n\n` +
+    (fromQ && toQ ? `${isEn ? 'Route' : 'Trajet'} : ${fromQ} â†’ ${toQ}\n` : '') +
     `${isEn ? 'Order' : 'Commande'} : ${orderId}\n\n` +
-    `🔗 ${isEn ? 'Track your parcel live' : 'Suis ton colis en direct'} :\n${trackingUrl}\n\n` +
-    `🔑 ${isEn ? 'Delivery code' : 'Code de réception'} : *${codeReception}*\n` +
+    `ðŸ”— ${isEn ? 'Track your parcel live' : 'Suis ton colis en direct'} :\n${trackingUrl}\n\n` +
+    `ðŸ”‘ ${isEn ? 'Delivery code' : 'Code de rÃ©ception'} : *${codeReception}*\n` +
     `${isEn ? 'Enter this code when the deliverer arrives to confirm delivery.' : 'Saisis ce code quand le livreur arrive pour confirmer la livraison.'}\n\n` +
-    `— KoliGo`;
+    `â€” KoliGo`;
 
   const shareViaWhatsApp = async (msg, phone = '') => {
     const url = phone
@@ -197,7 +197,7 @@ export default function VendorCodesScreen({ navigation, route }) {
 
   const copyLink = async () => {
     await Clipboard.setStringAsync(trackingUrl);
-    showToast('Lien copié ✓');
+    showToast('Lien copiÃ© âœ“');
   };
 
   const isAccepte  = status === 'accepte';
@@ -222,37 +222,37 @@ export default function VendorCodesScreen({ navigation, route }) {
           )}
         </View>
 
-        {/* Step 10 — Deliverer accepted banner */}
+        {/* Step 10 â€” Deliverer accepted banner */}
         {isAccepte && !showTrust && (
           <View style={{ backgroundColor: '#EFF6FF', borderRadius: 18, padding: 16, borderLeftWidth: 4, borderLeftColor: '#3B82F6', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 24 }}>🚴</Text>
+              <Text style={{ fontSize: 24 }}>ðŸš´</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 15, color: '#1D4ED8' }}>Livreur en route !</Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: '#3B82F6', marginTop: 3, lineHeight: 18 }}>
-                Il arrive à ta boutique. Prépare le code collecte à lui montrer.
+                Il arrive Ã  ta boutique. PrÃ©pare le code collecte Ã  lui montrer.
               </Text>
             </View>
           </View>
         )}
 
-        {/* Step 12 — Delivery confirmed banner */}
+        {/* Step 12 â€” Delivery confirmed banner */}
         {isLivre && (
           <View style={{ backgroundColor: colors.greenLight, borderRadius: 20, padding: 20, alignItems: 'center', gap: 8 }}>
             <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="check" size={26} color="#fff" />
             </View>
             <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 18, color: colors.greenDark, textAlign: 'center' }}>
-              Livraison confirmée !
+              Livraison confirmÃ©e !
             </Text>
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.greenDark, textAlign: 'center', lineHeight: 20, opacity: 0.85 }}>
-              Le client a confirmé la réception. Le livreur a été payé automatiquement par KoliGo.
+              Le client a confirmÃ© la rÃ©ception. Le livreur a Ã©tÃ© payÃ© automatiquement par KoliGo.
             </Text>
           </View>
         )}
 
-        {/* Step 11 — Facture de confiance */}
+        {/* Step 11 â€” Facture de confiance */}
         {showTrust && (
           <View style={{ backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: colors.ink06 }}>
             {/* Document header */}
@@ -260,14 +260,14 @@ export default function VendorCodesScreen({ navigation, route }) {
               <Icon name="shield" size={20} color={colors.green} />
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.06 }}>
-                  KoliGo · Document officiel
+                  KoliGo Â· Document officiel
                 </Text>
                 <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: '#fff' }}>
                   Facture de confiance
                 </Text>
               </View>
               <View style={{ backgroundColor: colors.green, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 }}>
-                <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 10, color: '#fff' }}>Vérifié ✓</Text>
+                <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 10, color: '#fff' }}>VÃ©rifiÃ© âœ“</Text>
               </View>
             </View>
 
@@ -276,7 +276,7 @@ export default function VendorCodesScreen({ navigation, route }) {
                 <View style={{ alignItems: 'center', paddingVertical: 20 }}>
                   <ActivityIndicator color={colors.green} />
                   <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55, marginTop: 8 }}>
-                    Génération de la facture…
+                    GÃ©nÃ©ration de la factureâ€¦
                   </Text>
                 </View>
               )}
@@ -284,25 +284,25 @@ export default function VendorCodesScreen({ navigation, route }) {
               {trustDoc && (
                 <>
                   <SectionLabel>Commande</SectionLabel>
-                  <TrustRow label="Référence" value={orderId} />
-                  <TrustRow label="Trajet" value={fromQ && toQ ? `${fromQ} → ${toQ}` : null} />
+                  <TrustRow label="RÃ©fÃ©rence" value={orderId} />
+                  <TrustRow label="Trajet" value={fromQ && toQ ? `${fromQ} â†’ ${toQ}` : null} />
 
-                  <SectionLabel>Livreur identifié</SectionLabel>
+                  <SectionLabel>Livreur identifiÃ©</SectionLabel>
                   <TrustRow label="Nom complet" value={trustDoc.deliverer?.name} />
-                  <TrustRow label="Téléphone" value={trustDoc.deliverer?.phone ? `+237 ${trustDoc.deliverer.phone}` : null} />
-                  <TrustRow label="N° CNI" value={trustDoc.deliverer?.cniNumber || 'Non renseigné'} />
-                  <TrustRow label="Statut KYC" value={trustDoc.deliverer?.kycStatus === 'VERIFIED' ? 'Vérifié ✓' : 'En attente'} highlight={trustDoc.deliverer?.kycStatus === 'VERIFIED'} />
+                  <TrustRow label="TÃ©lÃ©phone" value={trustDoc.deliverer?.phone ? `+237 ${trustDoc.deliverer.phone}` : null} />
+                  <TrustRow label="NÂ° CNI" value={trustDoc.deliverer?.cniNumber || 'Non renseignÃ©'} />
+                  <TrustRow label="Statut KYC" value={trustDoc.deliverer?.kycStatus === 'VERIFIED' ? 'VÃ©rifiÃ© âœ“' : 'En attente'} highlight={trustDoc.deliverer?.kycStatus === 'VERIFIED'} />
 
                   <SectionLabel>{isEn ? 'Recipient (client)' : 'Destinataire (client)'}</SectionLabel>
-                  <TrustRow label="Nom" value={trustDoc.recipientName || recipientName || '—'} />
-                  <TrustRow label="Téléphone" value={trustDoc.recipientPhone ? `+237 ${trustDoc.recipientPhone}` : null} />
+                  <TrustRow label="Nom" value={trustDoc.recipientName || recipientName || 'â€”'} />
+                  <TrustRow label="TÃ©lÃ©phone" value={trustDoc.recipientPhone ? `+237 ${trustDoc.recipientPhone}` : null} />
                   <TrustRow label="Adresse" value={trustDoc.recipientAddress || recipientAddress || toQ} />
 
                   {/* Download / share trust doc */}
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
                     <KGButton kind="primary" size="sm" icon="send" full={false} style={{ flex: 1 }}
                       onPress={downloadTrustDoc}>
-                      {isEn ? 'Download' : 'Télécharger'}
+                      {isEn ? 'Download' : 'TÃ©lÃ©charger'}
                     </KGButton>
                     {trustDoc.deliverer?.id && (
                       <KGButton kind="soft" size="sm" icon="chat" full={false} style={{ flex: 1 }}
@@ -320,24 +320,24 @@ export default function VendorCodesScreen({ navigation, route }) {
                     )}
                   </View>
                   <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: colors.ink35, textAlign: 'center', marginTop: 8 }}>
-                    {isEn ? '💡 To save as an image, take a screenshot.' : '💡 Pour sauvegarder en image, fais une capture d\'écran'}
+                    {isEn ? 'ðŸ’¡ To save as an image, take a screenshot.' : 'ðŸ’¡ Pour sauvegarder en image, fais une capture d\'Ã©cran'}
                   </Text>
                 </>
               )}
 
               {!loadingTrust && !trustDoc && (
                 <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: colors.ink55, lineHeight: 18 }}>
-                  {isEn ? 'The invoice will appear here once the pickup code is validated.' : 'La facture apparaîtra ici dès que le code de collecte est validé.'}
+                  {isEn ? 'The invoice will appear here once the pickup code is validated.' : 'La facture apparaÃ®tra ici dÃ¨s que le code de collecte est validÃ©.'}
                 </Text>
               )}
             </View>
           </View>
         )}
 
-        {/* Code A — Collecte */}
+        {/* Code A â€” Collecte */}
         <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 20, borderLeftWidth: 4, borderLeftColor: colors.orange }}>
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.orange, letterSpacing: 0.06, textTransform: 'uppercase' }}>
-            {isEn ? '① Pickup code — show it to the deliverer' : '① Code de collecte — à montrer au livreur'}
+            {isEn ? 'â‘  Pickup code â€” show it to the deliverer' : 'â‘  Code de collecte â€” Ã  montrer au livreur'}
           </Text>
           <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 13.5, color: colors.ink, marginTop: 4 }}>
             Le livreur saisit ce code en arrivant chez toi
@@ -348,17 +348,17 @@ export default function VendorCodesScreen({ navigation, route }) {
             ))}
           </View>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55, marginTop: 12, lineHeight: 18 }}>
-            KoliGo libère le paiement de la marchandise vers ton compte MoMo et génère la facture de confiance.
+            KoliGo libÃ¨re le paiement de la marchandise vers ton compte MoMo et gÃ©nÃ¨re la facture de confiance.
           </Text>
         </View>
 
         {/* Code B + Client share section */}
         <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 20, borderLeftWidth: 4, borderLeftColor: colors.green }}>
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.green, letterSpacing: 0.06, textTransform: 'uppercase' }}>
-            {isEn ? '② Link + delivery code — share with the client' : '② Lien + code de réception — à partager avec le client'}
+            {isEn ? 'â‘¡ Link + delivery code â€” share with the client' : 'â‘¡ Lien + code de rÃ©ception â€” Ã  partager avec le client'}
           </Text>
           <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 13.5, color: colors.ink, marginTop: 4 }}>
-            Le client confirme la réception avec ce code
+            Le client confirme la rÃ©ception avec ce code
           </Text>
           <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 16 }}>
             {codeReception.split('').map((d, i) => (
@@ -407,7 +407,7 @@ export default function VendorCodesScreen({ navigation, route }) {
             <Text style={{ flex: 1, fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink70, lineHeight: 18 }}>
               {isEn
                 ? <>Never share <Text style={{ fontFamily: `${fonts.ui}-SemiBold` }}>the pickup code</Text> with the client. Share only the delivery code and the tracking link.</>
-                : <>Ne partage <Text style={{ fontFamily: `${fonts.ui}-SemiBold` }}>jamais</Text> le code de collecte avec le client. Partage uniquement le code de réception et le lien de suivi.</>}
+                : <>Ne partage <Text style={{ fontFamily: `${fonts.ui}-SemiBold` }}>jamais</Text> le code de collecte avec le client. Partage uniquement le code de rÃ©ception et le lien de suivi.</>}
             </Text>
           </View>
         </KGCard>
@@ -418,7 +418,7 @@ export default function VendorCodesScreen({ navigation, route }) {
         {/* Preview for vendor */}
         <View style={{ borderTopWidth: 1, borderTopColor: colors.ink06, paddingTop: 16, gap: 8 }}>
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink35, textTransform: 'uppercase', letterSpacing: 0.04, textAlign: 'center' }}>
-            {isEn ? 'Client preview' : 'Aperçu côté client'}
+            {isEn ? 'Client preview' : 'AperÃ§u cÃ´tÃ© client'}
           </Text>
           <KGButton
             kind="dark"
@@ -428,7 +428,7 @@ export default function VendorCodesScreen({ navigation, route }) {
               orderId,
               clientName: trustDoc?.recipientName || recipientName || 'Client',
               vendorName: shopName || 'Ma boutique',
-              parcelDesc: params.parcelDesc || 'Colis · ' + orderId,
+              parcelDesc: params.parcelDesc || 'Colis Â· ' + orderId,
             })}
           >
             {isEn ? 'Open client view' : 'Voir la vue client (app)'}

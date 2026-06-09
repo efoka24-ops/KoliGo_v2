@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, ScrollView, Animated, Platform } from 'react-native';
 import * as Location from 'expo-location';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fonts } from '../constants/colors';
-import { useApp } from '../context/AppContext';
-import KGTopBar from '../components/KGTopBar';
-import KGButton from '../components/KGButton';
-import KGCard from '../components/KGCard';
-import Icon from '../components/Icon';
+import { colors, fonts } from '../../constants/colors';
+import { useApp } from '../../context/AppContext';
+import KGTopBar from '../../components/KGTopBar';
+import KGButton from '../../components/KGButton';
+import KGCard from '../../components/KGCard';
+import Icon from '../../components/Icon';
 
 const POLL_MS = 5000;
 
@@ -26,14 +26,14 @@ export default function DelivererWaitingScreen({ navigation, route }) {
     return () => clearInterval(id);
   }, []);
 
-  // Poll delivery status — navigate to Rating when LIVRE
+  // Poll delivery status â€” navigate to Rating when LIVRE
   const pollStatus = useCallback(async () => {
     if (isDemo || !deliveryId) return;
     try {
       const data = await api(`/api/deliveries/${deliveryId}`);
       if ((data.status || '').toLowerCase() === 'livre') {
         clearInterval(pollRef.current);
-        showToast('Livraison validée ✓ — paiement crédité !');
+        showToast('Livraison validÃ©e âœ“ â€” paiement crÃ©ditÃ© !');
         navigation.replace('Rating', { partner: 'client', deliveryId });
       }
     } catch {}
@@ -44,7 +44,7 @@ export default function DelivererWaitingScreen({ navigation, route }) {
     return () => clearInterval(pollRef.current);
   }, [pollStatus]);
 
-  // ── GPS streaming to backend ────────────────────────────────────────────────
+  // â”€â”€ GPS streaming to backend â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!deliveryId) return;
     let stopped = false;
@@ -117,8 +117,8 @@ export default function DelivererWaitingScreen({ navigation, route }) {
           </Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink70, textAlign: 'center', lineHeight: 21, paddingHorizontal: 10 }}>
             Demande au destinataire d'ouvrir son lien KoliGo et de saisir son{' '}
-            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, color: colors.ink }}>code de réception</Text>.
-            Tu seras notifié dès la validation.
+            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, color: colors.ink }}>code de rÃ©ception</Text>.
+            Tu seras notifiÃ© dÃ¨s la validation.
           </Text>
         </View>
 
@@ -127,12 +127,12 @@ export default function DelivererWaitingScreen({ navigation, route }) {
             Rappel
           </Text>
           {[
-            'Tu ne saisis pas de code toi-même',
-            'Le client confirme depuis son téléphone',
-            'Le paiement t\'est versé automatiquement à la confirmation',
+            'Tu ne saisis pas de code toi-mÃªme',
+            'Le client confirme depuis son tÃ©lÃ©phone',
+            'Le paiement t\'est versÃ© automatiquement Ã  la confirmation',
           ].map((line, i) => (
             <View key={i} style={{ flexDirection: 'row', gap: 8, marginBottom: 6 }}>
-              <Text style={{ fontFamily: `${fonts.mono}-Regular`, fontSize: 13, color: colors.green }}>•</Text>
+              <Text style={{ fontFamily: `${fonts.mono}-Regular`, fontSize: 13, color: colors.green }}>â€¢</Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70, flex: 1, lineHeight: 19 }}>{line}</Text>
             </View>
           ))}
@@ -154,7 +154,7 @@ export default function DelivererWaitingScreen({ navigation, route }) {
           icon="check"
           onPress={() => navigation.navigate('Rating', { partner: 'client' })}
         >
-          (Démo) Simuler confirmation client
+          (DÃ©mo) Simuler confirmation client
         </KGButton>
       </ScrollView>
     </SafeAreaView>

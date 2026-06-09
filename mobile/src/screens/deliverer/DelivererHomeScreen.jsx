@@ -50,7 +50,8 @@ function AvailableCard({ d, onPress }) {
 }
 
 export default function DelivererHomeScreen({ navigation }) {
-  const { toast, user, token, api } = useApp();`n  const { t } = useI18n();
+  const { toast, user, token, api } = useApp();
+  const { t } = useI18n();
   const displayName = user?.name || t('Mon compte');
   const avatar = user?.avatar || '??';
   const isDemo = user?.isTest === true;

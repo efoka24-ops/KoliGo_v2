@@ -16,7 +16,8 @@ import RouteLine from '../../components/RouteLine';
 import Icon from '../../components/Icon';
 import { useI18n } from '../../i18n';
 export default function DeliveryDetailScreen({ navigation, route }) {
-  const { role, user, token, api, showToast, conversations, startConversation, lang } = useApp();`n  const { t } = useI18n();
+  const { role, user, token, api, showToast, conversations, startConversation, lang } = useApp();
+  const { t } = useI18n();
   const isEn = lang === 'en';
   const { deliveryId, mode } = route?.params || {};
   const isAvailable = mode === 'available';

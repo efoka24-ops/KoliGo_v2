@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fonts } from '../constants/colors';
-import { KG_WALLET_TX } from '../constants/data';
-import { useApp } from '../context/AppContext';
-import KGTopBar from '../components/KGTopBar';
-import KGButton from '../components/KGButton';
-import KGCard from '../components/KGCard';
-import KGSectionTitle from '../components/KGSectionTitle';
-import KGInput from '../components/KGInput';
-import KGToast from '../components/KGToast';
-import KGTabBar from '../components/KGTabBar';
-import Icon from '../components/Icon';
+import { colors, fonts } from '../../constants/colors';
+import { KG_WALLET_TX } from '../../constants/data';
+import { useApp } from '../../context/AppContext';
+import KGTopBar from '../../components/KGTopBar';
+import KGButton from '../../components/KGButton';
+import KGCard from '../../components/KGCard';
+import KGSectionTitle from '../../components/KGSectionTitle';
+import KGInput from '../../components/KGInput';
+import KGToast from '../../components/KGToast';
+import KGTabBar from '../../components/KGTabBar';
+import Icon from '../../components/Icon';
 
 const TX_ICON_COLOR = (tx) => {
   if (tx.type === 'withdraw') return { bg: colors.orangeLight, color: colors.orange };
@@ -61,7 +61,7 @@ export default function WalletScreen({ navigation }) {
   const handleWithdraw = async () => {
     if (isDemo) {
       setWithdrawOpen(false);
-      showToast('Retrait envoyé · arrive sous 1 min ✅');
+      showToast('Retrait envoyÃ© Â· arrive sous 1 min âœ…');
       return;
     }
     if (!withdrawAmount || parseInt(withdrawAmount) < 500) {
@@ -69,7 +69,7 @@ export default function WalletScreen({ navigation }) {
     }
     const phoneNorm = withdrawPhone.replace(/\s/g, '');
     if (!/^6\d{8}$/.test(phoneNorm)) {
-      showToast('Numéro invalide (format: 6XXXXXXXX)', 'error'); return;
+      showToast('NumÃ©ro invalide (format: 6XXXXXXXX)', 'error'); return;
     }
     setWithdrawLoading(true);
     try {
@@ -78,7 +78,7 @@ export default function WalletScreen({ navigation }) {
         body: JSON.stringify({ amount: parseInt(withdrawAmount), provider: withdrawProvider, phone: phoneNorm }),
       });
       setWithdrawOpen(false);
-      showToast('Retrait initié · arrive sous 1 min ✅');
+      showToast('Retrait initiÃ© Â· arrive sous 1 min âœ…');
       api('/api/wallet').then(setWalletData).catch(() => {});
     } catch (err) {
       showToast(err.message, 'error');
@@ -154,7 +154,7 @@ export default function WalletScreen({ navigation }) {
             </View>
             <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: colors.ink }}>Aucune transaction</Text>
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55, textAlign: 'center', maxWidth: 240, lineHeight: 18 }}>
-              Tes gains apparaîtront ici après ta première course.
+              Tes gains apparaÃ®tront ici aprÃ¨s ta premiÃ¨re course.
             </Text>
           </View>
         )}
@@ -169,7 +169,7 @@ export default function WalletScreen({ navigation }) {
             <View style={{ width: 40, height: 4, backgroundColor: colors.ink12, borderRadius: 2, alignSelf: 'center' }} />
             <View>
               <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: colors.ink, letterSpacing: -0.02 * 22 }}>Retirer en Mobile Money</Text>
-              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70, marginTop: 4 }}>Instantané · 0 frais</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70, marginTop: 4 }}>InstantanÃ© Â· 0 frais</Text>
             </View>
 
             {/* Provider selection */}
@@ -189,7 +189,7 @@ export default function WalletScreen({ navigation }) {
             </View>
 
             <KGInput label="Montant" value={withdrawAmount} suffix="XAF" keyboardType="numeric" onChangeText={setWithdrawAmount} placeholder="Ex: 5000" />
-            <KGInput label="Numéro" value={withdrawPhone} suffix="🇨🇲 +237" keyboardType="phone-pad" onChangeText={setWithdrawPhone} placeholder="6 XX XX XX XX" />
+            <KGInput label="NumÃ©ro" value={withdrawPhone} suffix="ðŸ‡¨ðŸ‡² +237" keyboardType="phone-pad" onChangeText={setWithdrawPhone} placeholder="6 XX XX XX XX" />
 
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 10, backgroundColor: colors.greenLight, borderRadius: 10 }}>
               <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.greenDark }}>Frais</Text>

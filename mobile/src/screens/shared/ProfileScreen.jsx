@@ -17,7 +17,8 @@ const VEHICLE_TYPES = [
 ];
 
 export default function ProfileScreen({ navigation }) {
-  const { role, setRole, user, logout, token, api, loginAs, showToast, lang } = useApp();`n  const { t } = useI18n();
+  const { role, setRole, user, logout, token, api, loginAs, showToast, lang } = useApp();
+  const { t } = useI18n();
   const isEn = lang === 'en';
   const isVendor = role === 'vendor';
   const isDemo = user?.isTest === true;

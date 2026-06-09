@@ -4,7 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { I18nProvider } from './src/i18n';
-import { AppProvider } from './src/store';
+import { AppProvider } from './src/context/AppContext';
 import RootNavigator from './src/navigation/RootNavigator';
 import { navTheme } from './src/theme';
 

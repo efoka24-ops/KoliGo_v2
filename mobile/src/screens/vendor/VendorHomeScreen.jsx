@@ -26,7 +26,8 @@ function StatCard({ label, value, kind, sub, accent }) {
 }
 
 export default function VendorHomeScreen({ navigation, route }) {
-  const { toast, user, lang } = useApp();`n  const { t } = useI18n();
+  const { toast, user, lang } = useApp();
+  const { t } = useI18n();
   const displayName = user?.name || 'Mon compte';
   const avatar = user?.avatar || '??';
   const isDemo = user?.isTest === true;

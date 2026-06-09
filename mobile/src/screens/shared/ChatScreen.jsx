@@ -1,19 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fonts } from '../constants/colors';
-import { useApp } from '../context/AppContext';
-import Icon from '../components/Icon';
+import { colors, fonts } from '../../constants/colors';
+import { useApp } from '../../context/AppContext';
+import Icon from '../../components/Icon';
 
-const QUICK_REPLIES_VENDOR    = ['Je suis là', 'Merci !', 'OK reçu 👍', 'Code SVP', 'En route ?'];
-const QUICK_REPLIES_DELIVERER = ['En route', 'Je suis là', 'OK reçu 👍', 'Code SVP', 'À bientôt'];
+const QUICK_REPLIES_VENDOR    = ['Je suis lÃ ', 'Merci !', 'OK reÃ§u ðŸ‘', 'Code SVP', 'En route ?'];
+const QUICK_REPLIES_DELIVERER = ['En route', 'Je suis lÃ ', 'OK reÃ§u ðŸ‘', 'Code SVP', 'Ã€ bientÃ´t'];
 
 const AUTO_REPLIES = [
-  'Ok reçu 👍',
-  'Je regarde ça de suite.',
+  'Ok reÃ§u ðŸ‘',
+  'Je regarde Ã§a de suite.',
   "D'accord, merci !",
   'Super, parfait.',
-  'Noté !',
+  'NotÃ© !',
 ];
 
 export default function ChatScreen({ route, navigation }) {
@@ -147,7 +147,7 @@ export default function ChatScreen({ route, navigation }) {
             <TextInput
               value={input}
               onChangeText={setInput}
-              placeholder="Message…"
+              placeholder="Messageâ€¦"
               placeholderTextColor={colors.ink35}
               style={{ flex: 1, fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink, outlineWidth: 0 }}
               onSubmitEditing={() => handleSend(input)}

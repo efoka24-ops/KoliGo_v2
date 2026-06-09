@@ -1,4 +1,4 @@
-﻿export { default as ChatInboxScreen } from './ChatInboxScreen';
+export { default as ChatInboxScreen } from './ChatInboxScreen';
 export { default as ChatScreen } from './ChatScreen';
 export { default as ConfirmScreen } from './ConfirmScreen';
 export { default as DeliveryDetailScreen } from './DeliveryDetailScreen';

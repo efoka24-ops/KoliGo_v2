@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fonts } from '../constants/colors';
-import { useApp } from '../context/AppContext';
-import KGTopBar from '../components/KGTopBar';
-import KGButton from '../components/KGButton';
-import Icon from '../components/Icon';
+import { colors, fonts } from '../../constants/colors';
+import { useApp } from '../../context/AppContext';
+import KGTopBar from '../../components/KGTopBar';
+import KGButton from '../../components/KGButton';
+import Icon from '../../components/Icon';
 
 const NUMPAD = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [null, 0, 'del']];
 
@@ -53,14 +53,14 @@ export default function ConfirmScreen({ navigation, route }) {
           method: 'POST',
           body: JSON.stringify({ code }),
         });
-        showToast('Collecte confirmée ! En route 🚀');
+        showToast('Collecte confirmÃ©e ! En route ðŸš€');
         navigation.navigate('DeliveryDetail', { deliveryId, mode: 'mine' });
       } else {
         await api(`/api/deliveries/${deliveryId}/confirm-deliver`, {
           method: 'POST',
           body: JSON.stringify({ code }),
         });
-        showToast('Livraison validée ! Paiement crédité ✅');
+        showToast('Livraison validÃ©e ! Paiement crÃ©ditÃ© âœ…');
         navigation.navigate('DelivererHome');
       }
     } catch (err) {
@@ -92,8 +92,8 @@ export default function ConfirmScreen({ navigation, route }) {
           </Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink70, marginTop: 8, lineHeight: 20 }}>
             {isCollect
-              ? 'Saisis le code à 4 chiffres affiché dans son app pour confirmer la collecte.'
-              : "Saisis le code à 4 chiffres reçu par SMS. Sans ce code, la livraison n'est pas validée."}
+              ? 'Saisis le code Ã  4 chiffres affichÃ© dans son app pour confirmer la collecte.'
+              : "Saisis le code Ã  4 chiffres reÃ§u par SMS. Sans ce code, la livraison n'est pas validÃ©e."}
           </Text>
         </View>
 

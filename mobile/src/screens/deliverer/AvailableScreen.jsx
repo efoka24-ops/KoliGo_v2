@@ -48,7 +48,8 @@ function AvailableCard({ d, onPress }) {
 }
 
 export default function AvailableScreen({ navigation }) {
-  const { token, api, user, showToast } = useApp();`n  const { t } = useI18n();
+  const { token, api, user, showToast } = useApp();
+  const { t } = useI18n();
   const [filter, setFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
 

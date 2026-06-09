@@ -2,27 +2,27 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { colors, fonts } from '../constants/colors';
-import { useApp } from '../context/AppContext';
-import KGTopBar from '../components/KGTopBar';
-import KGButton from '../components/KGButton';
-import KGInput from '../components/KGInput';
-import Icon from '../components/Icon';
+import { colors, fonts } from '../../constants/colors';
+import { useApp } from '../../context/AppContext';
+import KGTopBar from '../../components/KGTopBar';
+import KGButton from '../../components/KGButton';
+import KGInput from '../../components/KGInput';
+import Icon from '../../components/Icon';
 
-// Step 0: CNI number · Step 1: CNI recto · Step 2: CNI verso · Step 3: Selfie · Step 4: Success
+// Step 0: CNI number Â· Step 1: CNI recto Â· Step 2: CNI verso Â· Step 3: Selfie Â· Step 4: Success
 const TITLES = [
-  'Ton numéro de CNI',
+  'Ton numÃ©ro de CNI',
   'Photo de ta CNI',
   'Et le verso',
   'Selfie avec ta CNI',
 ];
 const DESCS = [
-  'Saisis le numéro figurant sur ta Carte Nationale d\'Identité camerounaise. Il sera affiché sur ta facture de confiance.',
-  'Cadre bien la face recto de ta CNI. Toutes les informations doivent être lisibles.',
-  'Tourne ta CNI et photographie l\'arrière.',
-  'Tiens ta CNI à côté de ton visage face à la caméra. Cligne des yeux si demandé.',
+  'Saisis le numÃ©ro figurant sur ta Carte Nationale d\'IdentitÃ© camerounaise. Il sera affichÃ© sur ta facture de confiance.',
+  'Cadre bien la face recto de ta CNI. Toutes les informations doivent Ãªtre lisibles.',
+  'Tourne ta CNI et photographie l\'arriÃ¨re.',
+  'Tiens ta CNI Ã  cÃ´tÃ© de ton visage face Ã  la camÃ©ra. Cligne des yeux si demandÃ©.',
 ];
-const STEP_LABELS = ['N° CNI', 'CNI recto', 'CNI verso', 'Selfie'];
+const STEP_LABELS = ['NÂ° CNI', 'CNI recto', 'CNI verso', 'Selfie'];
 
 export default function VerificationScreen({ navigation }) {
   const { api } = useApp();
@@ -79,7 +79,7 @@ export default function VerificationScreen({ navigation }) {
       return;
     }
 
-    // Step 3 → submit + success
+    // Step 3 â†’ submit + success
     setLoading(true);
     try {
       const selfieData = selfie || await captureStepPhoto();
@@ -94,7 +94,7 @@ export default function VerificationScreen({ navigation }) {
         }),
       });
     } catch {
-      // Continue even if API fails — user can resubmit from profile
+      // Continue even if API fails â€” user can resubmit from profile
     } finally {
       setLoading(false);
       setStep(4);
@@ -103,7 +103,7 @@ export default function VerificationScreen({ navigation }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
-      <KGTopBar title="Vérification d'identité" onBack={handleBack} />
+      <KGTopBar title="VÃ©rification d'identitÃ©" onBack={handleBack} />
       <ScrollView contentContainerStyle={{ padding: 20, gap: 18, flexGrow: 1 }} showsVerticalScrollIndicator={false}>
 
         {/* 4-step progress bar */}
@@ -120,7 +120,7 @@ export default function VerificationScreen({ navigation }) {
 
             <View>
               <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink35, textTransform: 'uppercase', letterSpacing: 0.06 }}>
-                Étape {step + 1} / 4 — {STEP_LABELS[step]}
+                Ã‰tape {step + 1} / 4 â€” {STEP_LABELS[step]}
               </Text>
               <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 26, color: colors.ink, letterSpacing: -0.02 * 26, marginTop: 4 }}>
                 {TITLES[step]}
@@ -132,7 +132,7 @@ export default function VerificationScreen({ navigation }) {
 
             {isCNIStep ? (
               <KGInput
-                label="Numéro CNI"
+                label="NumÃ©ro CNI"
                 value={cniNumber}
                 onChangeText={setCniNumber}
                 icon="shield"
@@ -165,7 +165,7 @@ export default function VerificationScreen({ navigation }) {
                   {STEP_LABELS[step]}
                 </Text>
                 <Text style={{ fontFamily: `${fonts.mono}-Regular`, fontSize: 10, color: colors.green, opacity: 0.5, marginTop: 4 }}>
-                  aperçu caméra
+                  aperÃ§u camÃ©ra
                 </Text>
               </View>
             )}
@@ -173,8 +173,8 @@ export default function VerificationScreen({ navigation }) {
             <View style={{ backgroundColor: colors.orangeLight, padding: 14, borderRadius: 12, flexDirection: 'row', gap: 10 }}>
               <Icon name="shield" size={20} color={colors.orange} />
               <Text style={{ flex: 1, fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70, lineHeight: 18 }}>
-                Tes documents sont chiffrés et ne servent qu'à la vérification KYC.{' '}
-                <Text style={{ fontFamily: `${fonts.ui}-Bold`, color: colors.orange }}>Jamais partagés.</Text>
+                Tes documents sont chiffrÃ©s et ne servent qu'Ã  la vÃ©rification KYC.{' '}
+                <Text style={{ fontFamily: `${fonts.ui}-Bold`, color: colors.orange }}>Jamais partagÃ©s.</Text>
               </Text>
             </View>
 
@@ -204,10 +204,10 @@ export default function VerificationScreen({ navigation }) {
             </View>
             <View style={{ alignItems: 'center' }}>
               <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 26, color: colors.ink, letterSpacing: -0.02 * 26 }}>
-                Vérification envoyée
+                VÃ©rification envoyÃ©e
               </Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink70, marginTop: 8, textAlign: 'center', paddingHorizontal: 20, lineHeight: 20 }}>
-                Un admin KoliGo valide ton dossier sous 5–10 minutes. Tu peux déjà utiliser l'application.
+                Un admin KoliGo valide ton dossier sous 5â€“10 minutes. Tu peux dÃ©jÃ  utiliser l'application.
               </Text>
             </View>
             <KGButton kind="primary" size="lg" iconRight="arrow" onPress={() => navigation.navigate('PaymentAccount')}>
