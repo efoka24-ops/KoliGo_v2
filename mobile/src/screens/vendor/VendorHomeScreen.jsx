@@ -1,19 +1,19 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fonts } from '../constants/colors';
-import { useApp, t } from '../context/AppContext';
-import { useDeliveries } from '../hooks/useDeliveries';
-import KGCard from '../components/KGCard';
-import KGTabBar from '../components/KGTabBar';
-import KGStatusPill from '../components/KGStatusPill';
-import KGCourierBadge from '../components/KGCourierBadge';
-import KGSectionTitle from '../components/KGSectionTitle';
-import KGToast from '../components/KGToast';
-import RouteLine from '../components/RouteLine';
-import Icon from '../components/Icon';
-import DemoDrawer from '../components/DemoDrawer';
-
+import { colors, fonts } from '../../constants/colors';
+import { useApp, t } from '../../context/AppContext';
+import { useDeliveries } from '../../hooks/useDeliveries';
+import KGCard from '../../components/KGCard';
+import KGTabBar from '../../components/KGTabBar';
+import KGStatusPill from '../../components/KGStatusPill';
+import KGCourierBadge from '../../components/KGCourierBadge';
+import KGSectionTitle from '../../components/KGSectionTitle';
+import KGToast from '../../components/KGToast';
+import RouteLine from '../../components/RouteLine';
+import Icon from '../../components/Icon';
+import DemoDrawer from '../../components/DemoDrawer';
+import { useI18n } from '../../i18n';
 function StatCard({ label, value, kind, sub, accent }) {
   return (
     <KGCard kind={kind} padding={16} style={styles.statCard}>
@@ -26,7 +26,7 @@ function StatCard({ label, value, kind, sub, accent }) {
 }
 
 export default function VendorHomeScreen({ navigation, route }) {
-  const { toast, user, lang } = useApp();
+  const { toast, user, lang } = useApp();`n  const { t } = useI18n();
   const displayName = user?.name || 'Mon compte';
   const avatar = user?.avatar || '??';
   const isDemo = user?.isTest === true;
@@ -58,7 +58,7 @@ export default function VendorHomeScreen({ navigation, route }) {
             <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 16, color: '#fff' }}>{avatar}</Text>
           </View>
           <View>
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{t('Bonjour 👋')}</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{t('Bonjour ðŸ‘‹')}</Text>
             <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 17, color: colors.ink, letterSpacing: -0.01 }}>{displayName}</Text>
           </View>
         </View>
@@ -125,7 +125,7 @@ export default function VendorHomeScreen({ navigation, route }) {
                 <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.greenDark, opacity: 0.7 }}>{t('Ce mois')}</Text>
                 <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: colors.greenDark, letterSpacing: -0.02, marginTop: 4 }}>{isDemo ? '42 colis' : '0 colis'}</Text>
               </View>
-              {isDemo && <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.greenDark }}>+18% ↗</Text>}
+              {isDemo && <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.greenDark }}>+18% â†—</Text>}
             </KGCard>
           </View>
         </View>
@@ -144,8 +144,8 @@ export default function VendorHomeScreen({ navigation, route }) {
             <Icon name="plus" size={24} color="#fff" strokeWidth={2.4} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 17, color: '#fff', letterSpacing: -0.01 }}>{t('Créer une livraison')}</Text>
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 }}>{t('Prix calculé en 3 secondes')}</Text>
+            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 17, color: '#fff', letterSpacing: -0.01 }}>{t('CrÃ©er une livraison')}</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 }}>{t('Prix calculÃ© en 3 secondes')}</Text>
           </View>
           <Icon name="arrow" size={22} color="#fff" />
         </TouchableOpacity>
@@ -173,9 +173,9 @@ export default function VendorHomeScreen({ navigation, route }) {
                     <RouteLine from={d.from} to={d.to} />
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
                       <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{d.distance} km</Text>
-                      <Text style={{ color: colors.ink55 }}>·</Text>
+                      <Text style={{ color: colors.ink55 }}>Â·</Text>
                       <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{d.weight} kg</Text>
-                      <Text style={{ color: colors.ink55 }}>·</Text>
+                      <Text style={{ color: colors.ink55 }}>Â·</Text>
                       <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 12, color: colors.ink }}>{d.price.toLocaleString('fr-FR')} XAF</Text>
                     </View>
                   </View>
@@ -204,7 +204,7 @@ export default function VendorHomeScreen({ navigation, route }) {
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 14, color: colors.ink }}>{isEn ? 'Go-go tip' : 'Astuce go-go'}</Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: colors.ink70, marginTop: 4, lineHeight: 18 }}>
-                {isEn ? 'Choose "Express" between 7am and 9am — your parcels arrive before shops open.' : 'Choisis "Express" entre 7h et 9h — tes colis arrivent avant l\'ouverture des boutiques.'}
+                {isEn ? 'Choose "Express" between 7am and 9am â€” your parcels arrive before shops open.' : 'Choisis "Express" entre 7h et 9h â€” tes colis arrivent avant l\'ouverture des boutiques.'}
               </Text>
             </View>
           </View>

@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fonts } from '../constants/colors';
-import { KG_AVAILABLE_FOR_DELIVERER } from '../constants/data'; // Still needed for demo mode
-import { useApp, t } from '../context/AppContext';
-import { useDeliveries } from '../hooks/useDeliveries';
-import KGTopBar from '../components/KGTopBar';
-import KGCard from '../components/KGCard';
-import KGChip from '../components/KGChip';
-import KGCourierBadge from '../components/KGCourierBadge';
-import RouteLine from '../components/RouteLine';
-import Icon from '../components/Icon';
-
+import { colors, fonts } from '../../constants/colors';
+import { KG_AVAILABLE_FOR_DELIVERER } from '../../constants/data'; // Still needed for demo mode
+import { useApp, t } from '../../context/AppContext';
+import { useDeliveries } from '../../hooks/useDeliveries';
+import KGTopBar from '../../components/KGTopBar';
+import KGCard from '../../components/KGCard';
+import KGChip from '../../components/KGChip';
+import KGCourierBadge from '../../components/KGCourierBadge';
+import RouteLine from '../../components/RouteLine';
+import Icon from '../../components/Icon';
+import { useI18n } from '../../i18n';
 const FILTERS = [
   { id: 'all', label: 'Toutes' },
   { id: 'temporaire', label: 'Temporaire' },
@@ -32,10 +32,10 @@ function AvailableCard({ d, onPress }) {
           <RouteLine from={d.from} to={d.to} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
             <Icon name="package" size={14} color={colors.ink55} />
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{d.weight} kg · {d.distance} km</Text>
-            <Text style={{ color: colors.ink55 }}>·</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{d.weight} kg Â· {d.distance} km</Text>
+            <Text style={{ color: colors.ink55 }}>Â·</Text>
             <Icon name="star" size={14} color={colors.ink55} />
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{d.vendorRating} · {d.vendor}</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{d.vendorRating} Â· {d.vendor}</Text>
           </View>
         </View>
         <View style={styles.availableCardRight}>
@@ -48,7 +48,7 @@ function AvailableCard({ d, onPress }) {
 }
 
 export default function AvailableScreen({ navigation }) {
-  const { token, api, user, showToast } = useApp();
+  const { token, api, user, showToast } = useApp();`n  const { t } = useI18n();
   const [filter, setFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
 

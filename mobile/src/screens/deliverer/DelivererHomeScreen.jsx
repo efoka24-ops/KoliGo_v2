@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fonts } from '../constants/colors';
-import { useApp, t } from '../context/AppContext';
-import { useDeliveries } from '../hooks/useDeliveries';
-import KGCard from '../components/KGCard';
-import KGTabBar from '../components/KGTabBar';
-import KGCourierBadge from '../components/KGCourierBadge';
-import KGSectionTitle from '../components/KGSectionTitle';
-import KGToast from '../components/KGToast';
-import RouteLine from '../components/RouteLine';
-import Icon from '../components/Icon';
-import DemoDrawer from '../components/DemoDrawer';
-
+import { colors, fonts } from '../../constants/colors';
+import { useApp, t } from '../../context/AppContext';
+import { useDeliveries } from '../../hooks/useDeliveries';
+import KGCard from '../../components/KGCard';
+import KGTabBar from '../../components/KGTabBar';
+import KGCourierBadge from '../../components/KGCourierBadge';
+import KGSectionTitle from '../../components/KGSectionTitle';
+import KGToast from '../../components/KGToast';
+import RouteLine from '../../components/RouteLine';
+import Icon from '../../components/Icon';
+import DemoDrawer from '../../components/DemoDrawer';
+import { useI18n } from '../../i18n';
 function StatCard({ label, value }) {
   return (
     <KGCard padding={12} style={{ flex: 1, gap: 2 }}>
@@ -34,8 +34,8 @@ function AvailableCard({ d, onPress }) {
           <RouteLine from={d.from} to={d.to} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
             <Icon name="package" size={14} color={colors.ink55} />
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{d.weight} kg · {d.distance} km</Text>
-            <Text style={{ color: colors.ink55 }}>·</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{d.weight} kg Â· {d.distance} km</Text>
+            <Text style={{ color: colors.ink55 }}>Â·</Text>
             <Icon name="star" size={14} color={colors.ink55} />
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{d.vendorRating}</Text>
           </View>
@@ -50,7 +50,7 @@ function AvailableCard({ d, onPress }) {
 }
 
 export default function DelivererHomeScreen({ navigation }) {
-  const { toast, user, token, api } = useApp();
+  const { toast, user, token, api } = useApp();`n  const { t } = useI18n();
   const displayName = user?.name || t('Mon compte');
   const avatar = user?.avatar || '??';
   const isDemo = user?.isTest === true;
@@ -94,7 +94,7 @@ export default function DelivererHomeScreen({ navigation }) {
             <View style={[styles.onlineIndicator, { backgroundColor: online ? '#22C55E' : colors.ink35 }]} /> {/* Assuming styles.onlineIndicator is defined */}
           </View>
           <View>
-            <Text style={styles.headerStatus}>{online ? t('Tu es en ligne · Akwa') : t('Hors ligne')}</Text> {/* Assuming styles.headerStatus is defined */}
+            <Text style={styles.headerStatus}>{online ? t('Tu es en ligne Â· Akwa') : t('Hors ligne')}</Text> {/* Assuming styles.headerStatus is defined */}
             <Text style={styles.headerDisplayName}>{displayName}</Text> {/* Assuming styles.headerDisplayName is defined */}
           </View>
         </View>
@@ -122,13 +122,13 @@ export default function DelivererHomeScreen({ navigation }) {
               {isDemo ? (
                 <>
                   <Text style={styles.walletCardStatText}>{t('+5 095 aujourd\'hui')}</Text> {/* Assuming styles.walletCardStatText is defined */}
-                  <Text style={styles.walletCardStatSeparator}>·</Text> {/* Assuming styles.walletCardStatSeparator is defined */}
+                  <Text style={styles.walletCardStatSeparator}>Â·</Text> {/* Assuming styles.walletCardStatSeparator is defined */}
                   <Text style={styles.walletCardStatText}>{t('3 courses')}</Text>
                 </>
               ) : stats ? (
                 <>
                   <Text style={styles.walletCardStatText}>{t('+{{amount}} XAF aujourd\'hui', { amount: (stats.gainsToday || 0).toLocaleString('fr-FR') })}</Text>
-                  <Text style={styles.walletCardStatSeparator}>·</Text>
+                  <Text style={styles.walletCardStatSeparator}>Â·</Text>
                   <Text style={styles.walletCardStatText}>{t('{{count}} courses', { count: stats.courses || 0 })}</Text>
                 </>
               ) : null}
@@ -149,8 +149,8 @@ export default function DelivererHomeScreen({ navigation }) {
         {/* Stats */}
         <View style={styles.statsRow}> {/* Assuming styles.statsRow is defined */}
           <StatCard label={t('Courses')} value={isDemo ? '3' : String(stats?.courses ?? 0)} loading={!isDemo && !stats} />
-          <StatCard label={t('Note')} value={isDemo ? '4.9 ★' : (stats?.note ? `${stats.note} ★` : '—')} loading={!isDemo && !stats} />
-          <StatCard label={t('Acceptation')} value={isDemo ? '92%' : (stats?.acceptation != null ? `${stats.acceptation}%` : '—')} loading={!isDemo && !stats} />
+          <StatCard label={t('Note')} value={isDemo ? '4.9 â˜…' : (stats?.note ? `${stats.note} â˜…` : 'â€”')} loading={!isDemo && !stats} />
+          <StatCard label={t('Acceptation')} value={isDemo ? '92%' : (stats?.acceptation != null ? `${stats.acceptation}%` : 'â€”')} loading={!isDemo && !stats} />
         </View>
 
         {(() => {
@@ -158,7 +158,7 @@ export default function DelivererHomeScreen({ navigation }) {
           return (
             <>
               <KGSectionTitle action={list.length > 0 ? { label: 'Voir tout', onPress: () => navigation.navigate('Available') } : undefined}>
-                {list.length > 0 ? t('Courses dispo · {{count}}', { count: list.length }) : t('Courses disponibles')}
+                {list.length > 0 ? t('Courses dispo Â· {{count}}', { count: list.length }) : t('Courses disponibles')}
               </KGSectionTitle>
               {list.length > 0 ? (
                 <View style={styles.availableDeliveriesList}> {/* Assuming styles.availableDeliveriesList is defined */}
@@ -190,7 +190,7 @@ export default function DelivererHomeScreen({ navigation }) {
               <View style={styles.bonusCardTextContainer}> {/* Assuming styles.bonusCardTextContainer is defined */}
                 <Text style={styles.bonusCardTitle}>{t('+2000 XAF en bonus')}</Text> {/* Assuming styles.bonusCardTitle is defined */}
                 <Text style={styles.bonusCardDescription}> {/* Assuming styles.bonusCardDescription is defined */}
-                  Atteins 10 courses aujourd'hui — il t'en reste 7. Vas-y go-go !
+                  Atteins 10 courses aujourd'hui â€” il t'en reste 7. Vas-y go-go !
                 </Text>
               </View>
             </View>
@@ -204,9 +204,9 @@ export default function DelivererHomeScreen({ navigation }) {
                 <Icon name="bolt" size={18} color="#fff" />
               </View>
               <View style={styles.startDeliveringCardTextContainer}> {/* Assuming styles.startDeliveringCardTextContainer is defined */}
-                <Text style={styles.startDeliveringCardTitle}>{t('Commence à livrer !')}</Text> {/* Assuming styles.startDeliveringCardTitle is defined */}
+                <Text style={styles.startDeliveringCardTitle}>{t('Commence Ã  livrer !')}</Text> {/* Assuming styles.startDeliveringCardTitle is defined */}
                 <Text style={styles.startDeliveringCardDescription}> {/* Assuming styles.startDeliveringCardDescription is defined */}
-                  Active toi et accepte ta première course pour gagner ton premier XAF.
+                  Active toi et accepte ta premiÃ¨re course pour gagner ton premier XAF.
                 </Text>
               </View>
             </View>

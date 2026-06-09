@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fonts } from '../constants/colors';
-import { KG_DEMO_DELIVERIES, KG_AVAILABLE_FOR_DELIVERER, KG_QUARTIER_COORDS } from '../constants/data';
-import LiveMap from '../components/LiveMap';
-import { normalizeDelivery } from '../services/api';
-import { useApp, t } from '../context/AppContext';
-import { getInitials } from '../utils/helpers';
-import KGTopBar from '../components/KGTopBar';
-import KGButton from '../components/KGButton';
-import KGCard from '../components/KGCard';
-import KGStatusPill from '../components/KGStatusPill';
-import KGCourierBadge from '../components/KGCourierBadge';
-import RouteLine from '../components/RouteLine';
-import Icon from '../components/Icon';
-
+import { colors, fonts } from '../../constants/colors';
+import { KG_DEMO_DELIVERIES, KG_AVAILABLE_FOR_DELIVERER, KG_QUARTIER_COORDS } from '../../constants/data';
+import LiveMap from '../../components/LiveMap';
+import { normalizeDelivery } from '../../services/api';
+import { useApp, t } from '../../context/AppContext';
+import { getInitials } from '../../utils/helpers';
+import KGTopBar from '../../components/KGTopBar';
+import KGButton from '../../components/KGButton';
+import KGCard from '../../components/KGCard';
+import KGStatusPill from '../../components/KGStatusPill';
+import KGCourierBadge from '../../components/KGCourierBadge';
+import RouteLine from '../../components/RouteLine';
+import Icon from '../../components/Icon';
+import { useI18n } from '../../i18n';
 export default function DeliveryDetailScreen({ navigation, route }) {
-  const { role, user, token, api, showToast, conversations, startConversation, lang } = useApp();
+  const { role, user, token, api, showToast, conversations, startConversation, lang } = useApp();`n  const { t } = useI18n();
   const isEn = lang === 'en';
   const { deliveryId, mode } = route?.params || {};
   const isAvailable = mode === 'available';
@@ -49,7 +49,7 @@ export default function DeliveryDetailScreen({ navigation, route }) {
     setAccepting(true);
     try {
       await api(`/api/deliveries/${deliveryId}/accept`, { method: 'POST' });
-      showToast('Course acceptée !');
+      showToast('Course acceptÃ©e !');
       navigation.navigate('DeliveryDetail', { deliveryId, mode: 'going_vendor' });
     } catch (err) {
       showToast(err.message, 'error');
@@ -63,7 +63,7 @@ export default function DeliveryDetailScreen({ navigation, route }) {
     setCancelling(true);
     try {
       await api(`/api/deliveries/${deliveryId}/cancel`, { method: 'POST' });
-      showToast('Livraison annulée');
+      showToast('Livraison annulÃ©e');
       navigation.goBack();
     } catch (err) {
       showToast(err.message, 'error');
@@ -128,9 +128,9 @@ export default function DeliveryDetailScreen({ navigation, route }) {
         <KGCard padding={14}>
           <RouteLine from={d.from} to={d.to} />
           <View style={{ flexDirection: 'row', gap: 14, marginTop: 12, flexWrap: 'wrap' }}>
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70 }}>📍 {d.distance} km</Text>
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70 }}>📦 {d.weight} kg</Text>
-            {d.vendor && <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70 }}>🏪 {d.vendor}</Text>}
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70 }}>ðŸ“ {d.distance} km</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70 }}>ðŸ“¦ {d.weight} kg</Text>
+            {d.vendor && <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70 }}>ðŸª {d.vendor}</Text>}
           </View>
           {(d.shopName || d.parcelDesc) && (
             <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.ink06, gap: 6 }}>
@@ -161,7 +161,7 @@ export default function DeliveryDetailScreen({ navigation, route }) {
             </View>
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink70, marginTop: 10, lineHeight: 17 }}>
               {isVendor
-                ? t('Donne ce code au livreur quand il vient récupérer le colis.')
+                ? t('Donne ce code au livreur quand il vient rÃ©cupÃ©rer le colis.')
                 : t('Demande ce code au vendeur pour valider la collecte.')}
             </Text>
           </KGCard>
@@ -180,7 +180,7 @@ export default function DeliveryDetailScreen({ navigation, route }) {
               </View>
             </View>
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.greenDark, marginTop: 10, lineHeight: 17, opacity: 0.8 }}>
-              {t('doit donner ce code au livreur à la remise.', { name: d.recipient })}
+              {t('doit donner ce code au livreur Ã  la remise.', { name: d.recipient })}
             </Text>
           </KGCard>
         )}
@@ -197,7 +197,7 @@ export default function DeliveryDetailScreen({ navigation, route }) {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 14, color: colors.ink }}>{d.recipient}</Text>
-                <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>+237 {d.recipientPhone || '—'}</Text>
+                <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>+237 {d.recipientPhone || 'â€”'}</Text>
               </View>
               <TouchableOpacity
                 onPress={() => handleOpenChat('client')}
@@ -227,12 +227,12 @@ export default function DeliveryDetailScreen({ navigation, route }) {
         )}
         {isGoingVendor && role === 'deliverer' && (
           <KGButton kind="primary" size="lg" icon="pin" onPress={() => navigation.navigate('Confirm', { deliveryId: d.id, phase: 'collect' })}>
-            {t('Je suis arrivé chez le vendeur')}
+            {t('Je suis arrivÃ© chez le vendeur')}
           </KGButton>
         )}
         {!isAvailable && !isGoingVendor && role === 'deliverer' && (
           <KGButton kind="orange" size="lg" icon="check" onPress={() => navigation.navigate('DelivererWaiting', { deliveryId: d.id })}>
-            {t('Je suis arrivé chez le client')}
+            {t('Je suis arrivÃ© chez le client')}
           </KGButton>
         )}
         {!isAvailable && isVendor && !['en_attente', 'annule', 'livre'].includes(d.status) && (

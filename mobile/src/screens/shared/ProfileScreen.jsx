@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fonts } from '../constants/colors';
-import { useApp } from '../context/AppContext';
-import KGTopBar from '../components/KGTopBar';
-import KGButton from '../components/KGButton';
-import KGCard from '../components/KGCard';
-import KGChip from '../components/KGChip';
-import KGTabBar from '../components/KGTabBar';
-import Icon from '../components/Icon';
-
+import { colors, fonts } from '../../constants/colors';
+import { useApp } from '../../context/AppContext';
+import KGTopBar from '../../components/KGTopBar';
+import KGButton from '../../components/KGButton';
+import KGCard from '../../components/KGCard';
+import KGChip from '../../components/KGChip';
+import KGTabBar from '../../components/KGTabBar';
+import Icon from '../../components/Icon';
+import { useI18n } from '../../i18n';
 const VEHICLE_TYPES = [
   { id: 'moto',     label: 'Moto',      icon: 'moto' },
   { id: 'tricycle', label: 'Tricycle',  icon: 'package' },
@@ -17,7 +17,7 @@ const VEHICLE_TYPES = [
 ];
 
 export default function ProfileScreen({ navigation }) {
-  const { role, setRole, user, logout, token, api, loginAs, showToast, lang } = useApp();
+  const { role, setRole, user, logout, token, api, loginAs, showToast, lang } = useApp();`n  const { t } = useI18n();
   const isEn = lang === 'en';
   const isVendor = role === 'vendor';
   const isDemo = user?.isTest === true;
@@ -40,34 +40,34 @@ export default function ProfileScreen({ navigation }) {
     setSavingVehicle(true);
     try {
       await api('/api/users/me', { method: 'PATCH', body: JSON.stringify({ vehicle, plate: plate.trim() || null }) });
-      showToast('Véhicule mis à jour ✓');
+      showToast('VÃ©hicule mis Ã  jour âœ“');
     } catch (e) {
       showToast(e.message || 'Erreur', 'error');
     } finally {
       setSavingVehicle(false);
     }
   };
-  const kycLabel = { PENDING: t('En attente'), VERIFIED: t('Vérifiée ✓'), REJECTED: t('Refusée — réessaie') }[user?.kycStatus] || t('Non soumise');
+  const kycLabel = { PENDING: t('En attente'), VERIFIED: t('VÃ©rifiÃ©e âœ“'), REJECTED: t('RefusÃ©e â€” rÃ©essaie') }[user?.kycStatus] || t('Non soumise');
   const MENU_ITEMS = [
     { icon: 'history',  label: t('Historique'),         sub: isDemo ? t('127 livraisons') : t('Consulter mes livraisons'), screen: 'History' },
-    { icon: 'wallet',   label: t('Moyens de paiement'), sub: 'MTN MoMo · Orange Money',  screen: 'PaymentAccount' },
-    ...(!isVendor ? [{ icon: 'shield',   label: t('Vérification KYC'),   sub: kycLabel, screen: 'KYC' }] : []),
-    { icon: 'bell',     label: t('Notifications'),       sub: t('Gérer les alertes'),        screen: 'Notifications' },
-    { icon: 'settings', label: t('Paramètres'),          sub: t('Langue, sécurité, compte'), screen: 'Settings' },
+    { icon: 'wallet',   label: t('Moyens de paiement'), sub: 'MTN MoMo Â· Orange Money',  screen: 'PaymentAccount' },
+    ...(!isVendor ? [{ icon: 'shield',   label: t('VÃ©rification KYC'),   sub: kycLabel, screen: 'KYC' }] : []),
+    { icon: 'bell',     label: t('Notifications'),       sub: t('GÃ©rer les alertes'),        screen: 'Notifications' },
+    { icon: 'settings', label: t('ParamÃ¨tres'),          sub: t('Langue, sÃ©curitÃ©, compte'), screen: 'Settings' },
   ];
   const displayName = user?.name || (isVendor ? t('Vendeur') : t('Livreur'));
   const avatar = user?.avatar || '??';
 
   const stats = isVendor
     ? [
-        { k: isDemo ? '127' : String(apiStats?.colisEnvoyes ?? 0), l: t('Colis envoyés') },
-        { k: isDemo ? '4.8' : (apiStats?.note ?? '—'), l: t('Note moyenne') },
-        { k: isDemo ? '98%' : (apiStats?.livres != null ? `${apiStats.livres}%` : '—'), l: t('Livrés') },
+        { k: isDemo ? '127' : String(apiStats?.colisEnvoyes ?? 0), l: t('Colis envoyÃ©s') },
+        { k: isDemo ? '4.8' : (apiStats?.note ?? 'â€”'), l: t('Note moyenne') },
+        { k: isDemo ? '98%' : (apiStats?.livres != null ? `${apiStats.livres}%` : 'â€”'), l: t('LivrÃ©s') },
       ]
     : [
         { k: isDemo ? '342' : String(apiStats?.courses ?? 0), l: t('Courses') },
-        { k: isDemo ? '4.9' : (apiStats?.note ?? '—'), l: t('Note') },
-        { k: isDemo ? '92%' : (apiStats?.acceptation != null ? `${apiStats.acceptation}%` : '—'), l: t('Acceptation') },
+        { k: isDemo ? '4.9' : (apiStats?.note ?? 'â€”'), l: t('Note') },
+        { k: isDemo ? '92%' : (apiStats?.acceptation != null ? `${apiStats.acceptation}%` : 'â€”'), l: t('Acceptation') },
       ];
 
   const switchRole = async () => {
@@ -119,12 +119,12 @@ export default function ProfileScreen({ navigation }) {
           <View style={styles.profileInfo}>
             <Text style={styles.displayName}>{displayName}</Text>
             <Text style={styles.roleText}>
-              {isVendor ? t('Vendeur · KoliGo') : t('Livreur · KoliGo')}
+              {isVendor ? t('Vendeur Â· KoliGo') : t('Livreur Â· KoliGo')}
             </Text>
           </View>
           <View style={styles.chipsContainer}>
-            <KGChip color="green" icon="shield">{t('CNI vérifiée')}</KGChip>
-            <KGChip color="orange" icon="star">{apiStats?.note ? `${apiStats.note} ★` : (isDemo ? (isVendor ? '4.8 ★' : '4.9 ★') : '— ★')}</KGChip>
+            <KGChip color="green" icon="shield">{t('CNI vÃ©rifiÃ©e')}</KGChip>
+            <KGChip color="orange" icon="star">{apiStats?.note ? `${apiStats.note} â˜…` : (isDemo ? (isVendor ? '4.8 â˜…' : '4.9 â˜…') : 'â€” â˜…')}</KGChip>
             {!isVendor && <KGChip color="ink" icon="bolt">{t('Lvl Argent')}</KGChip>}
           </View>
         </KGCard>
@@ -139,10 +139,10 @@ export default function ProfileScreen({ navigation }) {
           ))}
         </View>
 
-        {/* Section véhicule — livreur uniquement */}
+        {/* Section vÃ©hicule â€” livreur uniquement */}
         {!isVendor && (
           <KGCard padding={14} style={styles.vehicleSection}>
-            <Text style={styles.vehicleSectionTitle}>{t('Mon véhicule')}</Text>
+            <Text style={styles.vehicleSectionTitle}>{t('Mon vÃ©hicule')}</Text>
             <View style={styles.vehicleTypesContainer}>
               {VEHICLE_TYPES.map(v => {
                 const on = vehicle === v.id;
@@ -161,7 +161,7 @@ export default function ProfileScreen({ navigation }) {
             <TextInput
               value={plate}
               onChangeText={setPlate}
-              placeholder={t('Numéro de plaque (ex: LT-892-DA)')}
+              placeholder={t('NumÃ©ro de plaque (ex: LT-892-DA)')}
               placeholderTextColor={colors.ink35} // Assuming colors.ink35 is defined
               autoCapitalize="characters"
               style={styles.plateInput}
@@ -172,7 +172,7 @@ export default function ProfileScreen({ navigation }) {
               style={[styles.saveVehicleButton, vehicle && styles.saveVehicleButtonActive]}
             >
               <Text style={[styles.saveVehicleButtonText, vehicle && styles.saveVehicleButtonTextActive]}>
-                {savingVehicle ? t('Enregistrement…') : t('Enregistrer le véhicule')}
+                {savingVehicle ? t('Enregistrementâ€¦') : t('Enregistrer le vÃ©hicule')}
               </Text>
             </TouchableOpacity>
           </KGCard>
@@ -214,7 +214,7 @@ export default function ProfileScreen({ navigation }) {
           ))}
         </KGCard>
 
-        <KGButton kind="ghost" icon="logout" onPress={() => { logout(); navigation.replace('Welcome'); }}>{t('Se déconnecter')}</KGButton>
+        <KGButton kind="ghost" icon="logout" onPress={() => { logout(); navigation.replace('Welcome'); }}>{t('Se dÃ©connecter')}</KGButton>
 
         <Text style={styles.versionText}>
           KoliGo v1.1

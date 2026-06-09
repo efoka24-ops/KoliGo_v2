@@ -9,6 +9,7 @@ import KGButton from '../../components/KGButton';
 import KGInput from '../../components/KGInput'; // Assuming KGInput is a component, not a helper
 import Icon from '../../components/Icon';
 import { useApp, getInitials } from '../../context/AppContext';
+import { useI18n } from '../../i18n';
 import { TEST_ACCOUNTS, TEST_OTP } from '../../constants/testAccounts';
 import { apiFetch } from '../../services/api';
 
@@ -25,6 +26,7 @@ const TEST_PHONES = {
 
 export default function AuthScreen({ navigation, route }) {
   const { loginAs, setPendingUser, biometricEnabled, lang } = useApp();
+  const { t } = useI18n();
   const isEn = lang === 'en';
   const initialMode = route?.params?.mode || 'signup';
   const [mode, setMode] = useState(initialMode);
