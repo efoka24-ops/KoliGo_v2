@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts } from '../../constants/colors';
-import { useApp, t } from '../../context/AppContext';
+import { useApp } from '../../context/AppContext';
 import { useDeliveries } from '../../hooks/useDeliveries';
+import { KG_AVAILABLE_FOR_DELIVERER } from '../../constants/data';
 import KGCard from '../../components/KGCard';
 import KGTabBar from '../../components/KGTabBar';
 import KGCourierBadge from '../../components/KGCourierBadge';
@@ -13,11 +14,12 @@ import RouteLine from '../../components/RouteLine';
 import Icon from '../../components/Icon';
 import DemoDrawer from '../../components/DemoDrawer';
 import { useI18n } from '../../i18n';
+
 function StatCard({ label, value }) {
   return (
     <KGCard padding={12} style={{ flex: 1, gap: 2 }}>
-      <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55 }}>{label}</Text>
-      <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 18, color: colors.ink, letterSpacing: -0.01 }}>{value}</Text>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
     </KGCard>
   );
 }
@@ -25,24 +27,30 @@ function StatCard({ label, value }) {
 function AvailableCard({ d, onPress }) {
   return (
     <KGCard onPress={onPress}>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+      <View style={styles.cardRow}>
         <View style={{ flex: 1 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <View style={styles.cardHeader}>
             <KGCourierBadge type={d.type} />
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: colors.ink55 }}>{d.posted}</Text>
+            {d.posted && <Text style={styles.cardPosted}>{d.posted}</Text>}
           </View>
           <RouteLine from={d.from} to={d.to} />
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
-            <Icon name="package" size={14} color={colors.ink55} />
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{d.weight} kg Â· {d.distance} km</Text>
-            <Text style={{ color: colors.ink55 }}>Â·</Text>
-            <Icon name="star" size={14} color={colors.ink55} />
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{d.vendorRating}</Text>
+          <View style={styles.cardMeta}>
+            <Icon name="package" size={13} color={colors.ink55} />
+            <Text style={styles.cardMetaText}>{d.weight} kg</Text>
+            <Text style={styles.cardMetaDot}>&middot;</Text>
+            <Text style={styles.cardMetaText}>{d.distance} km</Text>
+            {d.vendorRating && (
+              <>
+                <Text style={styles.cardMetaDot}>&middot;</Text>
+                <Icon name="star" size={13} color={colors.ink55} />
+                <Text style={styles.cardMetaText}>{d.vendorRating}</Text>
+              </>
+            )}
           </View>
         </View>
-        <View style={{ alignItems: 'flex-end', gap: 2 }}>
-          <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 18, color: colors.green, letterSpacing: -0.02 }}>{d.price.toLocaleString('fr-FR')}</Text>
-          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 10, color: colors.ink55 }}>XAF</Text>
+        <View style={styles.cardPrice}>
+          <Text style={styles.cardPriceAmount}>{(d.price || 0).toLocaleString('fr-FR')}</Text>
+          <Text style={styles.cardPriceCurrency}>XAF</Text>
         </View>
       </View>
     </KGCard>
@@ -52,10 +60,8 @@ function AvailableCard({ d, onPress }) {
 export default function DelivererHomeScreen({ navigation }) {
   const { toast, user, token, api } = useApp();
   const { t } = useI18n();
-  const displayName = user?.name || t('Mon compte');
-  const avatar = user?.avatar || '??';
   const isDemo = user?.isTest === true;
-  const [online, setOnline] = useState(true); // This state should probably come from the backend or a global context
+  const [online, setOnline] = useState(true);
   const [stats, setStats] = useState(null);
 
   const { deliveries: availableDeliveries, loading: loadingDeliveries, fetchDeliveries } = useDeliveries();
@@ -65,7 +71,7 @@ export default function DelivererHomeScreen({ navigation }) {
     try {
       const data = await api('/api/users/me/stats');
       setStats(data);
-    } catch (err) { console.error(err); }
+    } catch {}
   }, [api, isDemo, token]);
 
   useEffect(() => {
@@ -76,144 +82,104 @@ export default function DelivererHomeScreen({ navigation }) {
   }, [fetchDeliveries, fetchStats, navigation]);
 
   const handleTab = (tab) => {
-    if (tab === 'wallet') navigation.navigate('Wallet');
-    else if (tab === 'chat') navigation.navigate('ChatInbox');
+    if (tab === 'courses') navigation.navigate('Available');
+    else if (tab === 'wallet') navigation.navigate('Wallet');
     else if (tab === 'profile') navigation.navigate('Profile');
   };
+
+  const demoStats = { balance: 128500, gainsToday: 12000, courses: 7, note: 4.9, acceptation: 92 };
+  const s = isDemo ? demoStats : stats;
+
+  const list = isDemo ? KG_AVAILABLE_FOR_DELIVERER : (availableDeliveries || []);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {toast && <KGToast message={toast.message} kind={toast.kind} />}
 
-      {/* Header */}
-      <View style={styles.header}> {/* Assuming styles.header is defined */}
-        <View style={styles.headerLeft}> {/* Assuming styles.headerLeft is defined */}
-          <View style={styles.avatarContainer}> {/* Assuming styles.avatarContainer is defined */}
-            <View style={styles.avatar}> {/* Assuming styles.avatar is defined */}
-              <Text style={styles.avatarText}>{avatar}</Text> {/* Assuming styles.avatarText is defined */}
-            </View>
-            <View style={[styles.onlineIndicator, { backgroundColor: online ? '#22C55E' : colors.ink35 }]} /> {/* Assuming styles.onlineIndicator is defined */}
-          </View>
-          <View>
-            <Text style={styles.headerStatus}>{online ? t('Tu es en ligne Â· Akwa') : t('Hors ligne')}</Text> {/* Assuming styles.headerStatus is defined */}
-            <Text style={styles.headerDisplayName}>{displayName}</Text> {/* Assuming styles.headerDisplayName is defined */}
-          </View>
+      {/* Online/Offline banner */}
+      <View style={[styles.banner, { backgroundColor: online ? colors.green : colors.ink35 }]}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.bannerTitle}>{online ? t('En ligne') : t('Hors ligne')}</Text>
+          <Text style={styles.bannerSubtitle}>
+            {online ? t('Vous recevez des courses') : t('Vous ne recevez plus de courses')}
+          </Text>
         </View>
-        <TouchableOpacity onPress={() => setOnline(o => !o)} style={[styles.onlineToggle, { backgroundColor: online ? colors.green : colors.ink06 }]}> {/* Assuming styles.onlineToggle is defined */}
-          <View style={[styles.onlineToggleDot, { backgroundColor: online ? '#fff' : colors.ink70 }]} /> {/* Assuming styles.onlineToggleDot is defined */}
-          <Text style={[styles.onlineToggleText, { color: online ? '#fff' : colors.ink70 }]}>{online ? t('ON') : t('OFF')}</Text> {/* Assuming styles.onlineToggleText is defined */}
-        </TouchableOpacity>
+        <Switch
+          value={online}
+          onValueChange={setOnline}
+          trackColor={{ false: 'rgba(255,255,255,0.3)', true: 'rgba(255,255,255,0.3)' }}
+          thumbColor="#fff"
+        />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}> {/* Assuming styles.scrollViewContent is defined */}
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
         {/* Wallet card */}
-        <TouchableOpacity onPress={() => navigation.navigate('Wallet')} activeOpacity={0.9} style={styles.walletCard}> {/* Assuming styles.walletCard is defined */}
-          <View style={styles.walletCardBgDecoration1} /> {/* Assuming styles.walletCardBgDecoration1 is defined */}
-          <View style={styles.walletCardBgDecoration2} /> {/* Assuming styles.walletCardBgDecoration2 is defined */}
-          <View style={styles.walletCardHeader}> {/* Assuming styles.walletCardHeader is defined */}
-            <Text style={styles.walletCardTitle}>{t('Mon wallet')}</Text> {/* Assuming styles.walletCardTitle is defined */}
-            <Icon name="wallet" size={20} color="#fff" />
-          </View>
-          <View>
-            <Text style={styles.walletCardBalance}> {/* Assuming styles.walletCardBalance is defined */}
-              {(isDemo ? 24580 : (stats?.balance ?? 0)).toLocaleString('fr-FR')} <Text style={styles.walletCardCurrency}>XAF</Text> {/* Assuming styles.walletCardCurrency is defined */}
-            </Text>
-            <View style={styles.walletCardStats}> {/* Assuming styles.walletCardStats is defined */}
-              {isDemo ? (
-                <>
-                  <Text style={styles.walletCardStatText}>{t('+5 095 aujourd\'hui')}</Text> {/* Assuming styles.walletCardStatText is defined */}
-                  <Text style={styles.walletCardStatSeparator}>Â·</Text> {/* Assuming styles.walletCardStatSeparator is defined */}
-                  <Text style={styles.walletCardStatText}>{t('3 courses')}</Text>
-                </>
-              ) : stats ? (
-                <>
-                  <Text style={styles.walletCardStatText}>{t('+{{amount}} XAF aujourd\'hui', { amount: (stats.gainsToday || 0).toLocaleString('fr-FR') })}</Text>
-                  <Text style={styles.walletCardStatSeparator}>Â·</Text>
-                  <Text style={styles.walletCardStatText}>{t('{{count}} courses', { count: stats.courses || 0 })}</Text>
-                </>
-              ) : null}
+        <View style={styles.walletCard}>
+          <View style={styles.walletRow}>
+            <View>
+              <Text style={styles.walletLabel}>WALLET</Text>
+              <Text style={styles.walletBalance}>
+                {(s?.balance ?? 0).toLocaleString('fr-FR')}{' '}
+                <Text style={styles.walletCurrency}>XAF</Text>
+              </Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={styles.walletLabel}>AUJOURD&apos;HUI</Text>
+              <Text style={styles.walletGain}>+{(s?.gainsToday ?? 0).toLocaleString('fr-FR')}</Text>
             </View>
           </View>
-          <View style={styles.walletCardActions}> {/* Assuming styles.walletCardActions is defined */}
-            <View style={styles.walletCardActionButton}> {/* Assuming styles.walletCardActionButton is defined */}
-              <Icon name="upload" size={14} color="#fff" strokeWidth={2.2} />
-              <Text style={styles.walletCardActionButtonText}>{t('Retirer')}</Text> {/* Assuming styles.walletCardActionButtonText is defined */}
-            </View>
-            <View style={styles.walletCardActionButtonGhost}> {/* Assuming styles.walletCardActionButtonGhost is defined */}
-              <Icon name="history" size={14} color="#fff" strokeWidth={2} />
-              <Text style={styles.walletCardActionButtonText}>{t('Historique')}</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
-
-        {/* Stats */}
-        <View style={styles.statsRow}> {/* Assuming styles.statsRow is defined */}
-          <StatCard label={t('Courses')} value={isDemo ? '3' : String(stats?.courses ?? 0)} loading={!isDemo && !stats} />
-          <StatCard label={t('Note')} value={isDemo ? '4.9 â˜…' : (stats?.note ? `${stats.note} â˜…` : 'â€”')} loading={!isDemo && !stats} />
-          <StatCard label={t('Acceptation')} value={isDemo ? '92%' : (stats?.acceptation != null ? `${stats.acceptation}%` : 'â€”')} loading={!isDemo && !stats} />
         </View>
 
-        {(() => {
-          const list = isDemo ? KG_AVAILABLE_FOR_DELIVERER : availableDeliveries;
-          return (
-            <>
-              <KGSectionTitle action={list.length > 0 ? { label: 'Voir tout', onPress: () => navigation.navigate('Available') } : undefined}>
-                {list.length > 0 ? t('Courses dispo Â· {{count}}', { count: list.length }) : t('Courses disponibles')}
-              </KGSectionTitle>
-              {list.length > 0 ? (
-                <View style={styles.availableDeliveriesList}> {/* Assuming styles.availableDeliveriesList is defined */}
-                  {list.slice(0, 3).map(d => (
-                    <AvailableCard
-                      key={d.id} d={d}
-                      onPress={() => navigation.navigate('DeliveryDetail', { deliveryId: d.id, mode: 'available' })}
-                    />
-                  ))}
-                </View>
-              ) : (
-                <View style={styles.emptyListContainer}> {/* Assuming styles.emptyListContainer is defined */}
-                  <View style={styles.emptyListIconContainer}> {/* Assuming styles.emptyListIconContainer is defined */}
-                    <Icon name="moto" size={24} color={colors.ink35} /> {/* Assuming Icon component handles color */}
-                  </View>
-                  <Text style={styles.emptyListText}>{t('Aucune course disponible pour le moment')}</Text> {/* Assuming styles.emptyListText is defined */}
-                </View>
-              )}
-            </>
-          );
-        })()}
+        {/* Stats */}
+        <View style={styles.statsRow}>
+          <StatCard label="COURSES" value={String(s?.courses ?? 0)} />
+          <StatCard label="NOTE" value={s?.note ? `${s.note}★` : '—'} />
+          <StatCard label="ACCEPT." value={s?.acceptation != null ? `${s.acceptation}%` : '—'} />
+        </View>
 
+        {/* Bonus banner */}
         {isDemo && (
-          <KGCard kind="cream" padding={14} style={styles.bonusCard}> {/* Assuming styles.bonusCard is defined */}
-            <View style={styles.bonusCardContent}> {/* Assuming styles.bonusCardContent is defined */}
-              <View style={styles.bonusCardIconContainer}> {/* Assuming styles.bonusCardIconContainer is defined */}
-                <Icon name="bolt" size={18} color="#fff" />
-              </View>
-              <View style={styles.bonusCardTextContainer}> {/* Assuming styles.bonusCardTextContainer is defined */}
-                <Text style={styles.bonusCardTitle}>{t('+2000 XAF en bonus')}</Text> {/* Assuming styles.bonusCardTitle is defined */}
-                <Text style={styles.bonusCardDescription}> {/* Assuming styles.bonusCardDescription is defined */}
-                  Atteins 10 courses aujourd'hui â€” il t'en reste 7. Vas-y go-go !
-                </Text>
+          <KGCard kind="orange" padding={14} style={styles.bonusCard}>
+            <View style={styles.bonusRow}>
+              <Text style={{ fontSize: 20 }}>🎁</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.bonusTitle}>{t('+2 000 XAF en bonus')}</Text>
+                <Text style={styles.bonusBody}>{t('Atteins 10 courses aujourd\'hui — encore 7 restantes.')}</Text>
               </View>
             </View>
           </KGCard>
         )}
 
-        {!isDemo && token && !stats?.courses && ( // Show this card only if not in demo and no courses yet
-          <KGCard kind="green" padding={14} style={styles.startDeliveringCard}> {/* Assuming styles.startDeliveringCard is defined */}
-            <View style={styles.startDeliveringCardContent}> {/* Assuming styles.startDeliveringCardContent is defined */}
-              <View style={styles.startDeliveringCardIconContainer}> {/* Assuming styles.startDeliveringCardIconContainer is defined */}
-                <Icon name="bolt" size={18} color="#fff" />
-              </View>
-              <View style={styles.startDeliveringCardTextContainer}> {/* Assuming styles.startDeliveringCardTextContainer is defined */}
-                <Text style={styles.startDeliveringCardTitle}>{t('Commence Ã  livrer !')}</Text> {/* Assuming styles.startDeliveringCardTitle is defined */}
-                <Text style={styles.startDeliveringCardDescription}> {/* Assuming styles.startDeliveringCardDescription is defined */}
-                  Active toi et accepte ta premiÃ¨re course pour gagner ton premier XAF.
-                </Text>
-              </View>
+        {/* Best deliveries */}
+        <KGSectionTitle
+          action={list.length > 0 ? { label: t('Voir tout'), onPress: () => navigation.navigate('Available') } : undefined}
+        >
+          {list.length > 0
+            ? t('Courses dispo · {{count}}', { count: list.length })
+            : t('Courses disponibles')}
+        </KGSectionTitle>
+
+        {list.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <View style={styles.emptyIcon}>
+              <Icon name="moto" size={24} color={colors.ink35} />
             </View>
-          </KGCard>
+            <Text style={styles.emptyText}>{t('Aucune course disponible pour le moment')}</Text>
+          </View>
+        ) : (
+          <View style={styles.listContainer}>
+            {list.slice(0, 3).map(d => (
+              <AvailableCard
+                key={d.id}
+                d={d}
+                onPress={() => navigation.navigate('DeliveryDetail', { deliveryId: d.id, mode: 'available' })}
+              />
+            ))}
+          </View>
         )}
 
+        <View style={{ height: 24 }} />
       </ScrollView>
 
       <KGTabBar active="home" onTab={handleTab} role="deliverer" />
@@ -221,3 +187,131 @@ export default function DelivererHomeScreen({ navigation }) {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.cream },
+  banner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    gap: 12,
+  },
+  bannerTitle: {
+    fontFamily: `${fonts.display}-ExtraBold`,
+    fontSize: 20,
+    color: '#fff',
+    letterSpacing: -0.3,
+  },
+  bannerSubtitle: {
+    fontFamily: `${fonts.ui}-Regular`,
+    fontSize: 12.5,
+    color: 'rgba(255,255,255,0.75)',
+    marginTop: 1,
+  },
+  scrollContent: { paddingBottom: 16 },
+  walletCard: {
+    margin: 16,
+    backgroundColor: colors.ink,
+    borderRadius: 18,
+    padding: 18,
+  },
+  walletRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
+  walletLabel: {
+    fontFamily: `${fonts.ui}-SemiBold`,
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.5)',
+    letterSpacing: 0.8,
+    marginBottom: 4,
+  },
+  walletBalance: {
+    fontFamily: `${fonts.display}-ExtraBold`,
+    fontSize: 28,
+    color: '#fff',
+    letterSpacing: -0.5,
+  },
+  walletCurrency: {
+    fontFamily: `${fonts.ui}-Regular`,
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.5)',
+  },
+  walletGain: {
+    fontFamily: `${fonts.display}-ExtraBold`,
+    fontSize: 18,
+    color: '#4ade80',
+    letterSpacing: -0.3,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    gap: 8,
+    marginBottom: 8,
+  },
+  statValue: {
+    fontFamily: `${fonts.display}-ExtraBold`,
+    fontSize: 18,
+    color: colors.ink,
+    letterSpacing: -0.01,
+  },
+  statLabel: {
+    fontFamily: `${fonts.ui}-SemiBold`,
+    fontSize: 10,
+    color: colors.ink55,
+    letterSpacing: 0.6,
+  },
+  bonusCard: { marginHorizontal: 16, marginBottom: 4 },
+  bonusRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  bonusTitle: {
+    fontFamily: `${fonts.ui}-SemiBold`,
+    fontSize: 13,
+    color: colors.ink,
+    marginBottom: 2,
+  },
+  bonusBody: {
+    fontFamily: `${fonts.ui}-Regular`,
+    fontSize: 12,
+    color: colors.ink70,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 48,
+    gap: 10,
+    marginHorizontal: 16,
+  },
+  emptyIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: colors.cream,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.ink12,
+    borderStyle: 'dashed',
+  },
+  emptyText: {
+    fontFamily: `${fonts.ui}-Regular`,
+    fontSize: 13,
+    color: colors.ink55,
+    textAlign: 'center',
+  },
+  listContainer: { gap: 8, marginHorizontal: 16 },
+  cardRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  cardPosted: { fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: colors.ink55 },
+  cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
+  cardMetaText: { fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 },
+  cardMetaDot: { color: colors.ink35, fontSize: 12 },
+  cardPrice: { alignItems: 'flex-end', gap: 2 },
+  cardPriceAmount: {
+    fontFamily: `${fonts.display}-ExtraBold`,
+    fontSize: 18,
+    color: colors.green,
+    letterSpacing: -0.4,
+  },
+  cardPriceCurrency: {
+    fontFamily: `${fonts.ui}-SemiBold`,
+    fontSize: 10,
+    color: colors.ink55,
+  },
+});
