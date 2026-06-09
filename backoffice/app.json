@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "KoliGo Admin",
+    "slug": "koligo-admin",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "web": { "bundler": "metro" }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "KoliGo",
+    "slug": "koligo",
+    "scheme": "koligo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/koligo-logo-1024.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/koligo-logo-1024.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0E2A1C"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": { "supportsTablet": false, "bundleIdentifier": "cm.koligo.app" },
+    "android": {
+      "package": "cm.koligo.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/koligo-logo-1024.png",
+        "backgroundColor": "#0E2A1C"
+      },
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_BACKGROUND_LOCATION"]
+    }
+  }
+}
