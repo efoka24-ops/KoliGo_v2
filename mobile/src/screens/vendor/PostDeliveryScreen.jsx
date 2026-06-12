@@ -13,6 +13,14 @@ import KGCourierBadge from '../../components/KGCourierBadge';
 import RouteLine from '../../components/RouteLine';
 import Icon from '../../components/Icon';
 import { useI18n } from '../../i18n';
+const PARCEL_TYPES = [
+  { id: 'Vêtements',    icon: 'package' },
+  { id: 'Documents',    icon: 'id'      },
+  { id: 'Électronique', icon: 'bolt'    },
+  { id: 'Alimentaire',  icon: 'sparkle' },
+  { id: 'Autre',        icon: 'package' },
+];
+
 const WEIGHT_PRESETS = [
   { label: 'Documents', w: 0.3 },
   { label: 'Petit',     w: 1.5 },
@@ -21,9 +29,9 @@ const WEIGHT_PRESETS = [
 ];
 
 const COURIER_TYPES = [
-  { id: 'TEMPORAIRE', title: 'Standard', sub: 'Tarif de base',    mul: 'Ã—1.0',  icon: 'user'  },
-  { id: 'EXPRESS',    title: 'Express',  sub: 'Livraison rapide', mul: 'Ã—1.25', icon: 'bolt'  },
-  { id: 'VVIP',       title: 'VVIP',     sub: 'CertifiÃ© premium', mul: 'Ã—1.40', icon: 'crown' },
+  { id: 'TEMPORAIRE', title: 'Standard', sub: 'Tarif de base',    mul: '×1.0',  icon: 'user'  },
+  { id: 'EXPRESS',    title: 'Express',  sub: 'Livraison rapide', mul: '×1.25', icon: 'bolt'  },
+  { id: 'VVIP',       title: 'VVIP',     sub: 'Certifié premium', mul: '×1.40', icon: 'crown' },
 ];
 
 function QuartierPicker({ label, value, onChange }) {
@@ -86,14 +94,16 @@ export default function PostDeliveryScreen({ navigation }) {
   const [shopName, setShopName]     = useState('');
   const [from, setFrom]             = useState('Akwa');
   const [parcelDesc, setParcelDesc] = useState('');
+  const [parcelType, setParcelType] = useState('Vêtements');
   const [to, setTo]                 = useState('Bonapriso');
   const [weight, setWeight]         = useState(1.2);
   const [type, setType]             = useState('TEMPORAIRE');
   const [productPrice, setProductPrice] = useState('');
 
-  // Recipient â€” single phone field used as both WhatsApp & delivery phone
-  const [recipient, setRecipient]     = useState('');
-  const [clientPhone, setClientPhone] = useState('');
+  // Recipient fields
+  const [recipient, setRecipient]         = useState('');
+  const [clientPhone, setClientPhone]     = useState('');
+  const [recipientEmail, setRecipientEmail] = useState('');
 
   const [step, setStep]         = useState(1);
   const [loading, setLoading]   = useState(false);
@@ -113,10 +123,10 @@ export default function PostDeliveryScreen({ navigation }) {
   const validateStep1 = () => {
     const errs = {};
     if (!shopName.trim())   errs.shopName   = t('Indique le nom de ta boutique');
-    if (!parcelDesc.trim()) errs.parcelDesc = t('DÃ©cris le colis');
+    if (!parcelDesc.trim()) errs.parcelDesc = t('Décris le colis');
     if (!recipient.trim())  errs.recipient  = t('Indique le nom du destinataire');
-    if (!phoneNorm)                          errs.clientPhone = 'NumÃ©ro requis';
-    else if (!/^6\d{8}$/.test(phoneNorm))   errs.clientPhone = 'Format invalide â€” ex: 655 123 456';
+    if (!phoneNorm)                          errs.clientPhone = 'Numéro requis';
+    else if (!/^6\d{8}$/.test(phoneNorm))   errs.clientPhone = 'Format invalide â€" ex: 655 123 456';
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -130,17 +140,19 @@ export default function PostDeliveryScreen({ navigation }) {
         const result = await api('/api/deliveries', {
           method: 'POST',
           body: JSON.stringify({
-            shopName:      shopName.trim(),
-            fromQuartier:  from,
-            toQuartier:    to,
-            parcelDesc:    parcelDesc.trim(),
+            shopName:       shopName.trim(),
+            fromQuartier:   from,
+            toQuartier:     to,
+            parcelDesc:     parcelDesc.trim(),
+            parcelType:     parcelType,
             distance,
             weight,
-            courierType:   type,
-            recipientName: recipient.trim(),
+            courierType:    type,
+            recipientName:  recipient.trim(),
             recipientPhone: phoneNorm,
+            recipientEmail: recipientEmail.trim() || undefined,
             clientWhatsApp: phoneNorm,
-            productPrice:  productVal,
+            productPrice:   productVal,
           }),
         });
         navigation.navigate('VendorCodes', {
@@ -166,7 +178,7 @@ export default function PostDeliveryScreen({ navigation }) {
         });
       }
     } catch (err) {
-      showToast(err.message || 'Impossible de crÃ©er la livraison', 'error');
+      showToast(err.message || 'Impossible de créer la livraison', 'error');
     } finally {
       setLoading(false);
     }
@@ -195,19 +207,38 @@ export default function PostDeliveryScreen({ navigation }) {
                 />
                 <FieldError msg={fieldErrors.shopName} />
               </View>
-              <QuartierPicker label={isEn ? 'Pickup area' : 'Quartier de dÃ©part (retrait)'} value={from} onChange={setFrom} />
+              <QuartierPicker label={isEn ? 'Pickup area' : 'Quartier de départ (retrait)'} value={from} onChange={setFrom} />
             </KGCard>
 
             {/* Colis */}
             <KGSectionTitle>{isEn ? 'The parcel' : 'Le colis'}</KGSectionTitle>
             <KGCard padding={14} style={{ gap: 12 }}>
+              {/* Type de colis */}
+              <View style={{ gap: 6 }}>
+                <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.05 }}>
+                  {isEn ? 'Type' : 'Type de colis'}
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                  {PARCEL_TYPES.map(pt => {
+                    const on = parcelType === pt.id;
+                    return (
+                      <TouchableOpacity key={pt.id} onPress={() => setParcelType(pt.id)}
+                        style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1.5, borderColor: on ? colors.green : colors.ink12, backgroundColor: on ? colors.greenLight : '#fff', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Icon name={pt.icon} size={14} color={on ? colors.greenDark : colors.ink55} />
+                        <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: on ? colors.greenDark : colors.ink70 }}>{pt.id}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+
               <View>
                 <KGInput
                   label={isEn ? 'Parcel description' : 'Description du colis'}
                   value={parcelDesc}
                   onChangeText={v => { setParcelDesc(v); setFieldErrors(e => ({ ...e, parcelDesc: null })); }}
                   icon="package"
-                  placeholder={isEn ? 'e.g. wax dress Â· 1 piece' : 'ex: Robe wax tissu Â· 1 piÃ¨ce'}
+                  placeholder={isEn ? 'e.g. wax dress · 1 piece' : 'ex: Robe wax tissu · 1 pièce'}
                 />
                 <FieldError msg={fieldErrors.parcelDesc} />
               </View>
@@ -270,7 +301,7 @@ export default function PostDeliveryScreen({ navigation }) {
             <KGCard padding={14} style={{ gap: 12 }}>
               <QuartierPicker label={isEn ? 'Delivery area' : 'Quartier de livraison'} value={to} onChange={setTo} />
               <View style={{ paddingVertical: 6, paddingHorizontal: 10, backgroundColor: colors.cream, borderRadius: 10, flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{isEn ? 'Estimated distance' : 'Distance estimÃ©e'}</Text>
+                <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{isEn ? 'Estimated distance' : 'Distance estimée'}</Text>
                 <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 13, color: colors.ink }}>{distance} km</Text>
               </View>
 
@@ -280,24 +311,35 @@ export default function PostDeliveryScreen({ navigation }) {
                   value={recipient}
                   onChangeText={v => { setRecipient(v); setFieldErrors(e => ({ ...e, recipient: null })); }}
                   icon="user"
-                  placeholder={isEn ? 'e.g. AÃ¯cha N.' : 'ex: AÃ¯cha N.'}
+                  placeholder={isEn ? 'e.g. Aïcha N.' : 'ex: Aïcha N.'}
                 />
                 <FieldError msg={fieldErrors.recipient} />
               </View>
 
               <View>
                 <KGInput
-                  label={isEn ? 'Client phone / WhatsApp' : 'TÃ©lÃ©phone / WhatsApp du client'}
+                  label={isEn ? 'Client phone / WhatsApp' : 'Téléphone / WhatsApp du client'}
                   value={clientPhone}
                   onChangeText={v => { setClientPhone(v); setFieldErrors(e => ({ ...e, clientPhone: null })); }}
                   icon="chat"
-                  suffix="ðŸ‡¨ðŸ‡² +237"
+                  suffix="🇨🇲 +237"
                   keyboardType="phone-pad"
                   placeholder="6 XX XX XX XX"
-                  hint={isEn ? 'The tracking link and delivery code will be sent here' : 'Le lien de suivi et le code de rÃ©ception lui seront envoyÃ©s ici'}
+                  hint={isEn ? 'Delivery code will be sent here' : 'Le code de réception lui sera envoyé ici'}
                 />
                 <FieldError msg={fieldErrors.clientPhone} />
               </View>
+
+              <KGInput
+                label={isEn ? 'Client email (optional)' : 'Email du destinataire (optionnel)'}
+                value={recipientEmail}
+                onChangeText={setRecipientEmail}
+                icon="bell"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                placeholder="ex: client@gmail.com"
+                hint={isEn ? 'Tracking link will be sent to this email' : 'Le lien de suivi sera envoyé à cet email'}
+              />
             </KGCard>
 
             {/* Valeur marchandise */}
@@ -329,12 +371,12 @@ export default function PostDeliveryScreen({ navigation }) {
               </View>
               {productVal > 0 && (
                 <View style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', paddingTop: 10, flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>{isEn ? 'Total billed to client' : 'Total facturÃ© client'}</Text>
+                  <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>{isEn ? 'Total billed to client' : 'Total facturé client'}</Text>
                   <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 15, color: '#fff' }}>{totalClient.toLocaleString('fr-FR')} XAF</Text>
                 </View>
               )}
               <Text style={{ fontFamily: `${fonts.mono}-Regular`, fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>
-                {from} â†’ {to} Â· {distance} km Â· {weight} kg
+                {from} â†' {to} Â· {distance} km Â· {weight} kg
               </Text>
             </View>
 
@@ -349,33 +391,33 @@ export default function PostDeliveryScreen({ navigation }) {
             <KGCard kind="cream" padding={18} style={{ alignItems: 'center', gap: 6 }}>
               <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.ink55, letterSpacing: 0.04, textTransform: 'uppercase' }}>{isEn ? 'Delivery fee' : 'Frais de livraison'}</Text>
               <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 52, color: colors.ink, letterSpacing: -0.04 * 52, lineHeight: 56 }}>{price.toLocaleString('fr-FR')}</Text>
-              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55 }}>XAF Â· {isEn ? 'paid on delivery' : 'payÃ© Ã  la livraison'}</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55 }}>XAF Â· {isEn ? 'paid on delivery' : 'payé à la livraison'}</Text>
             </KGCard>
 
             <KGCard padding={14}>
-              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.04, marginBottom: 10 }}>{isEn ? 'Summary' : 'RÃ©capitulatif'}</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.04, marginBottom: 10 }}>{isEn ? 'Summary' : 'Récapitulatif'}</Text>
               <RouteLine from={from} to={to} />
               <View style={{ height: 1, backgroundColor: colors.ink06, marginVertical: 12 }} />
-              <Detail label={isEn ? 'Shop' : 'Boutique'}            value={shopName || 'â€”'} />
-              <Detail label={isEn ? 'Parcel' : 'Colis'}               value={parcelDesc || 'â€”'} />
+              <Detail label={isEn ? 'Shop' : 'Boutique'}            value={shopName || 'â€"'} />
+              <Detail label={isEn ? 'Parcel' : 'Colis'}               value={parcelDesc || 'â€"'} />
               <Detail label={isEn ? 'Distance' : 'Distance'}            value={`${distance} km`} />
               <Detail label={isEn ? 'Weight' : 'Poids'}               value={`${weight} kg`} />
               <Detail label={isEn ? 'Speed' : 'Urgence'}             value={<KGCourierBadge type={type.toLowerCase()} />} />
-              <Detail label={isEn ? 'Recipient' : 'Destinataire'}        value={recipient || 'â€”'} />
-              <Detail label={isEn ? 'Phone / WhatsApp' : 'TÃ©lÃ©phone / WhatsApp'} value={phoneNorm ? `+237 ${phoneNorm}` : 'â€”'} />
+              <Detail label={isEn ? 'Recipient' : 'Destinataire'}        value={recipient || 'â€"'} />
+              <Detail label={isEn ? 'Phone / WhatsApp' : 'Téléphone / WhatsApp'} value={phoneNorm ? `+237 ${phoneNorm}` : 'â€"'} />
               {productVal > 0 && <Detail label={isEn ? 'Goods value' : 'Valeur marchandise'} value={`${productVal.toLocaleString('fr-FR')} XAF`} />}
-              <Detail label={isEn ? 'Total billed to client' : 'Total facturÃ© client'} value={`${totalClient.toLocaleString('fr-FR')} XAF`} last />
+              <Detail label={isEn ? 'Total billed to client' : 'Total facturé client'} value={`${totalClient.toLocaleString('fr-FR')} XAF`} last />
             </KGCard>
 
             <KGCard kind="green" padding={14}>
               <View style={{ flexDirection: 'row', gap: 12 }}>
                 <Icon name="shield" size={22} color={colors.greenDark} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 14, color: colors.greenDark }}>{isEn ? '2 secure codes generated' : '2 codes sÃ©curisÃ©s gÃ©nÃ©rÃ©s'}</Text>
+                  <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 14, color: colors.greenDark }}>{isEn ? '2 secure codes generated' : '2 codes sécurisés générés'}</Text>
                   <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: colors.greenDark, marginTop: 4, lineHeight: 18, opacity: 0.85 }}>
                     {isEn
-                      ? 'Code A (orange) â†’ give it to the deliverer at pickup.\nCode B (green) â†’ share it with your client to confirm delivery.'
-                      : 'Code A (orange) â†’ tu le donnes au livreur Ã  la prise en charge.\nCode B (vert) â†’ tu le partages avec ton client pour confirmer la rÃ©ception.'}
+                      ? 'Code A (orange) â†' give it to the deliverer at pickup.\nCode B (green) â†' share it with your client to confirm delivery.'
+                      : 'Code A (orange) â†' tu le donnes au livreur à la prise en charge.\nCode B (vert) â†' tu le partages avec ton client pour confirmer la réception.'}
                   </Text>
                 </View>
               </View>

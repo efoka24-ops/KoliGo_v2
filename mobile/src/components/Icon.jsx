@@ -43,6 +43,7 @@ export default function Icon({ name, size = 22, color, strokeWidth = 1.7, style 
     clock:    <><Circle cx="12" cy="12" r="9" {...p}/><Path d="M12 7v5l3 2" {...p}/></>,
     copy:     <><Rect x="9" y="9" width="11" height="11" rx="2" {...p}/><Path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" {...p}/></>,
     link:     <><Path d="M10 13a5 5 0 0 0 7.5.6l2-2a5 5 0 0 0-7-7l-1 1" {...p}/><Path d="M14 11a5 5 0 0 0-7.5-.6l-2 2a5 5 0 0 0 7 7l1-1" {...p}/></>,
+    phone:    <Path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10 21 3 14 3 5c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z" {...p}/>,
   };
 
   return (

@@ -19,6 +19,11 @@ export const deliveryService = {
     return data;
   },
 
+  async listAvailable() {
+    const { data } = await api.get('/deliveries/available');
+    return data;
+  },
+
   async getById(id: string) {
     const { data } = await api.get(`/deliveries/${id}`);
     return data;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Share, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts } from '../../constants/colors';
 import { KG_DEMO_DELIVERIES, KG_AVAILABLE_FOR_DELIVERER, KG_QUARTIER_COORDS } from '../../constants/data';
@@ -15,6 +15,46 @@ import KGCourierBadge from '../../components/KGCourierBadge';
 import RouteLine from '../../components/RouteLine';
 import Icon from '../../components/Icon';
 import { useI18n } from '../../i18n';
+
+function formatDelivererReceipt(d) {
+  const line = '─'.repeat(38);
+  const date = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+  const ref = (d.id || '').slice(-8).toUpperCase();
+  const totalPrice = d.priceXAF || d.price || 0;
+  const earning = d.delivererEarning || d.earning || 0;
+  const commission = d.commissionXAF || (totalPrice - earning);
+  const pct = totalPrice > 0 ? Math.round((commission / totalPrice) * 100) : 0;
+  return [
+    '╔════════════════════════════════════════╗',
+    '║         REÇU DE COURSE · LIVREUR       ║',
+    '║                KoliGo                  ║',
+    '╚════════════════════════════════════════╝',
+    '',
+    'Ref.    : ' + ref,
+    'Date    : ' + date,
+    'Statut  : LIVRÉ ✓',
+    line,
+    'De      : ' + (d.from || d.pickupAddress || '—'),
+    'Vers    : ' + (d.to || d.dropoffAddress || '—'),
+    d.distanceKm ? 'Distance: ' + d.distanceKm + ' km' : null,
+    d.weightKg ? 'Poids   : ' + d.weightKg + ' kg' : null,
+    line,
+    d.shopName ? 'Boutique: ' + d.shopName : null,
+    d.description ? 'Colis   : ' + d.description : null,
+    d.recipientName ? 'Client  : ' + d.recipientName : null,
+    line,
+    'Transport total  : ' + totalPrice.toLocaleString('fr-FR') + ' XAF',
+    'Commission KoliGo: ' + commission.toLocaleString('fr-FR') + ' XAF (' + pct + '%)',
+    'Vos gains nets   : ' + earning.toLocaleString('fr-FR') + ' XAF',
+    '',
+    'Merci de votre confiance · koligo.cm',
+    '════════════════════════════════════════',
+  ].filter(Boolean).join('\n');
+}
+
+function formatReceipt(d) {
+  return formatDelivererReceipt(d);
+}
 export default function DeliveryDetailScreen({ navigation, route }) {
   const { role, user, token, api, showToast, conversations, startConversation, lang } = useApp();
   const { t } = useI18n();
@@ -28,6 +68,32 @@ export default function DeliveryDetailScreen({ navigation, route }) {
   const [delivery, setDelivery] = useState(null);
   const [accepting, setAccepting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [sharingReceipt, setSharingReceipt] = useState(false);
+
+  const handleShareReceipt = async () => {
+    if (!delivery) return;
+    setSharingReceipt(true);
+    try {
+      const text = formatDelivererReceipt(delivery);
+      const ref = (delivery.id || '').slice(-8).toUpperCase();
+      if (Platform.OS === 'web') {
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'recu-course-koligo-' + ref + '.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Recu telecharge');
+      } else {
+        await Share.share({ message: text, title: 'Recu de course KoliGo' });
+      }
+    } catch {} finally {
+      setSharingReceipt(false);
+    }
+  };
 
   useEffect(() => {
     if (isDemo) {
@@ -47,10 +113,19 @@ export default function DeliveryDetailScreen({ navigation, route }) {
       navigation.navigate('DeliveryDetail', { deliveryId: delivery.id, mode: 'going_vendor' });
       return;
     }
+    if (user?.kycStatus !== 'VERIFIED') {
+      if (user?.kycStatus === 'PENDING') {
+        showToast(t('Vérification KYC en cours — résultat sous 24h'), 'error');
+      } else {
+        showToast(t('Soumettez votre CNI pour accepter des courses'), 'error');
+        navigation.navigate('Kyc');
+      }
+      return;
+    }
     setAccepting(true);
     try {
-      await api(`/api/deliveries/${deliveryId}/accept`, { method: 'POST' });
-      showToast('Course acceptÃ©e !');
+      await api(`/api/deliveries/${deliveryId}/accept`, { method: 'PATCH' });
+      showToast(t('Course acceptée !'));
       navigation.navigate('DeliveryDetail', { deliveryId, mode: 'going_vendor' });
     } catch (err) {
       showToast(err.message, 'error');
@@ -64,7 +139,7 @@ export default function DeliveryDetailScreen({ navigation, route }) {
     setCancelling(true);
     try {
       await api(`/api/deliveries/${deliveryId}/cancel`, { method: 'POST' });
-      showToast('Livraison annulÃ©e');
+      showToast('Livraison annulée');
       navigation.goBack();
     } catch (err) {
       showToast(err.message, 'error');
@@ -129,8 +204,8 @@ export default function DeliveryDetailScreen({ navigation, route }) {
         <KGCard padding={14}>
           <RouteLine from={d.from} to={d.to} />
           <View style={{ flexDirection: 'row', gap: 14, marginTop: 12, flexWrap: 'wrap' }}>
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70 }}>ðŸ“ {d.distance} km</Text>
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70 }}>ðŸ“¦ {d.weight} kg</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70 }}>ðŸ" {d.distance} km</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70 }}>ðŸ"¦ {d.weight} kg</Text>
             {d.vendor && <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70 }}>ðŸª {d.vendor}</Text>}
           </View>
           {(d.shopName || d.parcelDesc) && (
@@ -162,7 +237,7 @@ export default function DeliveryDetailScreen({ navigation, route }) {
             </View>
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink70, marginTop: 10, lineHeight: 17 }}>
               {isVendor
-                ? t('Donne ce code au livreur quand il vient rÃ©cupÃ©rer le colis.')
+                ? t('Donne ce code au livreur quand il vient récupérer le colis.')
                 : t('Demande ce code au vendeur pour valider la collecte.')}
             </Text>
           </KGCard>
@@ -181,7 +256,7 @@ export default function DeliveryDetailScreen({ navigation, route }) {
               </View>
             </View>
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.greenDark, marginTop: 10, lineHeight: 17, opacity: 0.8 }}>
-              {t('doit donner ce code au livreur Ã  la remise.', { name: d.recipient })}
+              {t('doit donner ce code au livreur à la remise.', { name: d.recipient })}
             </Text>
           </KGCard>
         )}
@@ -198,7 +273,7 @@ export default function DeliveryDetailScreen({ navigation, route }) {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 14, color: colors.ink }}>{d.recipient}</Text>
-                <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>+237 {d.recipientPhone || 'â€”'}</Text>
+                <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>+237 {d.recipientPhone || 'â€"'}</Text>
               </View>
               <TouchableOpacity
                 onPress={() => handleOpenChat('client')}
@@ -208,6 +283,20 @@ export default function DeliveryDetailScreen({ navigation, route }) {
               </TouchableOpacity>
             </View>
           </KGCard>
+        )}
+
+        {/* Receipt download for completed deliveries */}
+        {d.status === 'livre' && (
+          <TouchableOpacity
+            onPress={handleShareReceipt}
+            disabled={sharingReceipt}
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 14, borderWidth: 1.5, borderColor: '#E8DCC8', backgroundColor: '#F5F0E8' }}
+          >
+            {sharingReceipt ? <ActivityIndicator color={colors.green} size="small" /> : <Icon name="upload" size={18} color={colors.green} />}
+            <Text style={{ fontFamily: fonts.ui + '-Bold', fontSize: 14, color: colors.green }}>
+              Télécharger le reçu
+            </Text>
+          </TouchableOpacity>
         )}
 
         {/* Vendor can cancel EN_ATTENTE delivery */}
@@ -228,12 +317,12 @@ export default function DeliveryDetailScreen({ navigation, route }) {
         )}
         {isGoingVendor && role === 'deliverer' && (
           <KGButton kind="primary" size="lg" icon="pin" onPress={() => navigation.navigate('Confirm', { deliveryId: d.id, phase: 'collect' })}>
-            {t('Je suis arrivÃ© chez le vendeur')}
+            {t('Je suis arrivé chez le vendeur')}
           </KGButton>
         )}
         {!isAvailable && !isGoingVendor && role === 'deliverer' && (
           <KGButton kind="orange" size="lg" icon="check" onPress={() => navigation.navigate('DelivererWaiting', { deliveryId: d.id })}>
-            {t('Je suis arrivÃ© chez le client')}
+            {t('Je suis arrivé chez le client')}
           </KGButton>
         )}
         {!isAvailable && isVendor && !['en_attente', 'annule', 'livre'].includes(d.status) && (

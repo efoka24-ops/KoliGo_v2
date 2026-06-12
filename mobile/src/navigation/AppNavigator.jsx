@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 // Onboarding
 import WelcomeScreen from '../screens/WelcomeScreen';
 import AuthScreen from '../screens/AuthScreen';
+import ForgotPinScreen from '../screens/ForgotPinScreen';
 import VerificationScreen from '../screens/VerificationScreen';
 import ProfileChoiceScreen from '../screens/ProfileChoiceScreen';
 
@@ -53,6 +54,7 @@ export default function AppNavigator() {
       {/* Auth flow */}
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="Auth" component={AuthScreen} />
+      <Stack.Screen name="ForgotPin" component={ForgotPinScreen} />
       <Stack.Screen name="Verification" component={VerificationScreen} />
       <Stack.Screen name="PaymentAccount" component={PaymentAccountScreen} />
       <Stack.Screen name="ProfileChoice" component={ProfileChoiceScreen} />

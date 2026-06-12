@@ -18,17 +18,22 @@ datasource db {
 model User {
   id              String    @id @default(cuid())
   phone           String    @unique
+  email           String?
   name            String
   pinHash         String
   roles           String    @default("VENDOR")   // JSON array: ["VENDOR"]
   activeRole      String    @default("VENDOR")
-  kycStatus       String    @default("NONE")
+  kycStatus           String    @default("NONE")
+  kycRejectionReason  String?
+  gender          String?   // HOMME | FEMME
   biometryEnabled Boolean   @default(false)
   language        String    @default("fr")
   theme           String    @default("light")
   isBlocked       Boolean   @default(false)
   isOnline        Boolean   @default(false)
   expoPushToken   String?
+  cniNumber       String?
+  quartier        String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -58,6 +63,7 @@ model Delivery {
   pickupAddress    String
   dropoffAddress   String
   weightKg         Float
+  distanceKm       Float?
   description      String?
   delivererType    String   @default("TEMPORAIRE")
   status           String   @default("EN_ATTENTE")
@@ -68,6 +74,10 @@ model Delivery {
   commissionXAF    Int
   delivererEarning Int
   momoRef          String?
+  shopName         String?
+  recipientName    String?
+  recipientPhone   String?
+  productPriceXAF  Int      @default(0)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -77,6 +87,19 @@ model Delivery {
   locations GpsLocation[]
   ratings   Rating[]
   issues    Issue[]
+  messages  Message[]
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  deliveryId String
+  senderId   String?
+  senderName String
+  senderRole String   // vendor | deliverer | recipient
+  content    String
+  createdAt  DateTime @default(now())
+
+  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
 }
 
 model EscrowEntry {
@@ -182,4 +205,35 @@ model PlatformSetting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+model City {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  region        String
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  neighborhoods Neighborhood[]
+}
+
+model Neighborhood {
+  id        String   @id @default(cuid())
+  name      String
+  cityId    String
+  latitude  Float?
+  longitude Float?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  city City @relation(fields: [cityId], references: [id])
+
+  @@unique([name, cityId])
+}
+
+model DbArchive {
+  id          String   @id @default(cuid())
+  label       String
+  archivedAt  DateTime @default(now())
+  snapshotJson String  // JSON snapshot of counts before reset
+  archivedBy  String?  // admin userId
 }

@@ -29,46 +29,51 @@ export default function ProfileScreen({ navigation }) {
 
   useEffect(() => {
     if (isDemo || !token) return;
-    api('/api/users/me/stats').then(setApiStats).catch(() => {});
-    api('/api/users/me').then(u => {
-      if (u.vehicle) setVehicle(u.vehicle);
-      if (u.plate) setPlate(u.plate);
-    }).catch(() => {});
-  }, [token, isDemo]);
+    const fetchProfile = () => {
+      api('/api/user/profile').then(u => {
+        setApiStats(u);
+        if (u.vehicle) setVehicle(u.vehicle);
+        if (u.plate) setPlate(u.plate);
+      }).catch(() => {});
+    };
+    fetchProfile();
+    const unsub = navigation.addListener('focus', fetchProfile);
+    return unsub;
+  }, [token, isDemo, navigation, api]);
 
   const saveVehicle = async () => {
     if (!vehicle) return;
     setSavingVehicle(true);
     try {
-      await api('/api/users/me', { method: 'PATCH', body: JSON.stringify({ vehicle, plate: plate.trim() || null }) });
-      showToast('VÃ©hicule mis Ã  jour âœ“');
+      await api('/api/user/profile', { method: 'PATCH', body: JSON.stringify({ vehicle, plate: plate.trim() || null }) });
+      showToast('Véhicule mis à jour âœ"');
     } catch (e) {
       showToast(e.message || 'Erreur', 'error');
     } finally {
       setSavingVehicle(false);
     }
   };
-  const kycLabel = { PENDING: t('En attente'), VERIFIED: t('VÃ©rifiÃ©e âœ“'), REJECTED: t('RefusÃ©e â€” rÃ©essaie') }[user?.kycStatus] || t('Non soumise');
+  const kycLabel = { PENDING: t('En attente'), VERIFIED: t('Vérifiée âœ"'), REJECTED: t('Refusée â€" réessaie') }[(apiStats?.kycStatus ?? user?.kycStatus)] || t('Non soumise');
   const MENU_ITEMS = [
     { icon: 'history',  label: t('Historique'),         sub: isDemo ? t('127 livraisons') : t('Consulter mes livraisons'), screen: 'History' },
     { icon: 'wallet',   label: t('Moyens de paiement'), sub: 'MTN MoMo Â· Orange Money',  screen: 'PaymentAccount' },
-    ...(!isVendor ? [{ icon: 'shield',   label: t('VÃ©rification KYC'),   sub: kycLabel, screen: 'KYC' }] : []),
-    { icon: 'bell',     label: t('Notifications'),       sub: t('GÃ©rer les alertes'),        screen: 'Notifications' },
-    { icon: 'settings', label: t('ParamÃ¨tres'),          sub: t('Langue, sÃ©curitÃ©, compte'), screen: 'Settings' },
+    { icon: 'shield',   label: t('Vérification KYC'),   sub: kycLabel, screen: 'KYC' },
+    { icon: 'bell',     label: t('Notifications'),       sub: t('Gérer les alertes'),        screen: 'Notifications' },
+    { icon: 'settings', label: t('Paramètres'),          sub: t('Langue, sécurité, compte'), screen: 'Settings' },
   ];
   const displayName = user?.name || (isVendor ? t('Vendeur') : t('Livreur'));
   const avatar = user?.avatar || '??';
 
   const stats = isVendor
     ? [
-        { k: isDemo ? '127' : String(apiStats?.colisEnvoyes ?? 0), l: t('Colis envoyÃ©s') },
-        { k: isDemo ? '4.8' : (apiStats?.note ?? 'â€”'), l: t('Note moyenne') },
-        { k: isDemo ? '98%' : (apiStats?.livres != null ? `${apiStats.livres}%` : 'â€”'), l: t('LivrÃ©s') },
+        { k: isDemo ? '127' : String(apiStats?.colisEnvoyes ?? 0), l: t('Colis envoyés') },
+        { k: isDemo ? '4.8' : (apiStats?.note ?? 'â€"'), l: t('Note moyenne') },
+        { k: isDemo ? '98%' : (apiStats?.livres != null ? `${apiStats.livres}%` : 'â€"'), l: t('Livrés') },
       ]
     : [
         { k: isDemo ? '342' : String(apiStats?.courses ?? 0), l: t('Courses') },
-        { k: isDemo ? '4.9' : (apiStats?.note ?? 'â€”'), l: t('Note') },
-        { k: isDemo ? '92%' : (apiStats?.acceptation != null ? `${apiStats.acceptation}%` : 'â€”'), l: t('Acceptation') },
+        { k: isDemo ? '4.9' : (apiStats?.note ?? 'â€"'), l: t('Note') },
+        { k: isDemo ? '92%' : (apiStats?.acceptation != null ? `${apiStats.acceptation}%` : 'â€"'), l: t('Acceptation') },
       ];
 
   const switchRole = async () => {
@@ -124,8 +129,8 @@ export default function ProfileScreen({ navigation }) {
             </Text>
           </View>
           <View style={styles.chipsContainer}>
-            <KGChip color="green" icon="shield">{t('CNI vÃ©rifiÃ©e')}</KGChip>
-            <KGChip color="orange" icon="star">{apiStats?.note ? `${apiStats.note} â˜…` : (isDemo ? (isVendor ? '4.8 â˜…' : '4.9 â˜…') : 'â€” â˜…')}</KGChip>
+            <KGChip color="green" icon="shield">{t('CNI vérifiée')}</KGChip>
+            <KGChip color="orange" icon="star">{apiStats?.note ? `${apiStats.note} â˜…` : (isDemo ? (isVendor ? '4.8 â˜…' : '4.9 â˜…') : 'â€" â˜…')}</KGChip>
             {!isVendor && <KGChip color="ink" icon="bolt">{t('Lvl Argent')}</KGChip>}
           </View>
         </KGCard>
@@ -140,10 +145,10 @@ export default function ProfileScreen({ navigation }) {
           ))}
         </View>
 
-        {/* Section vÃ©hicule â€” livreur uniquement */}
+        {/* Section véhicule â€" livreur uniquement */}
         {!isVendor && (
           <KGCard padding={14} style={styles.vehicleSection}>
-            <Text style={styles.vehicleSectionTitle}>{t('Mon vÃ©hicule')}</Text>
+            <Text style={styles.vehicleSectionTitle}>{t('Mon véhicule')}</Text>
             <View style={styles.vehicleTypesContainer}>
               {VEHICLE_TYPES.map(v => {
                 const on = vehicle === v.id;
@@ -162,7 +167,7 @@ export default function ProfileScreen({ navigation }) {
             <TextInput
               value={plate}
               onChangeText={setPlate}
-              placeholder={t('NumÃ©ro de plaque (ex: LT-892-DA)')}
+              placeholder={t('Numéro de plaque (ex: LT-892-DA)')}
               placeholderTextColor={colors.ink35} // Assuming colors.ink35 is defined
               autoCapitalize="characters"
               style={styles.plateInput}
@@ -173,7 +178,7 @@ export default function ProfileScreen({ navigation }) {
               style={[styles.saveVehicleButton, vehicle && styles.saveVehicleButtonActive]}
             >
               <Text style={[styles.saveVehicleButtonText, vehicle && styles.saveVehicleButtonTextActive]}>
-                {savingVehicle ? t('Enregistrementâ€¦') : t('Enregistrer le vÃ©hicule')}
+                {savingVehicle ? t('Enregistrementâ€¦') : t('Enregistrer le véhicule')}
               </Text>
             </TouchableOpacity>
           </KGCard>
@@ -215,7 +220,7 @@ export default function ProfileScreen({ navigation }) {
           ))}
         </KGCard>
 
-        <KGButton kind="ghost" icon="logout" onPress={() => { logout(); navigation.replace('Welcome'); }}>{t('Se dÃ©connecter')}</KGButton>
+        <KGButton kind="ghost" icon="logout" onPress={() => { logout(); navigation.replace('Welcome'); }}>{t('Se déconnecter')}</KGButton>
 
         <Text style={styles.versionText}>
           KoliGo v1.1

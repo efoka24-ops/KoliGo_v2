@@ -11,24 +11,24 @@ import KGInput from '../../components/KGInput';
 import Icon from '../../components/Icon';
 
 const STATUS_CONFIG = {
-  PENDING:  { label: 'En attente de vÃ©rification', color: colors.orange, bg: colors.orangeLight, icon: 'clock' },
-  VERIFIED: { label: 'IdentitÃ© vÃ©rifiÃ©e',           color: colors.green,  bg: colors.greenLight,  icon: 'shield' },
-  REJECTED: { label: 'VÃ©rification refusÃ©e',        color: '#DC2626',     bg: '#FEF2F2',          icon: 'close' },
+  PENDING:  { label: 'En attente de vérification', color: colors.orange, bg: colors.orangeLight, icon: 'clock' },
+  VERIFIED: { label: 'Identité vérifiée',           color: colors.green,  bg: colors.greenLight,  icon: 'shield' },
+  REJECTED: { label: 'Vérification refusée',        color: '#DC2626',     bg: '#FEF2F2',          icon: 'close' },
 };
 
 function getVerifiedLabel(gender) {
-  if (gender === 'HOMME') return 'Homme vÃ©rifiÃ© âœ“';
-  if (gender === 'FEMME') return 'Femme vÃ©rifiÃ©e âœ“';
-  return 'IdentitÃ© vÃ©rifiÃ©e âœ“';
+  if (gender === 'HOMME') return 'Homme vérifié âœ"';
+  if (gender === 'FEMME') return 'Femme vérifiée âœ"';
+  return 'Identité vérifiée âœ"';
 }
 
 async function pickImage(setter, showToast, { selfie = false } = {}) {
-  // Demander permission camÃ©ra
+  // Demander permission caméra
   const camPerm = await ImagePicker.requestCameraPermissionsAsync();
   if (camPerm.status !== 'granted') {
     Alert.alert(
-      'Permission refusÃ©e',
-      'KoliGo a besoin de la camÃ©ra pour capturer tes documents. Active-la dans les paramÃ¨tres.',
+      'Permission refusée',
+      'KoliGo a besoin de la caméra pour capturer tes documents. Active-la dans les paramètres.',
       [{ text: 'OK' }]
     );
     return;
@@ -44,7 +44,7 @@ async function pickImage(setter, showToast, { selfie = false } = {}) {
 
   if (!result.canceled && result.assets?.[0]?.base64) {
     setter(`data:image/jpeg;base64,${result.assets[0].base64}`);
-    showToast('Photo capturÃ©e âœ“');
+    showToast('Photo capturée âœ"');
   }
 }
 
@@ -59,7 +59,7 @@ function DocSlot({ label, sublabel, uri, onPress, onRetake }) {
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 10, backgroundColor: colors.greenLight }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Icon name="check" size={16} color={colors.green} />
-                <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.greenDark }}>{label} â€” capturÃ©</Text>
+                <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.greenDark }}>{label} â€" capturé</Text>
               </View>
               <TouchableOpacity onPress={onRetake} style={{ paddingHorizontal: 10, paddingVertical: 4, backgroundColor: '#fff', borderRadius: 8 }}>
                 <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55 }}>Reprendre</Text>
@@ -102,11 +102,11 @@ export default function KYCScreen({ navigation }) {
     if (!allDone) return;
     setLoading(true);
     try {
-      await api('/api/auth/kyc', {
+      await api('/api/user/kyc', {
         method: 'POST',
         body: JSON.stringify({ cniNumber: cniNumber.trim(), cniRecto, cniVerso, selfie }),
       });
-      showToast('Documents soumis â€” vÃ©rification sous 24h');
+      showToast('Documents soumis â€" vérification sous 24h');
       navigation.goBack();
     } catch {
       showToast('Erreur lors de la soumission', 'error');
@@ -117,7 +117,7 @@ export default function KYCScreen({ navigation }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }} edges={['top']}>
-      <KGTopBar title="VÃ©rification d'identitÃ©" onBack={() => navigation.goBack()} />
+      <KGTopBar title="Vérification d'identité" onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
 
         {/* Status badge */}
@@ -129,17 +129,17 @@ export default function KYCScreen({ navigation }) {
             <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: statusCfg.color }}>{verifiedLabel}</Text>
             {kycStatus === 'PENDING' && (
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55, marginTop: 2 }}>
-                Soumets tes documents pour accÃ©der Ã  toutes les fonctionnalitÃ©s.
+                Soumets tes documents pour accéder à toutes les fonctionnalités.
               </Text>
             )}
             {kycStatus === 'VERIFIED' && (
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.greenDark, marginTop: 2 }}>
-                {getVerifiedLabel(gender)} â€” accÃ¨s complet activÃ©.
+                {getVerifiedLabel(gender)} â€" accès complet activé.
               </Text>
             )}
             {kycStatus === 'REJECTED' && (
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: '#DC2626', marginTop: 2 }}>
-                Tes documents n'ont pas pu Ãªtre vÃ©rifiÃ©s. RÃ©essaie avec des photos claires.
+                Tes documents n'ont pas pu être vérifiés. Réessaie avec des photos claires.
               </Text>
             )}
           </View>
@@ -149,10 +149,10 @@ export default function KYCScreen({ navigation }) {
           <>
             <KGCard padding={14}>
               <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.04, marginBottom: 12 }}>
-                NumÃ©ro CNI
+                Numéro CNI
               </Text>
               <KGInput
-                label="NumÃ©ro de ta Carte Nationale d'IdentitÃ©"
+                label="Numéro de ta Carte Nationale d'Identité"
                 value={cniNumber}
                 onChangeText={setCniNumber}
                 icon="shield"
@@ -160,7 +160,7 @@ export default function KYCScreen({ navigation }) {
                 autoCapitalize="characters"
               />
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: colors.ink35, marginTop: 6, lineHeight: 16 }}>
-                Ce numÃ©ro sera affichÃ© sur la facture de confiance remise au vendeur.
+                Ce numéro sera affiché sur la facture de confiance remise au vendeur.
               </Text>
             </KGCard>
 
@@ -169,26 +169,26 @@ export default function KYCScreen({ navigation }) {
                 Documents requis
               </Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55, marginBottom: 10, lineHeight: 18 }}>
-                Prends chaque document en photo. Les images sont chiffrÃ©es et envoyÃ©es de faÃ§on sÃ©curisÃ©e Ã  l'Ã©quipe KoliGo.
+                Prends chaque document en photo. Les images sont chiffrées et envoyées de façon sécurisée à l'équipe KoliGo.
               </Text>
               <View style={{ gap: 10 }}>
                 <DocSlot
-                  label="CNI â€” Recto"
+                  label="CNI â€" Recto"
                   sublabel="Appuie pour prendre la photo face avant"
                   uri={cniRecto}
                   onPress={() => pickImage(setCniRecto, showToast)}
                   onRetake={() => pickImage(setCniRecto, showToast)}
                 />
                 <DocSlot
-                  label="CNI â€” Verso"
-                  sublabel="Appuie pour prendre la photo face arriÃ¨re"
+                  label="CNI â€" Verso"
+                  sublabel="Appuie pour prendre la photo face arrière"
                   uri={cniVerso}
                   onPress={() => pickImage(setCniVerso, showToast)}
                   onRetake={() => pickImage(setCniVerso, showToast)}
                 />
                 <DocSlot
                   label="Selfie avec CNI"
-                  sublabel="Tiens ta CNI face Ã  la camÃ©ra frontale"
+                  sublabel="Tiens ta CNI face à la caméra frontale"
                   uri={selfie}
                   onPress={() => pickImage(setSelfie, showToast, { selfie: true })}
                   onRetake={() => pickImage(setSelfie, showToast, { selfie: true })}
@@ -200,7 +200,7 @@ export default function KYCScreen({ navigation }) {
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <Icon name="shield" size={18} color={colors.ink55} />
                 <Text style={{ flex: 1, fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink70, lineHeight: 18 }}>
-                  Tes documents sont chiffrÃ©s et utilisÃ©s uniquement pour la vÃ©rification d'identitÃ©. Ils ne seront jamais partagÃ©s.
+                  Tes documents sont chiffrés et utilisés uniquement pour la vérification d'identité. Ils ne seront jamais partagés.
                 </Text>
               </View>
             </KGCard>

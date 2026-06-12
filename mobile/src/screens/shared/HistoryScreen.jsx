@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts } from '../../constants/colors';
 import { KG_DEMO_DELIVERIES } from '../../constants/data';
@@ -10,27 +10,28 @@ import KGCard from '../../components/KGCard';
 import KGChip from '../../components/KGChip';
 import KGStatusPill from '../../components/KGStatusPill';
 import KGTabBar from '../../components/KGTabBar';
+import KenteStripe from '../../components/KenteStripe';
 import Icon from '../../components/Icon';
 
 const FILTERS = [
-  { id: 'all', label: 'Toutes' },
-  { id: 'livre', label: 'LivrÃ©' },
-  { id: 'en_route', label: 'En route' },
-  { id: 'accepte', label: 'AcceptÃ©' },
-  { id: 'annule', label: 'AnnulÃ©' },
+  { id: 'all',     label: 'Toutes'  },
+  { id: 'livre',   label: 'Livré'   },
+  { id: 'en_route',label: 'En route'},
+  { id: 'accepte', label: 'Accepté' },
+  { id: 'annule',  label: 'Annulé'  },
 ];
 
-const STATUS_ICON_COLOR = {
-  livre:    { bg: colors.greenLight, color: colors.greenDark },
-  en_route: { bg: colors.orangeLight, color: colors.orange },
-  default:  { bg: colors.cream, color: colors.ink70 },
+const STATUS_STYLE = {
+  livre:    { bg: '#EFF8F1', color: colors.greenDark, dot: '#0D7A3E' },
+  en_route: { bg: '#FEF0E3', color: '#C4611A',        dot: '#C4611A' },
+  default:  { bg: '#F5F0E8', color: colors.ink55,     dot: '#D4991A' },
 };
 
 export default function HistoryScreen({ navigation }) {
   const { role, user, token, api } = useApp();
   const [filter, setFilter] = useState('all');
   const isDemo = user?.isTest === true;
-  const [realDeliveries, setRealDeliveries] = useState(null); // null = loading
+  const [realDeliveries, setRealDeliveries] = useState(null);
 
   const goBack = () => {
     if (navigation.canGoBack()) navigation.goBack();
@@ -69,10 +70,12 @@ export default function HistoryScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF5E6' }} edges={['top']}>
+      <KenteStripe height={4} />
       <KGTopBar title="Historique" onBack={goBack} action={<Icon name="search" size={20} color={colors.ink} />} />
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8, gap: 8 }}>
+      {/* Filters */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}>
         {FILTERS.map(f => (
           <KGChip key={f.id} active={filter === f.id} onPress={() => setFilter(f.id)}>{f.label}</KGChip>
         ))}
@@ -83,58 +86,74 @@ export default function HistoryScreen({ navigation }) {
           <ActivityIndicator color={colors.green} />
         </View>
       ) : (
-        <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16, gap: 8 }} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 10 }} showsVerticalScrollIndicator={false}>
+
+          {/* Stats card */}
           {isDemo && (
-            <KGCard kind="dark" padding={14} style={{ marginBottom: 4 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-                <View>
-                  <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 0.04 }}>Ce mois</Text>
-                  <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 24, color: '#fff', letterSpacing: -0.02 }}>42 colis</Text>
-                </View>
-                <View style={{ width: 1, height: 30, backgroundColor: 'rgba(255,255,255,0.15)' }} />
-                <View>
-                  <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 0.04 }}>DÃ©pensÃ©</Text>
-                  <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 24, color: '#fff', letterSpacing: -0.02 }}>82 350 <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>XAF</Text></Text>
-                </View>
+            <View style={{
+              backgroundColor: '#0E2116', borderRadius: 20, padding: 18, marginBottom: 4,
+              flexDirection: 'row', alignItems: 'center', gap: 0, overflow: 'hidden',
+            }}>
+              <View style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(212,153,26,0.1)' }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.08 }}>Ce mois</Text>
+                <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 28, color: '#fff', letterSpacing: -0.02 }}>42 colis</Text>
               </View>
-            </KGCard>
+              <View style={{ width: 1, height: 36, backgroundColor: 'rgba(255,255,255,0.12)', marginHorizontal: 18 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.08 }}>Dépensé</Text>
+                <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 28, color: '#D4991A', letterSpacing: -0.02 }}>82 350 <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>XAF</Text></Text>
+              </View>
+            </View>
+          )}
+
+          {isDemo && (
+            <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 10, color: '#B8A48A', paddingHorizontal: 2, textTransform: 'uppercase', letterSpacing: 0.1 }}>
+              ◈ Mai 2026
+            </Text>
           )}
 
           {!isDemo && list.length === 0 && (
-            <View style={{ alignItems: 'center', paddingVertical: 60, gap: 10 }}>
-              <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.ink12, borderStyle: 'dashed' }}>
-                <Icon name="package" size={28} color={colors.ink35} />
+            <View style={{ alignItems: 'center', paddingVertical: 60, gap: 12 }}>
+              <View style={{ width: 72, height: 72, borderRadius: 20, backgroundColor: '#F5F0E8', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#E8DCC8', borderStyle: 'dashed' }}>
+                <Icon name="package" size={30} color={colors.ink35} />
               </View>
-              <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: colors.ink }}>Aucune livraison pour le moment</Text>
-              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55, textAlign: 'center', maxWidth: 240, lineHeight: 18 }}>
-                Tes livraisons apparaÃ®tront ici dÃ¨s que tu en auras crÃ©Ã© une.
+              <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 17, color: colors.ink }}>Aucune livraison</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55, textAlign: 'center', maxWidth: 240, lineHeight: 19 }}>
+                Tes livraisons apparaîtront ici dès que tu en auras créé une.
               </Text>
             </View>
           )}
 
-          {isDemo && <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, paddingHorizontal: 4, paddingTop: 8, textTransform: 'uppercase', letterSpacing: 0.05 }}>Mai 2026</Text>}
-
           {list.map(d => {
-            const sc = STATUS_ICON_COLOR[d.status] || STATUS_ICON_COLOR.default;
+            const sc = STATUS_STYLE[d.status] || STATUS_STYLE.default;
             return (
-              <KGCard key={d.id} onPress={() => navigation.navigate('DeliveryDetail', { deliveryId: d.id })}>
+              <TouchableOpacity
+                key={d.id}
+                activeOpacity={0.85}
+                onPress={() => navigation.navigate('DeliveryDetail', { deliveryId: d.id })}
+                style={{ backgroundColor: '#fff', borderRadius: 18, padding: 14, borderWidth: 1, borderColor: '#E8DCC8', gap: 0 }}
+              >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: sc.bg, alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon name="package" size={20} color={sc.color} />
+                  <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: sc.bg, alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="package" size={22} color={sc.color} />
                   </View>
                   <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 14, color: colors.ink }} numberOfLines={1}>{d.from} â†’ {d.to}</Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
+                    <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 14, color: colors.ink }} numberOfLines={1}>
+                      {d.from} → {d.to}
+                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                      <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: sc.dot }} />
                       <KGStatusPill status={d.status} />
-                      <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11.5, color: colors.ink55 }}>{d.posted || d.time}</Text>
+                      <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: colors.ink35 }}>{d.posted || d.time}</Text>
                     </View>
                   </View>
                   <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 14.5, color: colors.ink }}>{d.price.toLocaleString('fr-FR')}</Text>
-                    <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 10, color: colors.ink55 }}>XAF</Text>
+                    <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 15, color: colors.ink }}>{d.price.toLocaleString('fr-FR')}</Text>
+                    <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 10, color: '#B8A48A' }}>XAF</Text>
                   </View>
                 </View>
-              </KGCard>
+              </TouchableOpacity>
             );
           })}
         </ScrollView>

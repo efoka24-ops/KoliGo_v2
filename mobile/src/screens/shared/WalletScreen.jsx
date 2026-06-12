@@ -11,11 +11,12 @@ import KGSectionTitle from '../../components/KGSectionTitle';
 import KGInput from '../../components/KGInput';
 import KGToast from '../../components/KGToast';
 import KGTabBar from '../../components/KGTabBar';
+import KenteStripe from '../../components/KenteStripe';
 import Icon from '../../components/Icon';
 
 const TX_ICON_COLOR = (tx) => {
-  if (tx.type === 'withdraw') return { bg: colors.orangeLight, color: colors.orange };
-  if (tx.type === 'bonus') return { bg: '#FFF7E8', color: '#B4881C' };
+  if (tx.type === 'withdraw' || tx.type === 'WITHDRAWAL') return { bg: '#FEF0E3', color: '#C4611A' };
+  if (tx.type === 'bonus' || tx.type === 'BONUS') return { bg: '#FFF8E3', color: '#D4991A' };
   return { bg: colors.greenLight, color: colors.greenDark };
 };
 
@@ -44,7 +45,7 @@ export default function WalletScreen({ navigation }) {
 
   useEffect(() => {
     if (isDemo || !token) return;
-    api('/api/wallet').then(setWalletData).catch(() => {});
+    api('/wallet').then(setWalletData).catch(() => {});
   }, [token, isDemo]);
 
   const balance = isDemo ? 24580 : (walletData?.balance ?? 0);
@@ -59,27 +60,19 @@ export default function WalletScreen({ navigation }) {
   };
 
   const handleWithdraw = async () => {
-    if (isDemo) {
-      setWithdrawOpen(false);
-      showToast('Retrait envoyÃ© Â· arrive sous 1 min âœ…');
-      return;
-    }
-    if (!withdrawAmount || parseInt(withdrawAmount) < 500) {
-      showToast('Montant minimum 500 XAF', 'error'); return;
-    }
+    if (isDemo) { setWithdrawOpen(false); showToast('Retrait envoyé · arrive sous 1 min ✅'); return; }
+    if (!withdrawAmount || parseInt(withdrawAmount) < 500) { showToast('Montant minimum 500 XAF', 'error'); return; }
     const phoneNorm = withdrawPhone.replace(/\s/g, '');
-    if (!/^6\d{8}$/.test(phoneNorm)) {
-      showToast('NumÃ©ro invalide (format: 6XXXXXXXX)', 'error'); return;
-    }
+    if (!/^6\d{8}$/.test(phoneNorm)) { showToast('Numéro invalide (format: 6XXXXXXXX)', 'error'); return; }
     setWithdrawLoading(true);
     try {
-      await api('/api/wallet/withdraw', {
+      await api('/wallet/withdraw', {
         method: 'POST',
         body: JSON.stringify({ amount: parseInt(withdrawAmount), provider: withdrawProvider, phone: phoneNorm }),
       });
       setWithdrawOpen(false);
-      showToast('Retrait initiÃ© Â· arrive sous 1 min âœ…');
-      api('/api/wallet').then(setWalletData).catch(() => {});
+      showToast('Retrait initié · arrive sous 1 min ✅');
+      api('/wallet').then(setWalletData).catch(() => {});
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
@@ -88,73 +81,97 @@ export default function WalletScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF5E6' }} edges={['top']}>
       {toast && <KGToast message={toast.message} kind={toast.kind} />}
-
+      <KenteStripe height={4} />
       <KGTopBar title="Wallet" onBack={() => navigation.goBack()} action={<Icon name="settings" size={20} color={colors.ink} />} />
 
       <ScrollView contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
 
-        {/* Balance card */}
-        <KGCard kind="dark" padding={20} style={{ overflow: 'hidden' }}>
-          <View style={{ position: 'absolute', top: -40, right: -40, width: 180, height: 180, borderRadius: 90, backgroundColor: 'rgba(13,122,62,0.22)' }} />
-          <View>
-            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: 0.05 }}>Solde disponible</Text>
-            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 48, color: '#fff', letterSpacing: -0.04 * 48, lineHeight: 52, marginTop: 6 }}>
-              {balance.toLocaleString('fr-FR')} <Text style={{ fontSize: 20, color: 'rgba(255,255,255,0.55)' }}>XAF</Text>
+        {/* Balance card — forest dark */}
+        <View style={{
+          backgroundColor: '#0E2116', borderRadius: 24, padding: 22, overflow: 'hidden',
+          shadowColor: '#0E2116', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.3, shadowRadius: 24, elevation: 10,
+        }}>
+          {/* Decorative circle */}
+          <View style={{ position: 'absolute', top: -50, right: -50, width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(13,122,62,0.18)' }} />
+          <View style={{ position: 'absolute', bottom: -30, left: -30, width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(212,153,26,0.08)' }} />
+
+          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.08 }}>
+            Solde disponible
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, marginTop: 8, marginBottom: 4 }}>
+            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 46, color: '#fff', letterSpacing: -0.04 * 46, lineHeight: 50 }}>
+              {balance.toLocaleString('fr-FR')}
             </Text>
-            {isDemo && (
-              <View style={{ flexDirection: 'row', gap: 20, marginTop: 14 }}>
-                {[
-                  { label: "Aujourd'hui", value: '+5 095' },
-                  { label: 'Cette semaine', value: '+18 240' },
-                ].map(s => (
-                  <View key={s.label} style={{ gap: 2 }}>
-                    <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: 0.04 }}>{s.label}</Text>
-                    <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 15, color: colors.orange }}>{s.value}</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 16, color: '#D4991A', marginBottom: 8 }}>XAF</Text>
+          </View>
+
+          {isDemo && (
+            <>
+              <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)', marginVertical: 14 }} />
+              <View style={{ flexDirection: 'row', gap: 24 }}>
+                {[{ label: "Aujourd'hui", value: '+5 095', color: '#4EAF74' }, { label: 'Cette semaine', value: '+18 240', color: '#D4991A' }].map(s => (
+                  <View key={s.label} style={{ gap: 3 }}>
+                    <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 10, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: 0.06 }}>{s.label}</Text>
+                    <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: s.color }}>{s.value}</Text>
                   </View>
                 ))}
               </View>
-            )}
-          </View>
-        </KGCard>
-
-        {/* Quick actions */}
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <KGButton kind="orange" icon="upload" style={{ flex: 1 }} onPress={() => setWithdrawOpen(true)}>Retirer</KGButton>
-          <KGButton kind="ghost" icon="plus" style={{ flex: 1 }} onPress={() => {}}>Recharger</KGButton>
+            </>
+          )}
         </View>
 
-        <KGSectionTitle>Transactions</KGSectionTitle>
+        {/* Actions */}
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <TouchableOpacity onPress={() => setWithdrawOpen(true)}
+            style={{ flex: 1, height: 50, borderRadius: 14, backgroundColor: '#C4611A', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <Icon name="upload" size={18} color="#fff" />
+            <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: '#fff' }}>Retirer</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{ flex: 1, height: 50, borderRadius: 14, borderWidth: 1.5, borderColor: colors.green, backgroundColor: '#EFF8F1', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <Icon name="plus" size={18} color={colors.green} />
+            <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: colors.green }}>Recharger</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Transactions */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 2, paddingTop: 4 }}>
+          <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.08 }}>Transactions</Text>
+          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.green }}>Tout</Text>
+        </View>
 
         {transactions.length > 0 ? (
-          <KGCard padding={0}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: '#E8DCC8' }}>
             {transactions.map((tx, i) => {
               const { bg, color } = TX_ICON_COLOR(tx);
               return (
-                <View key={tx.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderBottomWidth: i < transactions.length - 1 ? 1 : 0, borderBottomColor: colors.ink06 }}>
-                  <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
+                <View key={tx.id} style={{
+                  flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14,
+                  borderBottomWidth: i < transactions.length - 1 ? 1 : 0,
+                  borderBottomColor: '#F0E8D8',
+                }}>
+                  <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
                     <Icon name={tx.icon} size={18} color={color} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 14, color: colors.ink }}>{tx.label}</Text>
                     <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11.5, color: colors.ink55 }}>{tx.date}</Text>
                   </View>
-                  <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 14.5, color: tx.amount < 0 ? colors.orange : colors.greenDark }}>
+                  <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 15, color: tx.amount < 0 ? '#C4611A' : colors.greenDark }}>
                     {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString('fr-FR')}
                   </Text>
                 </View>
               );
             })}
-          </KGCard>
+          </View>
         ) : (
           <View style={{ alignItems: 'center', paddingVertical: 48, gap: 10 }}>
-            <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.ink12, borderStyle: 'dashed' }}>
-              <Icon name="wallet" size={28} color={colors.ink35} />
-            </View>
+            <Icon name="wallet" size={32} color={colors.ink35} />
             <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: colors.ink }}>Aucune transaction</Text>
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55, textAlign: 'center', maxWidth: 240, lineHeight: 18 }}>
-              Tes gains apparaÃ®tront ici aprÃ¨s ta premiÃ¨re course.
+              Tes gains apparaîtront ici après ta première course.
             </Text>
           </View>
         )}
@@ -163,36 +180,33 @@ export default function WalletScreen({ navigation }) {
       <KGTabBar active="wallet" onTab={handleTab} role="deliverer" />
 
       {/* Withdraw modal */}
-      <Modal visible={withdrawOpen} transparent animationType="none">
-        <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} activeOpacity={1} onPress={() => setWithdrawOpen(false)}>
-          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14 }}>
+      <Modal visible={withdrawOpen} transparent animationType="slide">
+        <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(14,33,22,0.6)' }} activeOpacity={1} onPress={() => setWithdrawOpen(false)}>
+          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, gap: 14 }}>
             <View style={{ width: 40, height: 4, backgroundColor: colors.ink12, borderRadius: 2, alignSelf: 'center' }} />
+            <KenteStripe height={3} />
             <View>
-              <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: colors.ink, letterSpacing: -0.02 * 22 }}>Retirer en Mobile Money</Text>
-              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70, marginTop: 4 }}>InstantanÃ© Â· 0 frais</Text>
+              <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: colors.ink, letterSpacing: -0.02 * 22, marginTop: 8 }}>Retrait Mobile Money</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55, marginTop: 3 }}>Instantané · 0 frais</Text>
             </View>
 
-            {/* Provider selection */}
             <View style={{ flexDirection: 'row', gap: 10 }}>
               {[
                 { id: 'MTN_MOMO', label: 'MTN MoMo', bg: '#FFCC00', color: '#1A1A1A' },
-                { id: 'ORANGE_MONEY', label: 'Orange Money', bg: colors.orange, color: '#fff' },
+                { id: 'ORANGE_MONEY', label: 'Orange Money', bg: '#C4611A', color: '#fff' },
               ].map(p => (
-                <TouchableOpacity
-                  key={p.id}
-                  onPress={() => setWithdrawProvider(p.id)}
-                  style={{ flex: 1, height: 64, borderRadius: 14, borderWidth: withdrawProvider === p.id ? 2.5 : 1.5, borderColor: withdrawProvider === p.id ? colors.green : colors.ink12, backgroundColor: p.bg, alignItems: 'center', justifyContent: 'center' }}
-                >
-                  <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 14, color: p.color }}>{p.label}</Text>
+                <TouchableOpacity key={p.id} onPress={() => setWithdrawProvider(p.id)}
+                  style={{ flex: 1, height: 60, borderRadius: 14, borderWidth: withdrawProvider === p.id ? 2.5 : 1.5, borderColor: withdrawProvider === p.id ? colors.green : '#E8DCC8', backgroundColor: p.bg, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 13, color: p.color }}>{p.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <KGInput label="Montant" value={withdrawAmount} suffix="XAF" keyboardType="numeric" onChangeText={setWithdrawAmount} placeholder="Ex: 5000" />
-            <KGInput label="NumÃ©ro" value={withdrawPhone} suffix="ðŸ‡¨ðŸ‡² +237" keyboardType="phone-pad" onChangeText={setWithdrawPhone} placeholder="6 XX XX XX XX" />
+            <KGInput label="Montant (XAF)" value={withdrawAmount} suffix="XAF" keyboardType="numeric" onChangeText={setWithdrawAmount} placeholder="Ex: 5000" />
+            <KGInput label="Numéro" value={withdrawPhone} suffix="🇨🇲 +237" keyboardType="phone-pad" onChangeText={setWithdrawPhone} placeholder="6 XX XX XX XX" />
 
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 10, backgroundColor: colors.greenLight, borderRadius: 10 }}>
-              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.greenDark }}>Frais</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 12, backgroundColor: colors.greenLight, borderRadius: 12 }}>
+              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.greenDark }}>Frais de retrait</Text>
               <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 16, color: colors.greenDark }}>0 XAF</Text>
             </View>
 

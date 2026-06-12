@@ -11,7 +11,7 @@ import KGButton from '../../components/KGButton';
 import Icon from '../../components/Icon';
 
 const LANGUAGES = [
-  { code: 'fr', label: 'FranÃ§ais', flag: 'ðŸ‡«ðŸ‡·' },
+  { code: 'fr', label: 'Français', flag: 'ðŸ‡«ðŸ‡·' },
   { code: 'en', label: 'English',  flag: 'ðŸ‡¬ðŸ‡§' },
 ];
 
@@ -75,7 +75,7 @@ export default function SettingsScreen({ navigation }) {
         method: 'POST',
         body: JSON.stringify({ currentPassword: oldPin, newPassword: newPin }),
       });
-      showToast('Code PIN modifiÃ© avec succÃ¨s âœ“');
+      showToast('Code PIN modifié avec succès âœ"');
       setShowPinChange(false);
       setOldPin(''); setNewPin(''); setConfirmPin('');
     } catch {
@@ -87,33 +87,33 @@ export default function SettingsScreen({ navigation }) {
 
   const handleToggleBiometric = async () => {
     if (!bioHardware) {
-      showToast('Aucune biomÃ©trie configurÃ©e sur cet appareil', 'error');
+      showToast('Aucune biométrie configurée sur cet appareil', 'error');
       return;
     }
     if (biometricEnabled) {
       enableBiometric(false);
-      showToast('BiomÃ©trie dÃ©sactivÃ©e');
+      showToast('Biométrie désactivée');
       return;
     }
     // Ask biometric to confirm activation
     const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: 'Confirme ton identitÃ© pour activer la biomÃ©trie',
+      promptMessage: 'Confirme ton identité pour activer la biométrie',
       cancelLabel: 'Annuler',
       fallbackLabel: 'Utiliser le PIN',
     });
     if (result.success) {
       enableBiometric(true);
-      showToast('BiomÃ©trie activÃ©e âœ“');
+      showToast('Biométrie activée âœ"');
     }
   };
 
   const themeLabel = lang === 'en'
     ? { light: 'Light mode', dark: 'Dark mode', sepia: 'Sepia mode' }
-    : { light: 'Mode clair', dark: 'Mode sombre', sepia: 'Mode sÃ©pia' };
+    : { light: 'Mode clair', dark: 'Mode sombre', sepia: 'Mode sépia' };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }} edges={['top']}>
-      <KGTopBar title={lang === 'en' ? 'Settings' : 'ParamÃ¨tres'} onBack={() => navigation.goBack()} />
+      <KGTopBar title={lang === 'en' ? 'Settings' : 'Paramètres'} onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
 
         {/* Language */}
@@ -169,13 +169,13 @@ export default function SettingsScreen({ navigation }) {
         </Section>
 
         {/* Security */}
-        <Section title={lang === 'en' ? 'Security' : 'SÃ©curitÃ©'}>
+        <Section title={lang === 'en' ? 'Security' : 'Sécurité'}>
           <KGCard padding={0}>
             <View style={{ overflow: 'hidden' }}>
               <Row
                 icon="shield"
                 label={lang === 'en' ? 'Change my PIN' : 'Changer mon code PIN'}
-                sub={lang === 'en' ? 'Change your account access code' : 'Modifier le code d\'accÃ¨s Ã  ton compte'}
+                sub={lang === 'en' ? 'Change your account access code' : 'Modifier le code d\'accès à ton compte'}
                 onPress={() => setShowPinChange(p => !p)}
                 rightLabel={showPinChange ? 'â–²' : undefined}
               />
@@ -211,12 +211,12 @@ export default function SettingsScreen({ navigation }) {
               )}
               <Row
                 icon="eye"
-                label={lang === 'en' ? 'Biometric authentication' : 'Authentification biomÃ©trique'}
+                label={lang === 'en' ? 'Biometric authentication' : 'Authentification biométrique'}
                 sub={
                   !bioHardware
                     ? (lang === 'en' ? 'Not available on this device' : 'Non disponible sur cet appareil')
                     : biometricEnabled
-                      ? (lang === 'en' ? 'Enabled â€” tap to disable' : 'ActivÃ©e â€” appuie pour dÃ©sactiver')
+                      ? (lang === 'en' ? 'Enabled â€" tap to disable' : 'Activée â€" appuie pour désactiver')
                       : (lang === 'en' ? 'Use Face ID / fingerprint' : 'Utiliser Face ID / empreinte digitale')
                 }
                 onPress={handleToggleBiometric}
@@ -247,11 +247,11 @@ export default function SettingsScreen({ navigation }) {
                 icon="user"
                 label={lang === 'en' ? 'Personal information' : 'Informations personnelles'}
                 sub={user?.phone || ''}
-                onPress={() => showToast(lang === 'en' ? 'Profile editing coming soon' : 'Modification du profil bientÃ´t disponible')}
+                onPress={() => showToast(lang === 'en' ? 'Profile editing coming soon' : 'Modification du profil bientôt disponible')}
               />
               <Row
                 icon="logout"
-                label={lang === 'en' ? 'Sign out' : 'Se dÃ©connecter'}
+                label={lang === 'en' ? 'Sign out' : 'Se déconnecter'}
                 sub={lang === 'en' ? 'Close session on this device' : 'Fermer la session sur cet appareil'}
                 onPress={() => { logout(); navigation.replace('Welcome'); }}
               />

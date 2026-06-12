@@ -8,6 +8,7 @@ const router = Router();
 
 router.use(verifyJWT);
 router.get('/profile', ctrl.getProfile);
+router.get('/stats',   ctrl.getUserStats);
 router.patch('/profile', ctrl.updateProfile);
 router.patch('/payment-account', ctrl.updatePaymentAccount);
 router.post('/kyc', upload.fields([

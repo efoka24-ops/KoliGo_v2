@@ -1,48 +1,102 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { Screen, ScreenHeader, Field, Pill, Avatar } from '../../components';
-import { colors, type } from '../../theme';
-import { useI18n } from '../../i18n';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors, fonts } from '../../constants/colors';
+import { useApp } from '../../context/AppContext';
+import KenteStripe from '../../components/KenteStripe';
+import Icon from '../../components/Icon';
 
-function Bubble({ mine, children }) {
-  return (
-    <View style={[styles.bubble, mine ? styles.mine : styles.theirs]}>
-      <Text style={[type.body, mine && { color: '#fff' }]}>{children}</Text>
-    </View>
-  );
-}
+// Inbox tab — shows list of conversations
+export default function ChatScreen({ navigation }) {
+  const { conversations, role } = useApp();
 
-export default function ChatScreen() {
-  const { t } = useI18n();
+  const convList = Object.values(conversations || {}).sort((a, b) => {
+    if (!a.lastTime) return 1;
+    if (!b.lastTime) return -1;
+    return a.lastTime > b.lastTime ? -1 : 1;
+  });
+
+  const roleColor = (contactRole) =>
+    contactRole === 'deliverer' ? colors.green
+    : contactRole === 'client'  ? '#C4611A'
+    : colors.ink55;
+
+  const roleLabel = (contactRole) =>
+    contactRole === 'deliverer' ? 'Livreur'
+    : contactRole === 'client'  ? 'Client'
+    : 'Contact';
+
   return (
-    <Screen padded={false} scroll={false}>
-      <ScreenHeader
-        title="Jean · ★4.9"
-        subtitle={`${t('deliverer')} · ${t('online')}`}
-        right={<Avatar label="J" tone="orange" size={34} />}
-      />
-      <View style={{ flex: 1, padding: 18, gap: 10 }}>
-        <Bubble>Bonjour, je pars de la boutique 👍</Bubble>
-        <Bubble mine>Parfait, le client attend à Bonapriso.</Bubble>
-        <Bubble>J'y serai dans 10 min.</Bubble>
-        <View style={{ flex: 1 }} />
-        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-          <Pill label="J'arrive" tone="muted" />
-          <Pill label="Je suis là" tone="muted" />
-          <Pill label="OK 👍" tone="muted" />
-        </View>
-        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-          <View style={{ flex: 1 }}><Field placeholder={t('message')} /></View>
-          <Pressable style={styles.sendBtn}><Text style={{ color: '#fff', fontSize: 16 }}>➤</Text></Pressable>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF5E6' }} edges={['top']}>
+      <KenteStripe height={4} />
+
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14 }}>
+        <Text style={{ flex: 1, fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: '#0E2116', letterSpacing: -0.5 }}>
+          Messages
+        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#EFF8F1', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99 }}>
+          <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: colors.green }} />
+          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.greenDark }}>En ligne</Text>
         </View>
       </View>
-    </Screen>
+
+      {convList.length === 0 ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 40 }}>
+          <View style={{ width: 72, height: 72, borderRadius: 20, backgroundColor: '#F5F0E8', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#E8DCC8', borderStyle: 'dashed' }}>
+            <Icon name="chat" size={30} color={colors.ink35} />
+          </View>
+          <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 18, color: colors.ink }}>Aucune conversation</Text>
+          <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink55, textAlign: 'center', lineHeight: 20, maxWidth: 260 }}>
+            Tes échanges avec les livreurs et clients apparaîtront ici.
+          </Text>
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 16, gap: 10, paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
+          {convList.map(conv => (
+            <TouchableOpacity
+              key={conv.id}
+              activeOpacity={0.82}
+              onPress={() => navigation.navigate('ChatDetail', { convId: conv.id })}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#fff', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#E8DCC8' }}
+            >
+              {/* Avatar */}
+              <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: roleColor(conv.contactRole), alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 16, color: '#fff' }}>
+                  {conv.contactInitials || '??'}
+                </Text>
+              </View>
+
+              {/* Text */}
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 14.5, color: colors.ink }} numberOfLines={1}>
+                    {conv.contactName || 'Contact'}
+                  </Text>
+                  <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: colors.ink35 }}>
+                    {conv.lastTime || ''}
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                  <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 10, color: roleColor(conv.contactRole), textTransform: 'uppercase', letterSpacing: 0.06 }}>
+                    {roleLabel(conv.contactRole)}
+                  </Text>
+                  <Text style={{ color: colors.ink35, fontSize: 10 }}>·</Text>
+                  <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: colors.ink55 }} numberOfLines={1}>
+                    {conv.lastMessage || '…'}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Unread badge */}
+              {conv.unread > 0 && (
+                <View style={{ minWidth: 20, height: 20, borderRadius: 10, backgroundColor: colors.green, paddingHorizontal: 5, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 11, color: '#fff' }}>{conv.unread}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  bubble: { maxWidth: '78%', borderRadius: 14, paddingVertical: 9, paddingHorizontal: 13 },
-  theirs: { alignSelf: 'flex-start', backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.line },
-  mine: { alignSelf: 'flex-end', backgroundColor: colors.green },
-  sendBtn: { width: 44, height: 44, borderRadius: 12, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' },
-});

@@ -15,16 +15,16 @@ export const colors = {
   orangeDark: '#C8410F',
   orange50: '#FCEBE2',
 
-  // neutrals (warm)
-  ink: '#15140F',
-  ink2: '#3E3D36',
-  muted: '#76746B',
-  muted2: '#9A988E',
-  app: '#F4F5F1',
+  // neutrals — Blanc & Africanité (luminous white base, warm earthy accents)
+  ink: '#1A1814',
+  ink2: '#3D3B32',
+  muted: '#7A7870',
+  muted2: '#A09E96',
+  app: '#FFFFFF',          // pure white — luminous
   surface: '#FFFFFF',
-  surface2: '#FBFBF8',
-  line: '#E7E7E0',
-  line2: '#EFEFEA',
+  surface2: '#F8F7F4',     // warm off-white
+  line: '#EAE9E4',
+  line2: '#F2F1ED',
 
   // status
   ok: '#178A3C',

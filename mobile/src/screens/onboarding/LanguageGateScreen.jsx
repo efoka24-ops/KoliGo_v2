@@ -5,7 +5,7 @@ import { colors, fonts } from '../../constants/colors';
 import Icon from '../../components/Icon';
 
 const OPTIONS = [
-  { id: 'fr', label: 'ðŸ‡«ðŸ‡· FranÃ§ais', subtitle: 'Continuer en franÃ§ais' },
+  { id: 'fr', label: 'ðŸ‡«ðŸ‡· Français', subtitle: 'Continuer en français' },
   { id: 'en', label: 'ðŸ‡¬ðŸ‡§ English', subtitle: 'Continue in English' },
 ];
 
@@ -21,7 +21,7 @@ export default function LanguageGateScreen({ onSelected }) {
           Choisir la langue / Choose Language
         </Text>
         <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14.5, color: colors.ink55, textAlign: 'center', lineHeight: 21, marginTop: 8, maxWidth: 320 }}>
-          SÃ©lectionne ta langue pour commencer / Select your language to start
+          Sélectionne ta langue pour commencer / Select your language to start
         </Text>
       </View>
 

@@ -1,4 +1,5 @@
 export { default as AuthScreen } from './AuthScreen';
+export { default as ForgotPinScreen } from './ForgotPinScreen';
 export { default as KYCScreen } from './KYCScreen';
 export { default as LanguageGateScreen } from './LanguageGateScreen';
 export { default as PermissionsGateScreen } from './PermissionsGateScreen';

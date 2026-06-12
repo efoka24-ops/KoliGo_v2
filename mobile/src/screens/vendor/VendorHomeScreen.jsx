@@ -26,21 +26,27 @@ function StatCard({ label, value, kind, sub, accent }) {
 }
 
 export default function VendorHomeScreen({ navigation, route }) {
-  const { toast, user, lang } = useApp();
+  const { toast, user, token, api, lang } = useApp();
   const { t } = useI18n();
   const displayName = user?.name || 'Mon compte';
   const avatar = user?.avatar || '??';
   const isDemo = user?.isTest === true;
   const isEn = lang === 'en';
-  
+  const [stats, setStats] = useState(null);
+
   const { deliveries: active, fetchDeliveries } = useDeliveries();
 
+  const fetchStats = useCallback(async () => {
+    if (isDemo || !token) return;
+    try { setStats(await api('/api/user/stats')); } catch {}
+  }, [api, isDemo, token]);
+
   useEffect(() => {
-    const load = () => fetchDeliveries({ activeOnly: true });
+    const load = () => { fetchDeliveries({ activeOnly: true }); fetchStats(); };
     load();
     const unsub = navigation.addListener('focus', load);
     return unsub;
-  }, [fetchDeliveries, navigation]);
+  }, [fetchDeliveries, fetchStats, navigation]);
 
   const handleTab = (tab) => {
     if (tab === 'history') navigation.navigate('History');
@@ -59,7 +65,7 @@ export default function VendorHomeScreen({ navigation, route }) {
             <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 16, color: '#fff' }}>{avatar}</Text>
           </View>
           <View>
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{t('Bonjour ðŸ‘‹')}</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{t('Bonjour ðŸ'‹')}</Text>
             <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 17, color: colors.ink, letterSpacing: -0.01 }}>{displayName}</Text>
           </View>
         </View>
@@ -88,7 +94,7 @@ export default function VendorHomeScreen({ navigation, route }) {
           <View>
             <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.05 }}>{t('Gains du jour')}</Text>
             <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 32, color: '#fff', letterSpacing: -0.03 * 32, lineHeight: 36, marginTop: 4 }}>
-              {isDemo ? '12 450' : '0'} <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>XAF</Text>
+              {isDemo ? '12 450' : (stats?.gainsToday ?? 0).toLocaleString('fr-FR')} <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>XAF</Text>
             </Text>
             {isDemo && (
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
@@ -124,7 +130,7 @@ export default function VendorHomeScreen({ navigation, route }) {
             <KGCard kind="green" padding={16} style={{ justifyContent: 'space-between', minHeight: 100 }}>
               <View>
                 <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.greenDark, opacity: 0.7 }}>{t('Ce mois')}</Text>
-                <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: colors.greenDark, letterSpacing: -0.02, marginTop: 4 }}>{isDemo ? '42 colis' : '0 colis'}</Text>
+                <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: colors.greenDark, letterSpacing: -0.02, marginTop: 4 }}>{isDemo ? '42 colis' : `${stats?.totalMonth ?? 0} colis`}</Text>
               </View>
               {isDemo && <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.greenDark }}>+18% â†—</Text>}
             </KGCard>
@@ -145,8 +151,8 @@ export default function VendorHomeScreen({ navigation, route }) {
             <Icon name="plus" size={24} color="#fff" strokeWidth={2.4} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 17, color: '#fff', letterSpacing: -0.01 }}>{t('CrÃ©er une livraison')}</Text>
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 }}>{t('Prix calculÃ© en 3 secondes')}</Text>
+            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 17, color: '#fff', letterSpacing: -0.01 }}>{t('Créer une livraison')}</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 }}>{t('Prix calculé en 3 secondes')}</Text>
           </View>
           <Icon name="arrow" size={22} color="#fff" />
         </TouchableOpacity>
@@ -205,7 +211,7 @@ export default function VendorHomeScreen({ navigation, route }) {
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 14, color: colors.ink }}>{isEn ? 'Go-go tip' : 'Astuce go-go'}</Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: colors.ink70, marginTop: 4, lineHeight: 18 }}>
-                {isEn ? 'Choose "Express" between 7am and 9am â€” your parcels arrive before shops open.' : 'Choisis "Express" entre 7h et 9h â€” tes colis arrivent avant l\'ouverture des boutiques.'}
+                {isEn ? 'Choose "Express" between 7am and 9am â€" your parcels arrive before shops open.' : 'Choisis "Express" entre 7h et 9h â€" tes colis arrivent avant l\'ouverture des boutiques.'}
               </Text>
             </View>
           </View>

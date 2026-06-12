@@ -1,6 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useApp } from '../store';
+import { useApp } from '../context/AppContext';
 
 // Onboarding
 import LanguageScreen from '../screens/onboarding/LanguageScreen';
@@ -14,6 +14,7 @@ import LocationScreen from '../screens/onboarding/LocationScreen';
 import RoleSelectScreen from '../screens/onboarding/RoleSelectScreen';
 import PaymentSetupScreen from '../screens/onboarding/PaymentSetupScreen';
 import MaintenanceScreen from '../screens/onboarding/MaintenanceScreen';
+import ForgotPinScreen from '../screens/onboarding/ForgotPinScreen';
 
 // Role tab navigators
 import VendorTabs from './VendorTabs';
@@ -22,12 +23,14 @@ import DelivererTabs from './DelivererTabs';
 // Vendor stack extras
 import PostDeliveryScreen from '../screens/vendor/PostDeliveryScreen';
 import VendorCodesScreen from '../screens/vendor/VendorCodesScreen';
+import VendorTrustInvoiceScreen from '../screens/vendor/VendorTrustInvoiceScreen';
 import DeliveryDetailScreen from '../screens/vendor/DeliveryDetailScreen';
 
 // Deliverer stack extras
 import OfferDetailScreen from '../screens/deliverer/OfferDetailScreen';
 import ConfirmCodeScreen from '../screens/deliverer/ConfirmCodeScreen';
 import WaitingScreen from '../screens/deliverer/WaitingScreen';
+import DelivererWaitingScreen from '../screens/deliverer/DelivererWaitingScreen';
 import RatingScreen from '../screens/deliverer/RatingScreen';
 import ReportIssueScreen from '../screens/deliverer/ReportIssueScreen';
 import KycStatusScreen from '../screens/deliverer/KycStatusScreen';
@@ -36,13 +39,19 @@ import KycStatusScreen from '../screens/deliverer/KycStatusScreen';
 import ClientLandingScreen from '../screens/client/ClientLandingScreen';
 import ClientTrackingScreen from '../screens/client/ClientTrackingScreen';
 import ClientReceptionScreen from '../screens/client/ClientReceptionScreen';
-import ReceptionSuccessScreen from '../screens/client/ReceptionSuccessScreen';
+import ReceptionSuccessScreen from '../screens/client/ClientReceptionSuccessScreen';
 import ClientRatingScreen from '../screens/client/ClientRatingScreen';
+import ClientReportIssueScreen from '../screens/client/ClientReportIssueScreen';
 
 // Shared
 import NotificationsScreen from '../screens/shared/NotificationsScreen';
 import SettingsScreen from '../screens/shared/SettingsScreen';
 import TermsScreen from '../screens/shared/TermsScreen';
+import ChatDetailScreen from '../screens/shared/ChatScreen';
+import DeliveryChatScreen from '../screens/shared/DeliveryChatScreen';
+import HistoryScreen from '../screens/shared/HistoryScreen';
+import PaymentAccountScreen from '../screens/shared/PaymentAccountScreen';
+import VendorHistoryScreen from '../screens/vendor/HistoryScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -50,7 +59,7 @@ export default function RootNavigator() {
   const { role } = useApp();
 
   return (
-    <Stack.Navigator initialRouteName="Language" screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#F4F5F1' } }}>
+    <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#F4F5F1' } }}>
       {/* Onboarding */}
       <Stack.Screen name="Language" component={LanguageScreen} />
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
@@ -62,6 +71,7 @@ export default function RootNavigator() {
       <Stack.Screen name="Location" component={LocationScreen} />
       <Stack.Screen name="RoleSelect" component={RoleSelectScreen} />
       <Stack.Screen name="PaymentSetup" component={PaymentSetupScreen} />
+      <Stack.Screen name="ForgotPin" component={ForgotPinScreen} />
 
       {/* Main app — role decides which tab set */}
       <Stack.Screen name="VendorApp" component={VendorTabs} />
@@ -70,12 +80,14 @@ export default function RootNavigator() {
       {/* Vendor extras */}
       <Stack.Screen name="PostDelivery" component={PostDeliveryScreen} />
       <Stack.Screen name="VendorCodes" component={VendorCodesScreen} />
+      <Stack.Screen name="TrustInvoice" component={VendorTrustInvoiceScreen} />
       <Stack.Screen name="DeliveryDetail" component={DeliveryDetailScreen} />
 
       {/* Deliverer extras */}
       <Stack.Screen name="OfferDetail" component={OfferDetailScreen} />
       <Stack.Screen name="ConfirmCode" component={ConfirmCodeScreen} />
       <Stack.Screen name="Waiting" component={WaitingScreen} />
+      <Stack.Screen name="DelivererWaiting" component={DelivererWaitingScreen} />
       <Stack.Screen name="Rating" component={RatingScreen} />
       <Stack.Screen name="ReportIssue" component={ReportIssueScreen} />
       <Stack.Screen name="KycStatus" component={KycStatusScreen} />
@@ -86,11 +98,17 @@ export default function RootNavigator() {
       <Stack.Screen name="ClientReception" component={ClientReceptionScreen} />
       <Stack.Screen name="ReceptionSuccess" component={ReceptionSuccessScreen} />
       <Stack.Screen name="ClientRating" component={ClientRatingScreen} />
+      <Stack.Screen name="ClientReportIssue" component={ClientReportIssueScreen} />
 
       {/* Shared / modals */}
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="Terms" component={TermsScreen} />
+      <Stack.Screen name="ChatDetail" component={ChatDetailScreen} />
+      <Stack.Screen name="DeliveryChat" component={DeliveryChatScreen} />
+      <Stack.Screen name="History" component={VendorHistoryScreen} />
+      <Stack.Screen name="DelivererHistory" component={HistoryScreen} />
+      <Stack.Screen name="PaymentAccount" component={PaymentAccountScreen} />
       <Stack.Screen name="Maintenance" component={MaintenanceScreen} options={{ presentation: 'modal' }} />
     </Stack.Navigator>
   );

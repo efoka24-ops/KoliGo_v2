@@ -5,7 +5,7 @@ import * as Network from 'expo-network';
 import * as Application from 'expo-application';
 import * as Location from 'expo-location';
 import { storage as SecureStore } from '../utils/storage';
-import { apiFetch } from '../services/api';
+import { apiFetch, setAuthFailureHandler } from '../services/api';
 import { setCurrentLang } from '../i18n/translations.js';
 import { getInitials } from '../utils/helpers';
 
@@ -65,17 +65,18 @@ export function AppProvider({ children, initialLang = 'fr' }) {
   const [lang, setLangState] = useState(initialLang);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [sessionRestored, setSessionRestored] = useState(false);
+  const [online, setOnline] = useState(true);
   const toastTimer = useRef(null);
 
   // Fetch pricing config from backend on mount
   useEffect(() => {
-    apiFetch('/api/public/pricing').then(d => { if (d) setPricing(d); }).catch(() => {});
+    apiFetch('/public/pricing').then(d => { if (d) setPricing(d); }).catch(() => {});
   }, []);
 
   // Restore persisted session + lang + biometric flag on startup
   useEffect(() => {
     Promise.all([
-      SecureStore.getItem('kg_token').catch(() => null),
+      SecureStore.getItem('access_token').catch(() => null),
       SecureStore.getItem('kg_lang').catch(() => null),
       SecureStore.getItem('kg_biometric').catch(() => null),
     ]).then(([storedToken, storedLang, storedBio]) => {
@@ -86,10 +87,10 @@ export function AppProvider({ children, initialLang = 'fr' }) {
       if (storedBio === '1') setBiometricEnabled(true);
       if (storedToken) {
         // Verify token is still valid
-        apiFetch('/api/users/me', {}, storedToken).then(u => {
-          if (u?.id) loginAs({ ...u, role: u.role?.toLowerCase() || 'vendor' }, storedToken);
+        apiFetch('/user/profile', {}, storedToken).then(u => {
+          if (u?.id) loginAs({ ...u, role: u.activeRole?.toLowerCase() || 'vendor' }, storedToken);
         }).catch(() => {
-          SecureStore.deleteItem('kg_token').catch(() => {});
+          SecureStore.deleteItem('access_token').catch(() => {});
         });
       }
     }).finally(() => setSessionRestored(true));
@@ -151,7 +152,7 @@ export function AppProvider({ children, initialLang = 'fr' }) {
           });
         }
       }
-      await apiFetch('/api/auth/device-session', {
+      await apiFetch('/auth/device-session', {
         method: 'POST',
         body: JSON.stringify({ deviceId, deviceModel, deviceBrand, osVersion, ipAddress, lat, lng, appVersion }),
       }, jwtToken);
@@ -167,7 +168,7 @@ export function AppProvider({ children, initialLang = 'fr' }) {
       setToken(jwt);
       if (!account.isTest) {
         collectDeviceSession(jwt);
-        SecureStore.setItem('kg_token', jwt).catch(() => {});
+        SecureStore.setItem('access_token', jwt).catch(() => {});
       }
     }
     if (account.isTest) {
@@ -177,14 +178,21 @@ export function AppProvider({ children, initialLang = 'fr' }) {
     }
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
     setToken(null);
     setPendingUser(null);
     setRole('vendor');
     setConversations({});
-    SecureStore.deleteItem('kg_token').catch(() => {});
-  };
+    SecureStore.deleteItem('access_token').catch(() => {});
+    SecureStore.deleteItem('refresh_token').catch(() => {});
+    SecureStore.deleteItem('user_phone').catch(() => {});
+  }, []);
+
+  // Register logout as the handler for token-refresh failures in the axios interceptor
+  useEffect(() => {
+    setAuthFailureHandler(logout);
+  }, [logout]);
 
   // Authenticated API shortcut
   const api = useCallback(
@@ -233,6 +241,13 @@ export function AppProvider({ children, initialLang = 'fr' }) {
     return convId;
   };
 
+  // Expose setOnline for E2E testing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__koligo_setOnline = (val) => setOnline(val);
+    }
+  }, []);
+
   return (
     <AppContext.Provider value={{
       role, setRole,
@@ -247,6 +262,7 @@ export function AppProvider({ children, initialLang = 'fr' }) {
       lang, setLang,
       biometricEnabled, enableBiometric,
       sessionRestored,
+      online, setOnline,
     }}>
       {children}
     </AppContext.Provider>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Top face -->
+  <polygon points="512,92 888,305 512,518 136,305" fill="#178A3C"/>
+  <!-- Left face -->
+  <polygon points="136,305 512,518 512,930 136,717" fill="#178A3C"/>
+  <!-- Right face -->
+  <polygon points="888,305 888,717 512,930 512,518" fill="#178A3C"/>
+
+  <!-- Outer edges (lighter green) -->
+  <polygon points="512,92 888,305 888,717 512,930 136,717 136,305"
+           fill="none" stroke="#4EAF74" stroke-width="22" stroke-linejoin="miter"/>
+  <!-- Inner Y-lines from center (512,518) -->
+  <line x1="512" y1="92"  x2="512" y2="518" stroke="#4EAF74" stroke-width="22"/>
+  <line x1="512" y1="518" x2="136" y2="717" stroke="#4EAF74" stroke-width="22"/>
+  <line x1="512" y1="518" x2="888" y2="717" stroke="#4EAF74" stroke-width="22"/>
+
+  <!-- White arrow (right-pointing, chunky rounded style) -->
+  <!-- Shaft -->
+  <line x1="258" y1="648" x2="612" y2="648" stroke="white" stroke-width="80" stroke-linecap="round"/>
+  <!-- Chevron head -->
+  <polyline points="562,568 724,648 562,728"
+            stroke="white" stroke-width="80" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- Orange dot (top-right, partially overlapping cube) -->
+  <circle cx="788" cy="196" r="118" fill="#E8551C"/>
+</svg>

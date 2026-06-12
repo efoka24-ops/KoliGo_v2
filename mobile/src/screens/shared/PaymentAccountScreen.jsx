@@ -10,8 +10,8 @@ import Icon from '../../components/Icon';
 import { useApp } from '../../context/AppContext';
 
 const PROVIDERS = [
-  { id: 'mtn',    label: 'MTN MoMo',      sub: 'NumÃ©ros 65x-67x, 68x', bg: '#FFCC00', textColor: '#1A1A1A' },
-  { id: 'orange', label: 'Orange Money',   sub: 'NumÃ©ros 69x, 65x',     bg: colors.orange, textColor: '#fff' },
+  { id: 'mtn',    label: 'MTN MoMo',      sub: 'Numéros 65x-67x, 68x', bg: '#FFCC00', textColor: '#1A1A1A' },
+  { id: 'orange', label: 'Orange Money',   sub: 'Numéros 69x, 65x',     bg: colors.orange, textColor: '#fff' },
 ];
 
 export default function PaymentAccountScreen({ navigation }) {
@@ -23,7 +23,7 @@ export default function PaymentAccountScreen({ navigation }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api('/api/users/me')
+    api('/api/user/profile')
       .then(u => {
         if (u.paymentProvider) setProvider(u.paymentProvider);
         if (u.paymentNumber)   setNumber(u.paymentNumber);
@@ -35,17 +35,17 @@ export default function PaymentAccountScreen({ navigation }) {
 
   const handleSave = async () => {
     if (!number.trim() || !name.trim()) {
-      showToast('Remplis le numÃ©ro et le nom du titulaire.', 'error');
+      showToast('Remplis le numéro et le nom du titulaire.', 'error');
       return;
     }
     setSaving(true);
     try {
-      const updated = await api('/api/users/me', {
+      const updated = await api('/api/user/profile', {
         method: 'PATCH',
         body: JSON.stringify({ paymentProvider: provider, paymentNumber: number.trim(), paymentName: name.trim() }),
       });
       setUser(prev => ({ ...prev, ...updated }));
-      showToast('Compte de paiement enregistrÃ© âœ“', 'success');
+      showToast('Compte de paiement enregistré âœ"', 'success');
       navigation.navigate('ProfileChoice');
     } catch (err) {
       showToast(err.message || 'Erreur lors de la sauvegarde.', 'error');
@@ -66,10 +66,10 @@ export default function PaymentAccountScreen({ navigation }) {
 
         <View style={{ gap: 8 }}>
           <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 26, letterSpacing: -0.02 * 26, color: colors.ink }}>
-            OÃ¹ on t'envoie l'argent ?
+            Où on t'envoie l'argent ?
           </Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink70, lineHeight: 21 }}>
-            Choisis ton compte Mobile Money. C'est lÃ  que KoliGo verse automatiquement tes paiements aprÃ¨s chaque livraison.
+            Choisis ton compte Mobile Money. C'est là que KoliGo verse automatiquement tes paiements après chaque livraison.
           </Text>
         </View>
 
@@ -94,7 +94,7 @@ export default function PaymentAccountScreen({ navigation }) {
                 {on && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <Icon name="check" size={12} color={colors.green} />
-                    <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.green }}>SÃ©lectionnÃ©</Text>
+                    <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.green }}>Sélectionné</Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -105,7 +105,7 @@ export default function PaymentAccountScreen({ navigation }) {
         {/* Account details */}
         <KGCard padding={14} style={{ gap: 14 }}>
           <KGInput
-            label="NumÃ©ro du compte"
+            label="Numéro du compte"
             value={number}
             onChangeText={setNumber}
             icon="bell"
@@ -128,7 +128,7 @@ export default function PaymentAccountScreen({ navigation }) {
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 13.5, color: colors.greenDark }}>Paiement automatique</Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: colors.greenDark, marginTop: 4, lineHeight: 18, opacity: 0.85 }}>
-                Chaque transaction est rÃ©partie en direct : marchandise + livraison + frais. Tu reÃ§ois ta part sans cliquer.
+                Chaque transaction est répartie en direct : marchandise + livraison + frais. Tu reçois ta part sans cliquer.
               </Text>
             </View>
           </View>

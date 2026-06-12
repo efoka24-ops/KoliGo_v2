@@ -28,5 +28,5 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.app },
   pad: { padding: 18, gap: 14 },
   center: { justifyContent: 'center', alignItems: 'center' },
-  footer: { padding: 18, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.app },
+  footer: { paddingHorizontal: 18, paddingVertical: 14, backgroundColor: colors.app },
 });

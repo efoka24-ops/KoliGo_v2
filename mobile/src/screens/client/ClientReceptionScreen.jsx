@@ -92,7 +92,7 @@ export default function ClientReceptionScreen({ navigation, route }) {
   const handleConfirm = async () => {
     setError(null);
     if (!deliveryId) {
-      navigation.navigate('ClientReceptionSuccess', {
+      navigation.navigate('ReceptionSuccess', {
         ...params,
         delivererName: params.delivererName || 'Eric',
         vendorName: params.vendorName || 'Mama Africa Boutique',
@@ -103,11 +103,11 @@ export default function ClientReceptionScreen({ navigation, route }) {
     }
     setLoading(true);
     try {
-      const result = await apiFetch(`/api/deliveries/${deliveryId}/client-confirm`, {
+      const result = await apiFetch(`/deliveries/${deliveryId}/client-confirm`, {
         method: 'POST',
         body: JSON.stringify({ code: code.join(''), momoRef: momoRef.trim() || undefined, paymentNumber: paymentNumber.trim() || undefined }),
       });
-      navigation.navigate('ClientReceptionSuccess', {
+      navigation.navigate('ReceptionSuccess', {
         ...params,
         delivererName: result.delivererName || null,
         delivererId:   result.delivererId || null,
@@ -119,7 +119,7 @@ export default function ClientReceptionScreen({ navigation, route }) {
         paymentNumber: paymentNumber.trim() || momoRef.trim() || null,
       });
     } catch (err) {
-      setError(err.message || 'Code incorrect, rÃ©essaie.');
+      setError(err.message || 'Code incorrect, réessaie.');
     } finally {
       setLoading(false);
     }
@@ -127,23 +127,23 @@ export default function ClientReceptionScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
-      <KGTopBar title="Confirmer la rÃ©ception" onBack={() => navigation.navigate('ClientTracking', params)} />
+      <KGTopBar title="Confirmer la réception" onBack={() => navigation.navigate('ClientTracking', params)} />
       <ScrollView contentContainerStyle={{ padding: 20, gap: 18, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
 
         <View style={{ gap: 6 }}>
           <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 24, letterSpacing: -0.02 * 24, color: colors.ink }}>
-            Ton colis est arrivÃ© ?
+            Ton colis est arrivé ?
           </Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13.5, color: colors.ink70, lineHeight: 20 }}>
             Saisis le{' '}
-            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, color: colors.ink }}>code de rÃ©ception Ã  4 chiffres</Text>
-            {' '}que le vendeur t'a communiquÃ© pour confirmer la livraison.
+            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, color: colors.ink }}>code de réception à 4 chiffres</Text>
+            {' '}que le vendeur t'a communiqué pour confirmer la livraison.
           </Text>
         </View>
 
         <KGCard padding={16}>
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, letterSpacing: 0.06, textTransform: 'uppercase', marginBottom: 16 }}>
-            Code de rÃ©ception
+            Code de réception
           </Text>
           <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'center', marginBottom: 20 }}>
             {code.map((d, i) => <DigitBox key={i} digit={d} />)}
@@ -153,18 +153,18 @@ export default function ClientReceptionScreen({ navigation, route }) {
 
         <KGCard padding={14}>
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, letterSpacing: 0.06, textTransform: 'uppercase', marginBottom: 10 }}>
-            RÃ©fÃ©rence paiement MoMo (optionnel)
+            Référence paiement MoMo (optionnel)
           </Text>
           <TextInput
             value={momoRef}
             onChangeText={setMomoRef}
-            placeholder="ex: 655 123 456 ou rÃ©f. transaction"
+            placeholder="ex: 655 123 456 ou réf. transaction"
             placeholderTextColor={colors.ink35}
             keyboardType="default"
             style={{ height: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.ink12, paddingHorizontal: 14, fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink, backgroundColor: colors.cream }}
           />
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, letterSpacing: 0.06, textTransform: 'uppercase', marginTop: 12, marginBottom: 10 }}>
-            NumÃ©ro de paiement
+            Numéro de paiement
           </Text>
           <TextInput
             value={paymentNumber}
@@ -190,7 +190,7 @@ export default function ClientReceptionScreen({ navigation, route }) {
           disabled={!isComplete || loading}
           onPress={handleConfirm}
         >
-          {loading ? <ActivityIndicator color={colors.green} /> : 'Confirmer la rÃ©ception'}
+          {loading ? <ActivityIndicator color={colors.green} /> : 'Confirmer la réception'}
         </KGButton>
       </ScrollView>
     </SafeAreaView>

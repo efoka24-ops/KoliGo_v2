@@ -9,7 +9,7 @@ import Icon from '../../components/Icon';
 
 export default function ClientLandingScreen({ navigation, route }) {
   const params = route?.params || {};
-  const clientName = params.clientName || 'AÃ¯cha';
+  const clientName = params.clientName || 'Aïcha';
   const vendorName = params.vendorName || 'Mama Africa Boutique';
   const parcelDesc = params.parcelDesc || 'Robe wax';
   const orderId = params.orderId || 'KG-2026-0512';
@@ -29,10 +29,10 @@ export default function ClientLandingScreen({ navigation, route }) {
           </View>
         </View>
         <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 28, color: '#fff', letterSpacing: -0.02 * 28, lineHeight: 32 }}>
-          Salut {clientName} ðŸ‘‹
+          Salut {clientName} ðŸ'‹
         </Text>
         <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: 'rgba(255,255,255,0.85)', marginTop: 6, lineHeight: 20 }}>
-          Ton colis de <Text style={{ fontFamily: `${fonts.ui}-SemiBold` }}>{vendorName}</Text> est en route. Il a Ã©tÃ© ajoutÃ© Ã  ton historique.
+          Ton colis de <Text style={{ fontFamily: `${fonts.ui}-SemiBold` }}>{vendorName}</Text> est en route. Il a été ajouté à ton historique.
         </Text>
       </View>
 
@@ -51,25 +51,25 @@ export default function ClientLandingScreen({ navigation, route }) {
           <View style={{ backgroundColor: colors.greenLight, borderRadius: 14, padding: 14, flexDirection: 'row', gap: 12 }}>
             <Icon name="check" size={20} color={colors.green} />
             <Text style={{ flex: 1, fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.greenDark, lineHeight: 19 }}>
-              <Text style={{ fontFamily: `${fonts.ui}-SemiBold` }}>AjoutÃ© Ã  ton historique.</Text>{' '}
-              Retrouve ce colis Ã  tout moment dans l'app KoliGo, onglet{' '}
-              <Text style={{ fontFamily: `${fonts.ui}-SemiBold` }}>Mes rÃ©ceptions</Text>.
+              <Text style={{ fontFamily: `${fonts.ui}-SemiBold` }}>Ajouté à ton historique.</Text>{' '}
+              Retrouve ce colis à tout moment dans l'app KoliGo, onglet{' '}
+              <Text style={{ fontFamily: `${fonts.ui}-SemiBold` }}>Mes réceptions</Text>.
             </Text>
           </View>
         </KGCard>
 
         <KGCard padding={14} style={{ gap: 10 }}>
-          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.04 }}>AperÃ§u du colis</Text>
+          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.04 }}>Aperçu du colis</Text>
           <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, letterSpacing: -0.03 * 22, color: colors.ink }}>{parcelDesc}</Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13.5, color: colors.ink70, lineHeight: 19 }}>
-            Boutique: <Text style={{ fontFamily: `${fonts.ui}-SemiBold` }}>{vendorName}</Text> Â· RÃ©fÃ©rence <Text style={{ fontFamily: `${fonts.ui}-SemiBold` }}>{orderLabel}</Text>
+            Boutique: <Text style={{ fontFamily: `${fonts.ui}-SemiBold` }}>{vendorName}</Text> Â· Référence <Text style={{ fontFamily: `${fonts.ui}-SemiBold` }}>{orderLabel}</Text>
           </Text>
           <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
             <View style={{ backgroundColor: colors.greenLight, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 }}>
-              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.greenDark }}>ðŸ“¦ En route</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.greenDark }}>ðŸ"¦ En route</Text>
             </View>
             <View style={{ backgroundColor: '#fff3e8', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 }}>
-              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.orange }}>ðŸ”” Suivi actif</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.orange }}>ðŸ"" Suivi actif</Text>
             </View>
           </View>
         </KGCard>
@@ -89,12 +89,12 @@ export default function ClientLandingScreen({ navigation, route }) {
           icon="history"
           onPress={() => navigation.navigate('History')}
         >
-          Mes rÃ©ceptions
+          Mes réceptions
         </KGButton>
 
         <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55, textAlign: 'center', lineHeight: 18, paddingHorizontal: 10 }}>
-          Quand le livreur arrive, ouvre la page de suivi et confirme la rÃ©ception avec ton{' '}
-          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, color: colors.ink }}>code B</Text> et ton numÃ©ro de paiement.
+          Quand le livreur arrive, ouvre la page de suivi et confirme la réception avec ton{' '}
+          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, color: colors.ink }}>code B</Text> et ton numéro de paiement.
         </Text>
       </ScrollView>
     </SafeAreaView>

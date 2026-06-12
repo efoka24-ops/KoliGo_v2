@@ -30,9 +30,9 @@ export default function Button({ title, onPress, variant = 'primary', size = 'md
 }
 
 const VARIANTS = {
-  primary: { bg: colors.green, border: colors.greenDark, fg: colors.white },
-  accent: { bg: colors.orange, border: colors.orangeDark, fg: colors.white },
-  outline: { bg: colors.surface, border: colors.line, fg: colors.ink },
+  primary: { bg: colors.green, border: colors.green, fg: colors.white },
+  accent: { bg: colors.orange, border: colors.orange, fg: colors.white },
+  outline: { bg: 'transparent', border: colors.line, fg: colors.ink },
   ghost: { bg: 'transparent', border: 'transparent', fg: colors.ink },
 };
 

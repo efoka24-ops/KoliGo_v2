@@ -17,43 +17,43 @@ export default function ClientReceptionSuccessScreen({ navigation, route }) {
   const delivery = params.delivery || 0;
   const split = kgSplitPayment({ merchandise, delivery });
   const parcelDesc = params.parcelDesc || 'Colis';
-  const vendorName = params.vendorName || 'â€”';
-  const delivererName = params.delivererName || 'â€”';
-  const paymentNumber = params.paymentNumber || 'â€”';
+  const vendorName = params.vendorName || '—';
+  const delivererName = params.delivererName || '—';
+  const paymentNumber = params.paymentNumber || '—';
 
   const now = new Date();
   const dateStr = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-    + ' Â· ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    + ' · ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
   const shareReceipt = async () => {
     const text = [
-      `ðŸ§¾ ReÃ§u KoliGo Â· ${params.orderId || ''}`,
+      `Reçu KoliGo · ${params.orderId || ''}`,
       `Date : ${dateStr}`,
       ``,
-      `Vendeur : ${params.vendorName || 'â€”'}`,
-      `Livreur : ${params.delivererName || 'â€”'}`,
+      `Vendeur : ${params.vendorName || '—'}`,
+      `Livreur : ${params.delivererName || '—'}`,
       ``,
       `Marchandise : ${split.merchandise.toLocaleString('fr-FR')} XAF`,
       `Livraison   : ${split.delivery.toLocaleString('fr-FR')} XAF`,
       `Frais       : ${split.serviceFee.toLocaleString('fr-FR')} XAF`,
-      `â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€`,
-      `Total payÃ©  : ${split.total.toLocaleString('fr-FR')} XAF`,
+      `────────────────────`,
+      `Total payé  : ${split.total.toLocaleString('fr-FR')} XAF`,
       ``,
-      `KoliGo SARL Â· support@koligo.cm`,
+      `KoliGo SARL · support@koligo.cm`,
     ].join('\n');
 
     try {
       if (Platform.OS === 'web' && navigator?.share) {
-        await navigator.share({ title: `ReÃ§u ${params.orderId || 'KoliGo'}`, text });
+        await navigator.share({ title: `Reçu ${params.orderId || 'KoliGo'}`, text });
       } else {
-        await Share.share({ message: text, title: `ReÃ§u ${params.orderId || 'KoliGo'}` });
+        await Share.share({ message: text, title: `Reçu ${params.orderId || 'KoliGo'}` });
       }
     } catch {}
   };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }} edges={['top']}>
-      <KGTopBar title="RÃ©ception confirmÃ©e" onBack={() => navigation.navigate('ClientLanding')} />
+      <KGTopBar title="Réception confirmée" onBack={() => navigation.navigate('ClientLanding')} />
       <ScrollView contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
 
         {/* Success header */}
@@ -62,16 +62,16 @@ export default function ClientReceptionSuccessScreen({ navigation, route }) {
             <Icon name="check" size={38} color={colors.green} strokeWidth={2.6} />
           </View>
           <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 24, letterSpacing: -0.02 * 24, color: colors.ink }}>
-            Paiement traitÃ© âœ“
+            Paiement traité ✓
           </Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70, textAlign: 'center', lineHeight: 19, paddingHorizontal: 8 }}>
-            La rÃ©partition est automatique : vendeur, livreur et plateforme reÃ§oivent leur part instantanÃ©ment.
+            La répartition est automatique : vendeur, livreur et plateforme reçoivent leur part instantanément.
           </Text>
         </View>
 
         <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16 }}>
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.04, marginBottom: 12 }}>
-            ReÃ§u dÃ©taillÃ©
+            Reçu détaillé
           </Text>
           {[
             { label: 'Nom du vendeur ou boutique', value: vendorName },
@@ -80,7 +80,7 @@ export default function ClientReceptionSuccessScreen({ navigation, route }) {
             { label: 'Nom du livreur', value: delivererName },
             { label: 'Prix de livraison', value: `${delivery.toLocaleString('fr-FR')} XAF` },
             { label: 'KoliGo', value: `${split.platformTotal.toLocaleString('fr-FR')} XAF` },
-            { label: 'NumÃ©ro de paiement', value: paymentNumber },
+            { label: 'Numéro de paiement', value: paymentNumber },
           ].map(row => (
             <View key={row.label} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.ink06 }}>
               <Text style={{ flex: 1, fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70 }}>{row.label}</Text>
@@ -93,14 +93,14 @@ export default function ClientReceptionSuccessScreen({ navigation, route }) {
           </View>
         </View>
 
-        {/* RÃ©partition rapide */}
+        {/* Répartition */}
         <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16 }}>
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.04, marginBottom: 12 }}>
-            RÃ©partition automatique
+            Répartition automatique
           </Text>
           {[
-            { label: 'Vendeur reÃ§oit', value: split.vendorNet, color: colors.green },
-            { label: 'Livreur reÃ§oit', value: split.delivererNet, color: colors.orange },
+            { label: 'Vendeur reçoit', value: split.vendorNet, color: colors.green },
+            { label: 'Livreur reçoit', value: split.delivererNet, color: colors.orange },
             { label: 'Plateforme KoliGo', value: split.platformTotal, color: colors.ink55 },
           ].map(r => (
             <View key={r.label} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.ink06 }}>
@@ -109,7 +109,7 @@ export default function ClientReceptionSuccessScreen({ navigation, route }) {
             </View>
           ))}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10 }}>
-            <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 14, color: colors.ink }}>Total payÃ©</Text>
+            <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 14, color: colors.ink }}>Total payé</Text>
             <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 16, color: colors.ink }}>{split.total.toLocaleString('fr-FR')} XAF</Text>
           </View>
         </View>
@@ -120,7 +120,7 @@ export default function ClientReceptionSuccessScreen({ navigation, route }) {
           orderId={params.orderId || 'KG-2026-0001'}
           date={dateStr}
           vendor={vendorName}
-          client={params.clientName || 'â€”'}
+          client={params.clientName || '—'}
           deliverer={delivererName}
           paymentMethod="MTN MoMo"
           split={split}
@@ -136,7 +136,7 @@ export default function ClientReceptionSuccessScreen({ navigation, route }) {
             style={{ flex: 1 }}
             onPress={shareReceipt}
           >
-            ReÃ§u paiement
+            Reçu paiement
           </KGButton>
           <KGButton
             kind="ghost"
@@ -144,9 +144,9 @@ export default function ClientReceptionSuccessScreen({ navigation, route }) {
             icon="upload"
             full={false}
             style={{ flex: 1 }}
-            onPress={() => showToast('ReÃ§u livraison tÃ©lÃ©chargÃ© ðŸ“¦')}
+            onPress={() => showToast('Reçu livraison téléchargé')}
           >
-            ReÃ§u livraison
+            Reçu livraison
           </KGButton>
         </View>
 
@@ -154,9 +154,9 @@ export default function ClientReceptionSuccessScreen({ navigation, route }) {
           kind="ghost"
           size="md"
           icon="flag"
-          onPress={() => navigation.navigate('ReportIssue', { deliveryId: params.deliveryId })}
+          onPress={() => navigation.navigate('ClientReportIssue', { deliveryId: params.deliveryId })}
         >
-          Signaler un problÃ¨me
+          Signaler un problème
         </KGButton>
 
         <KGButton

@@ -13,10 +13,10 @@ const STEPS = {
       color: colors.green,
       bg: colors.greenLight,
       title: 'Position GPS',
-      subtitle: 'Requis pour le suivi en temps rÃ©el des livraisons',
+      subtitle: 'Requis pour le suivi en temps réel des livraisons',
       benefits: [
-        'Suivi de votre livreur en temps rÃ©el',
-        'Confirmation de prÃ©sence Ã  la collecte',
+        'Suivi de votre livreur en temps réel',
+        'Confirmation de présence à la collecte',
         'Calcul automatique de la distance',
       ],
       kind: 'foreground',
@@ -25,8 +25,8 @@ const STEPS = {
       icon: 'moto',
       color: colors.orange,
       bg: '#FFF3EC',
-      title: 'GPS en arriÃ¨re-plan',
-      subtitle: 'Permet de continuer le suivi quand l\'app est minimisÃ©e',
+      title: 'GPS en arrière-plan',
+      subtitle: 'Permet de continuer le suivi quand l\'app est minimisée',
       benefits: [],
       kind: 'background',
     },
@@ -86,7 +86,7 @@ export default function PermissionsGateScreen({ lang = 'fr', onGranted }) {
         }
       }
     } catch {
-      // Background permissions not available (web/simulator) â€” proceed anyway
+      // Background permissions not available (web/simulator) â€" proceed anyway
       if (step === 1) onGranted();
       else setStep(1);
     } finally {
@@ -101,7 +101,7 @@ export default function PermissionsGateScreen({ lang = 'fr', onGranted }) {
 
   const buttonLabels = lang === 'en'
     ? { permit: 'Allow access', skip: 'Continue without GPS' }
-    : { permit: 'Autoriser l\'accÃ¨s GPS', skip: 'Continuer sans GPS' };
+    : { permit: 'Autoriser l\'accès GPS', skip: 'Continuer sans GPS' };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', padding: 28 }} edges={['top', 'bottom']}>
@@ -144,7 +144,7 @@ export default function PermissionsGateScreen({ lang = 'fr', onGranted }) {
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70, lineHeight: 19 }}>
             {lang === 'en'
               ? 'This permission allows you to continue sharing your location during a delivery, even if you leave the app. It can be disabled from your phone\'s settings at any time.'
-              : 'Cette permission permet de continuer Ã  partager votre position pendant une livraison, mÃªme si vous quittez l\'application. Elle peut Ãªtre dÃ©sactivÃ©e depuis les paramÃ¨tres de votre tÃ©lÃ©phone Ã  tout moment.'}
+              : 'Cette permission permet de continuer à partager votre position pendant une livraison, même si vous quittez l\'application. Elle peut être désactivée depuis les paramètres de votre téléphone à tout moment.'}
           </Text>
         </View>
       )}
@@ -153,8 +153,8 @@ export default function PermissionsGateScreen({ lang = 'fr', onGranted }) {
         <View style={{ backgroundColor: '#FEF2F2', borderRadius: 12, padding: 14, marginBottom: 20, width: '100%' }}>
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: '#D8472A', textAlign: 'center' }}>
             {lang === 'en'
-              ? 'Permission denied. Enable GPS in Settings â†’ Apps â†’ KoliGo â†’ Location.'
-              : 'Permission refusÃ©e. Activez le GPS dans ParamÃ¨tres â†’ Applications â†’ KoliGo â†’ Localisation.'}
+              ? 'Permission denied. Enable GPS in Settings â†' Apps â†' KoliGo â†' Location.'
+              : 'Permission refusée. Activez le GPS dans Paramètres â†' Applications â†' KoliGo â†' Localisation.'}
           </Text>
         </View>
       )}

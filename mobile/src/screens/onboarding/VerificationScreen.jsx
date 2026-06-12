@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, fonts } from '../../constants/colors';
@@ -7,41 +7,42 @@ import { useApp } from '../../context/AppContext';
 import KGTopBar from '../../components/KGTopBar';
 import KGButton from '../../components/KGButton';
 import KGInput from '../../components/KGInput';
+import KenteStripe from '../../components/KenteStripe';
 import Icon from '../../components/Icon';
 
-// Step 0: CNI number Â· Step 1: CNI recto Â· Step 2: CNI verso Â· Step 3: Selfie Â· Step 4: Success
 const TITLES = [
-  'Ton numÃ©ro de CNI',
+  'Ton numéro de CNI',
   'Photo de ta CNI',
   'Et le verso',
   'Selfie avec ta CNI',
 ];
 const DESCS = [
-  'Saisis le numÃ©ro figurant sur ta Carte Nationale d\'IdentitÃ© camerounaise. Il sera affichÃ© sur ta facture de confiance.',
-  'Cadre bien la face recto de ta CNI. Toutes les informations doivent Ãªtre lisibles.',
-  'Tourne ta CNI et photographie l\'arriÃ¨re.',
-  'Tiens ta CNI Ã  cÃ´tÃ© de ton visage face Ã  la camÃ©ra. Cligne des yeux si demandÃ©.',
+  "Saisis le numéro figurant sur ta Carte Nationale d'Identité camerounaise.",
+  'Cadre bien la face recto de ta CNI. Toutes les informations doivent être lisibles.',
+  "Tourne ta CNI et photographie l'arrière.",
+  'Tiens ta CNI à côté de ton visage face à la caméra.',
 ];
-const STEP_LABELS = ['NÂ° CNI', 'CNI recto', 'CNI verso', 'Selfie'];
+const STEP_LABELS = ['N° CNI', 'CNI recto', 'CNI verso', 'Selfie'];
+
+const STEP_ICONS = ['shield', 'id', 'id', 'user'];
 
 export default function VerificationScreen({ navigation }) {
   const { api } = useApp();
-  const [step, setStep] = useState(0);
+  const [step, setStep]         = useState(0);
   const [cniNumber, setCniNumber] = useState('');
-  const [cniRecto, setCniRecto]   = useState(null);
-  const [cniVerso, setCniVerso]   = useState(null);
-  const [selfie, setSelfie]       = useState(null);
-  const [loading, setLoading]     = useState(false);
+  const [cniRecto, setCniRecto] = useState(null);
+  const [cniVerso, setCniVerso] = useState(null);
+  const [selfie, setSelfie]     = useState(null);
+  const [loading, setLoading]   = useState(false);
 
-  const isSuccess = step === 4;
-  const isCNIStep = step === 0;
-  const isSelfie  = step === 3;
+  const isSuccess  = step === 4;
+  const isCNIStep  = step === 0;
+  const isSelfie   = step === 3;
   const canProceed = isCNIStep ? cniNumber.trim().length >= 6 : true;
 
   const captureStepPhoto = async () => {
     const camPerm = await ImagePicker.requestCameraPermissionsAsync();
     if (camPerm.status !== 'granted') return null;
-
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: 'images',
       quality: 0.75,
@@ -49,172 +50,179 @@ export default function VerificationScreen({ navigation }) {
       allowsEditing: true,
       aspect: isSelfie ? [1, 1] : [4, 3],
     });
-
     if (result.canceled || !result.assets?.[0]?.base64) return null;
     const dataUrl = `data:image/jpeg;base64,${result.assets[0].base64}`;
-
     if (step === 1) setCniRecto(dataUrl);
     if (step === 2) setCniVerso(dataUrl);
     if (step === 3) setSelfie(dataUrl);
     return dataUrl;
   };
 
-  const handleBack = () => {
-    if (step === 0) navigation.goBack();
-    else setStep(s => s - 1);
-  };
+  const handleBack = () => { if (step === 0) navigation.goBack(); else setStep(s => s - 1); };
 
   const handleNext = async () => {
     if (step === 0) { setStep(1); return; }
-    if (step === 1) {
-      const photo = await captureStepPhoto();
-      if (!photo) return;
-      setStep(2);
-      return;
-    }
-    if (step === 2) {
-      const photo = await captureStepPhoto();
-      if (!photo) return;
-      setStep(3);
-      return;
-    }
-
-    // Step 3 â†’ submit + success
+    if (step === 1 || step === 2) { const p = await captureStepPhoto(); if (!p) return; setStep(s => s + 1); return; }
     setLoading(true);
     try {
       const selfieData = selfie || await captureStepPhoto();
       if (!selfieData) return;
-      await api('/api/auth/kyc', {
-        method: 'POST',
-        body: JSON.stringify({
-          cniNumber: cniNumber.trim(),
-          cniRecto,
-          cniVerso,
-          selfie: selfieData,
-        }),
-      });
-    } catch {
-      // Continue even if API fails â€” user can resubmit from profile
-    } finally {
+      await api('/api/auth/kyc', { method: 'POST', body: JSON.stringify({ cniNumber: cniNumber.trim(), cniRecto, cniVerso, selfie: selfieData }) });
+    } catch { /* continue even on API error */ } finally {
       setLoading(false);
       setStep(4);
     }
   };
 
+  if (isSuccess) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF5E6' }} edges={['top']}>
+        <KenteStripe height={4} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 20 }}>
+          <View style={{ width: 100, height: 100, borderRadius: 28, backgroundColor: '#EFF8F1', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.green }}>
+            <Icon name="shield" size={48} color={colors.green} />
+          </View>
+          <View style={{ alignItems: 'center', gap: 8 }}>
+            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 28, color: '#0E2116', textAlign: 'center', letterSpacing: -0.5 }}>
+              Dossier envoyé !
+            </Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink55, textAlign: 'center', lineHeight: 21, maxWidth: 280 }}>
+              Notre équipe examine tes documents. Tu seras notifié sous 24h. En attendant, tu peux déjà utiliser l'application.
+            </Text>
+          </View>
+          <View style={{ backgroundColor: '#F5F0E8', borderRadius: 16, padding: 16, gap: 8, borderWidth: 1, borderColor: '#E8DCC8', width: '100%' }}>
+            <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 12, color: '#B8A48A', textTransform: 'uppercase', letterSpacing: 0.08 }}>◈ Prochaines étapes</Text>
+            {['Vérification du document CNI', 'Validation de ton selfie', 'Badge KYC activé sur ton profil'].map((s, i) => (
+              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 11, color: '#fff' }}>{i + 1}</Text>
+                </View>
+                <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink }}>{s}</Text>
+              </View>
+            ))}
+          </View>
+          <KGButton kind="primary" size="lg" icon="check" onPress={() => navigation.goBack()}>
+            Retour au profil
+          </KGButton>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
-      <KGTopBar title="VÃ©rification d'identitÃ©" onBack={handleBack} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF5E6' }} edges={['top']}>
+      <KenteStripe height={4} />
+      <KGTopBar title="Vérification d'identité" onBack={handleBack} />
+
       <ScrollView contentContainerStyle={{ padding: 20, gap: 18, flexGrow: 1 }} showsVerticalScrollIndicator={false}>
 
-        {/* 4-step progress bar */}
-        {!isSuccess && (
-          <>
-            <View style={{ flexDirection: 'row', gap: 6 }}>
-              {[0, 1, 2, 3].map(i => (
+        {/* Progress steps */}
+        <View style={{ flexDirection: 'row', gap: 6 }}>
+          {[0, 1, 2, 3].map(i => (
+            <View key={i} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= step ? colors.green : '#E8DCC8' }} />
+          ))}
+        </View>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#0E2116', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name={STEP_ICONS[step]} size={18} color="#D4991A" />
+          </View>
+          <View>
+            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: '#B8A48A', textTransform: 'uppercase', letterSpacing: 0.08 }}>
+              Étape {step + 1} / 4 — {STEP_LABELS[step]}
+            </Text>
+            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 24, color: '#0E2116', letterSpacing: -0.5, marginTop: 2 }}>
+              {TITLES[step]}
+            </Text>
+          </View>
+        </View>
+
+        <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13.5, color: colors.ink55, lineHeight: 20 }}>
+          {DESCS[step]}
+        </Text>
+
+        {isCNIStep ? (
+          <KGInput
+            label="Numéro CNI"
+            value={cniNumber}
+            onChangeText={setCniNumber}
+            icon="shield"
+            placeholder="ex: CM000123456789"
+            autoCapitalize="characters"
+          />
+        ) : (
+          /* Photo frame — African terracotta corners instead of dashed green */
+          <View style={{
+            aspectRatio: isSelfie ? 1 : 1.6,
+            backgroundColor: '#F5F0E8',
+            borderRadius: 20,
+            alignItems: 'center', justifyContent: 'center',
+            position: 'relative', overflow: 'hidden',
+          }}>
+            {/* Terracotta L-corners */}
+            {[
+              { top: 0, left: 0 },
+              { top: 0, right: 0 },
+              { bottom: 0, left: 0 },
+              { bottom: 0, right: 0 },
+            ].map((pos, i) => {
+              const isTop    = pos.top    !== undefined;
+              const isLeft   = pos.left   !== undefined;
+              return (
                 <View key={i} style={{
-                  flex: 1, height: 4, borderRadius: 2,
-                  backgroundColor: i <= step ? colors.green : colors.ink12,
+                  position: 'absolute', width: 28, height: 28,
+                  borderTopWidth:    isTop    ? 3 : 0,
+                  borderBottomWidth: !isTop   ? 3 : 0,
+                  borderLeftWidth:   isLeft   ? 3 : 0,
+                  borderRightWidth:  !isLeft  ? 3 : 0,
+                  borderColor: '#C4611A',
+                  borderTopLeftRadius:     ( isTop &&  isLeft) ? 10 : 0,
+                  borderTopRightRadius:    ( isTop && !isLeft) ? 10 : 0,
+                  borderBottomLeftRadius:  (!isTop &&  isLeft) ? 10 : 0,
+                  borderBottomRightRadius: (!isTop && !isLeft) ? 10 : 0,
+                  ...pos,
                 }} />
-              ))}
-            </View>
+              );
+            })}
 
-            <View>
-              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink35, textTransform: 'uppercase', letterSpacing: 0.06 }}>
-                Ã‰tape {step + 1} / 4 â€” {STEP_LABELS[step]}
-              </Text>
-              <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 26, color: colors.ink, letterSpacing: -0.02 * 26, marginTop: 4 }}>
-                {TITLES[step]}
-              </Text>
-              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink70, marginTop: 8, lineHeight: 20 }}>
-                {DESCS[step]}
-              </Text>
-            </View>
-
-            {isCNIStep ? (
-              <KGInput
-                label="NumÃ©ro CNI"
-                value={cniNumber}
-                onChangeText={setCniNumber}
-                icon="shield"
-                placeholder="ex: CM000123456789"
-                autoCapitalize="characters"
-              />
-            ) : (
-              <View style={{
-                aspectRatio: isSelfie ? 1 : 1.6,
-                borderWidth: 2, borderStyle: 'dashed', borderColor: colors.green,
-                borderRadius: 18, backgroundColor: colors.greenSoft,
-                alignItems: 'center', justifyContent: 'center',
-                position: 'relative',
-              }}>
-                {[
-                  { top: 10, left: 10 }, { top: 10, right: 10 },
-                  { bottom: 10, left: 10 }, { bottom: 10, right: 10 },
-                ].map((pos, i) => (
-                  <View key={i} style={{
-                    position: 'absolute', width: 22, height: 22,
-                    borderTopWidth: pos.bottom !== undefined ? 0 : 2,
-                    borderBottomWidth: pos.top !== undefined ? 0 : 2,
-                    borderLeftWidth: pos.right !== undefined ? 0 : 2,
-                    borderRightWidth: pos.left !== undefined ? 0 : 2,
-                    borderColor: colors.green, borderRadius: 4, ...pos,
-                  }} />
-                ))}
-                <Icon name={isSelfie ? 'user' : 'id'} size={48} color={colors.green} strokeWidth={1.4} />
-                <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.greenDark, marginTop: 8 }}>
-                  {STEP_LABELS[step]}
-                </Text>
-                <Text style={{ fontFamily: `${fonts.mono}-Regular`, fontSize: 10, color: colors.green, opacity: 0.5, marginTop: 4 }}>
-                  aperÃ§u camÃ©ra
-                </Text>
-              </View>
-            )}
-
-            <View style={{ backgroundColor: colors.orangeLight, padding: 14, borderRadius: 12, flexDirection: 'row', gap: 10 }}>
-              <Icon name="shield" size={20} color={colors.orange} />
-              <Text style={{ flex: 1, fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70, lineHeight: 18 }}>
-                Tes documents sont chiffrÃ©s et ne servent qu'Ã  la vÃ©rification KYC.{' '}
-                <Text style={{ fontFamily: `${fonts.ui}-Bold`, color: colors.orange }}>Jamais partagÃ©s.</Text>
-              </Text>
-            </View>
-
-            <View style={{ flex: 1 }} />
-            <KGButton
-              kind={canProceed ? 'primary' : 'ghost'}
-              disabled={!canProceed || loading}
-              size="lg"
-              icon={isCNIStep ? 'arrow' : loading ? undefined : 'camera'}
-              onPress={handleNext}
-            >
-              {loading
-                ? <ActivityIndicator color="#fff" />
-                : isCNIStep
-                  ? 'Continuer'
-                  : isSelfie
-                    ? 'Prendre le selfie'
-                    : 'Prendre la photo'}
-            </KGButton>
-          </>
-        )}
-
-        {isSuccess && (
-          <View style={{ flex: 1, alignItems: 'center', gap: 18, marginTop: 30 }}>
-            <View style={{ width: 96, height: 96, borderRadius: 48, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="check" size={48} color={colors.green} strokeWidth={2.4} />
-            </View>
-            <View style={{ alignItems: 'center' }}>
-              <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 26, color: colors.ink, letterSpacing: -0.02 * 26 }}>
-                VÃ©rification envoyÃ©e
-              </Text>
-              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink70, marginTop: 8, textAlign: 'center', paddingHorizontal: 20, lineHeight: 20 }}>
-                Un admin KoliGo valide ton dossier sous 5â€“10 minutes. Tu peux dÃ©jÃ  utiliser l'application.
-              </Text>
-            </View>
-            <KGButton kind="primary" size="lg" iconRight="arrow" onPress={() => navigation.navigate('PaymentAccount')}>
-              Configurer mon compte MoMo
-            </KGButton>
+            {/* Warm decorative circle bg */}
+            <View style={{ position: 'absolute', width: '70%', height: '70%', borderRadius: 999, backgroundColor: 'rgba(196,97,26,0.06)' }} />
+            <Icon name={isSelfie ? 'user' : 'id'} size={52} color="#C4611A" strokeWidth={1.2} />
+            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: '#C4611A', marginTop: 10 }}>
+              {STEP_LABELS[step]}
+            </Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: '#B8A48A', marginTop: 4 }}>
+              aperçu caméra
+            </Text>
           </View>
         )}
+
+        {/* Security notice — warm terracotta */}
+        <View style={{ backgroundColor: '#FEF0E3', padding: 14, borderRadius: 14, flexDirection: 'row', gap: 10, borderWidth: 1, borderColor: '#F5D0B8' }}>
+          <Icon name="shield" size={20} color="#C4611A" />
+          <Text style={{ flex: 1, fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70, lineHeight: 18 }}>
+            Tes documents sont chiffrés et ne servent qu'à la vérification KYC.{' '}
+            <Text style={{ fontFamily: `${fonts.ui}-Bold`, color: '#C4611A' }}>Jamais partagés.</Text>
+          </Text>
+        </View>
+
+        <View style={{ flex: 1, minHeight: 16 }} />
+
+        <KGButton
+          kind={canProceed ? 'primary' : 'ghost'}
+          disabled={!canProceed || loading}
+          size="lg"
+          icon={isCNIStep ? 'arrow' : loading ? undefined : 'camera'}
+          onPress={handleNext}
+        >
+          {loading
+            ? <ActivityIndicator color="#fff" />
+            : isCNIStep
+              ? 'Continuer'
+              : isSelfie
+                ? 'Prendre le selfie'
+                : 'Prendre la photo'}
+        </KGButton>
       </ScrollView>
     </SafeAreaView>
   );

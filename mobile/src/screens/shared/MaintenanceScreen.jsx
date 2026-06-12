@@ -20,7 +20,7 @@ export default function MaintenanceScreen({ onRetry }) {
       </Text>
 
       <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: 'rgba(255,255,255,0.55)', textAlign: 'center', lineHeight: 22, maxWidth: 280, marginBottom: 40 }}>
-        L'application est temporairement indisponible pour des opÃ©rations de maintenance. Elle sera de retour trÃ¨s bientÃ´t.
+        L'application est temporairement indisponible pour des opérations de maintenance. Elle sera de retour très bientôt.
       </Text>
 
       <View style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 16, padding: 16, width: '100%', marginBottom: 32 }}>
@@ -38,7 +38,7 @@ export default function MaintenanceScreen({ onRetry }) {
         activeOpacity={0.85}
       >
         <Icon name="history" size={16} color="#fff" />
-        <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 15, color: '#fff' }}>RÃ©essayer</Text>
+        <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 15, color: '#fff' }}>Réessayer</Text>
       </TouchableOpacity>
 
       <Text style={{ fontFamily: `${fonts.mono}-Regular`, fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 32 }}>

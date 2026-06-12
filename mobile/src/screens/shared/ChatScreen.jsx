@@ -5,15 +5,15 @@ import { colors, fonts } from '../../constants/colors';
 import { useApp } from '../../context/AppContext';
 import Icon from '../../components/Icon';
 
-const QUICK_REPLIES_VENDOR    = ['Je suis lÃ ', 'Merci !', 'OK reÃ§u ðŸ‘', 'Code SVP', 'En route ?'];
-const QUICK_REPLIES_DELIVERER = ['En route', 'Je suis lÃ ', 'OK reÃ§u ðŸ‘', 'Code SVP', 'Ã€ bientÃ´t'];
+const QUICK_REPLIES_VENDOR    = ['Je suis là', 'Merci !', 'OK reçu 👍', 'Code SVP', 'En route ?'];
+const QUICK_REPLIES_DELIVERER = ['En route', 'Je suis là', 'OK reçu 👍', 'Code SVP', 'À bientôt'];
 
 const AUTO_REPLIES = [
-  'Ok reÃ§u ðŸ‘',
-  'Je regarde Ã§a de suite.',
+  'Ok reçu 👍',
+  'Je regarde ça de suite.',
   "D'accord, merci !",
   'Super, parfait.',
-  'NotÃ© !',
+  'Noté !',
 ];
 
 export default function ChatScreen({ route, navigation }) {
@@ -24,7 +24,6 @@ export default function ChatScreen({ route, navigation }) {
   const [input, setInput] = useState('');
   const scrollRef = useRef(null);
 
-  // Scroll to bottom whenever messages change
   const messages = conv?.messages || [];
   useEffect(() => {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
@@ -34,7 +33,6 @@ export default function ChatScreen({ route, navigation }) {
     if (!text.trim() || !convId) return;
     sendMessage(convId, text.trim());
     setInput('');
-    // Simulate reply after short delay
     setTimeout(() => {
       const reply = AUTO_REPLIES[Math.floor(Math.random() * AUTO_REPLIES.length)];
       receiveMessage(convId, reply);
@@ -54,7 +52,7 @@ export default function ChatScreen({ route, navigation }) {
 
   const quickReplies = role === 'vendor' ? QUICK_REPLIES_VENDOR : QUICK_REPLIES_DELIVERER;
   const roleColor = conv.contactRole === 'deliverer' ? colors.green
-    : conv.contactRole === 'client' ? colors.orange : colors.ink;
+    : conv.contactRole === 'client' ? '#C4611A' : colors.ink;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }} edges={['top']}>
@@ -67,15 +65,16 @@ export default function ChatScreen({ route, navigation }) {
           >
             <Icon name="back" size={20} color={colors.ink} />
           </TouchableOpacity>
-          <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 13, color: '#fff' }}>{conv.contactInitials}</Text>
+          <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: roleColor, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 13, color: '#fff' }}>{conv.contactInitials || '??'}</Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 15, color: colors.ink }}>{conv.contactName}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
               <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: roleColor }} />
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: roleColor }}>
-                {conv.contactRole === 'deliverer' ? 'Livreur' : conv.contactRole === 'client' ? 'Client' : 'Vendeur'}
+                {conv.contactRole === 'deliverer' ? 'Livreur'
+                  : conv.contactRole === 'client' ? 'Client' : 'Vendeur'}
               </Text>
             </View>
           </View>
@@ -102,7 +101,7 @@ export default function ChatScreen({ route, navigation }) {
                 <Icon name="chat" size={24} color={colors.ink35} />
               </View>
               <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 14, color: colors.ink55, textAlign: 'center' }}>
-                Commence la conversation avec {conv.contactName.split(' ')[0]} !
+                Commence la conversation avec {conv.contactName?.split(' ')[0]} !
               </Text>
             </View>
           )}
@@ -147,8 +146,9 @@ export default function ChatScreen({ route, navigation }) {
             <TextInput
               value={input}
               onChangeText={setInput}
-              placeholder="Messageâ€¦"
+              placeholder="Message..."
               placeholderTextColor={colors.ink35}
+              underlineColorAndroid="transparent"
               style={{ flex: 1, fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink, outlineWidth: 0 }}
               onSubmitEditing={() => handleSend(input)}
               returnKeyType="send"

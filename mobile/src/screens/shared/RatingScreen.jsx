@@ -13,7 +13,7 @@ import KGTextarea from '../../components/KGTextarea';
 import Icon from '../../components/Icon';
 
 const ALL_TAGS = ['Rapide', 'Souriant', 'Pro', 'Soigneux', 'Ponctuel', 'Communique bien'];
-const STAR_LABELS = ['', 'Pas top', 'Bof', 'Correct', 'Bien', 'Excellent ðŸ”¥'];
+const STAR_LABELS = ['', 'Pas top', 'Bof', 'Correct', 'Bien', 'Excellent 🔥'];
 
 export default function RatingScreen({ navigation, route }) {
   const { showToast, api, token } = useApp();
@@ -36,19 +36,19 @@ export default function RatingScreen({ navigation, route }) {
     try {
       if (token && ratedId) {
         // Authenticated user (deliverer rating client, or vendor rating deliverer)
-        await api('/api/ratings', {
+        await api('/ratings', {
           method: 'POST',
           body: JSON.stringify({ ratedId, stars, comment: comment.trim() || null, deliveryId, tags: [...tags] }),
         });
       } else if (deliveryId) {
         // Unauthenticated client rating deliverer
         const { apiFetch } = require('../../services/api');
-        await apiFetch(`/api/ratings/client/${deliveryId}`, {
+        await apiFetch(`/ratings/client/${deliveryId}`, {
           method: 'POST',
           body: JSON.stringify({ stars, comment: comment.trim() || null, tags: [...tags] }),
         });
       }
-      showToast('Merci pour ta note â­');
+      showToast('Merci pour ta note ⭐');
     } catch (err) {
       showToast(err?.message || 'Erreur', 'error');
     } finally {
@@ -73,7 +73,7 @@ export default function RatingScreen({ navigation, route }) {
             <Icon name="check" size={42} color={colors.green} strokeWidth={2.4} />
           </View>
           <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 24, color: colors.ink, letterSpacing: -0.02 * 24 }}>Livraison terminÃ©e !</Text>
+            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 24, color: colors.ink, letterSpacing: -0.02 * 24 }}>Livraison terminée !</Text>
           </View>
         </View>
 
@@ -84,7 +84,7 @@ export default function RatingScreen({ navigation, route }) {
               <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 12, color: colors.ink }}>{partnerInitials}</Text>
             </View>
             <View>
-              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: colors.ink55 }}>Comment c'Ã©tait avec</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: colors.ink55 }}>Comment c'était avec</Text>
               <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 14, color: colors.ink }}>{partnerName} ?</Text>
             </View>
           </View>
@@ -99,11 +99,11 @@ export default function RatingScreen({ navigation, route }) {
         </KGCard>
 
         <View style={{ gap: 10 }}>
-          <KGSectionTitle>Ce que tu as aimÃ©</KGSectionTitle>
+          <KGSectionTitle>Ce que tu as aimé</KGSectionTitle>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {ALL_TAGS.map(t => (
               <KGChip key={t} active={tags.has(t)} color={tags.has(t) ? 'orange' : 'ink'} onPress={() => toggleTag(t)}>
-                {tags.has(t) ? 'âœ“ ' : ''}{t}
+                {tags.has(t) ? 'âœ" ' : ''}{t}
               </KGChip>
             ))}
           </View>
@@ -120,7 +120,7 @@ export default function RatingScreen({ navigation, route }) {
             style={{ alignItems: 'center' }}
             onPress={() => navigation.navigate('ReportIssue', { deliveryId })}
           >
-            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.orange }}>Signaler un problÃ¨me</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.orange }}>Signaler un problème</Text>
           </TouchableOpacity>
         )}
       </ScrollView>

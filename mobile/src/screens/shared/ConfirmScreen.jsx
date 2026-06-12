@@ -53,14 +53,14 @@ export default function ConfirmScreen({ navigation, route }) {
           method: 'POST',
           body: JSON.stringify({ code }),
         });
-        showToast('Collecte confirmÃ©e ! En route ðŸš€');
+        showToast('Collecte confirmée ! En route ðŸš€');
         navigation.navigate('DeliveryDetail', { deliveryId, mode: 'mine' });
       } else {
         await api(`/api/deliveries/${deliveryId}/confirm-deliver`, {
           method: 'POST',
           body: JSON.stringify({ code }),
         });
-        showToast('Livraison validÃ©e ! Paiement crÃ©ditÃ© âœ…');
+        showToast('Livraison validée ! Paiement crédité âœ…');
         navigation.navigate('DelivererHome');
       }
     } catch (err) {
@@ -92,8 +92,8 @@ export default function ConfirmScreen({ navigation, route }) {
           </Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink70, marginTop: 8, lineHeight: 20 }}>
             {isCollect
-              ? 'Saisis le code Ã  4 chiffres affichÃ© dans son app pour confirmer la collecte.'
-              : "Saisis le code Ã  4 chiffres reÃ§u par SMS. Sans ce code, la livraison n'est pas validÃ©e."}
+              ? 'Saisis le code à 4 chiffres affiché dans son app pour confirmer la collecte.'
+              : "Saisis le code à 4 chiffres reçu par SMS. Sans ce code, la livraison n'est pas validée."}
           </Text>
         </View>
 

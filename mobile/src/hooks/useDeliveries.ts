@@ -9,6 +9,14 @@ export function useDeliveries(status?: DeliveryStatus) {
   });
 }
 
+export function useAvailableDeliveries() {
+  return useQuery({
+    queryKey: ['deliveries-available'],
+    queryFn: () => deliveryService.listAvailable(),
+    refetchInterval: 15000,
+  });
+}
+
 export function useDelivery(id: string) {
   return useQuery({
     queryKey: ['delivery', id],

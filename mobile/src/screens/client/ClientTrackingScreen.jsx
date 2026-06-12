@@ -27,7 +27,7 @@ export default function ClientTrackingScreen({ navigation, route }) {
   // Fetch public delivery info (deliverer name, status)
   useEffect(() => {
     if (!isRealId) return;
-    apiFetch(`/api/deliveries/${deliveryId}/public`)
+    apiFetch(`/deliveries/track/${deliveryId}`)
       .then(d => setTrackingInfo(d))
       .catch(() => {});
   }, [deliveryId, isRealId]);
@@ -36,7 +36,7 @@ export default function ClientTrackingScreen({ navigation, route }) {
   const pollLocation = useCallback(async () => {
     if (!deliveryId) return;
     try {
-      const data = await apiFetch(`/api/deliveries/${deliveryId}/location`);
+      const data = await apiFetch(`/deliveries/${deliveryId}/location`, {}, token);
       if (data?.lat && data?.lng) {
         setDelivererPos({ lat: data.lat, lng: data.lng });
         setLastUpdated(new Date());
@@ -103,10 +103,10 @@ export default function ClientTrackingScreen({ navigation, route }) {
         <View style={{ backgroundColor: colors.green, borderRadius: 20, padding: 16, gap: 8 }}>
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 0.05 }}>Parcours client</Text>
           <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 20, color: '#fff', letterSpacing: -0.03 * 20 }}>
-            {delivererPos ? 'Le livreur bouge en temps rÃ©el' : 'En attente de position GPS'}
+            {delivererPos ? 'Le livreur bouge en temps réel' : 'En attente de position GPS'}
           </Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 19 }}>
-            Tu peux appeler le livreur, lui parler, puis confirmer la rÃ©ception avec le code B quand il arrive chez toi.
+            Tu peux appeler le livreur, lui parler, puis confirmer la réception avec le code B quand il arrive chez toi.
           </Text>
         </View>
 
@@ -125,7 +125,7 @@ export default function ClientTrackingScreen({ navigation, route }) {
               )}
               {lastUpdated && (
                 <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
-                  Mis Ã  jour Ã  {lastUpdated.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                  Mis à jour à {lastUpdated.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               )}
             </View>
@@ -147,7 +147,7 @@ export default function ClientTrackingScreen({ navigation, route }) {
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 15, color: colors.ink }}>
-                  {delivererName || 'Livreur assignÃ©'}
+                  {delivererName || 'Livreur assigné'}
                 </Text>
                 {delivererRating && (
                   <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.orange }}>
@@ -188,11 +188,11 @@ export default function ClientTrackingScreen({ navigation, route }) {
 
         {/* Package details */}
         <KGCard padding={14}>
-          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.04, marginBottom: 10 }}>DÃ©tails commande</Text>
+          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.04, marginBottom: 10 }}>Détails commande</Text>
           {[
             { label: 'Vendeur', value: params.vendorName || 'Vendeur KoliGo' },
             { label: 'Colis', value: params.parcelDesc || 'Colis en cours de livraison' },
-            trackingInfo && { label: 'Trajet', value: `${trackingInfo.fromQuartier} â†’ ${trackingInfo.toQuartier}` },
+            trackingInfo && { label: 'Trajet', value: `${trackingInfo.fromQuartier} â†' ${trackingInfo.toQuartier}` },
             params.balance && { label: 'Montant', value: `${Number(params.balance).toLocaleString('fr-FR')} XAF` },
           ].filter(Boolean).map(r => (
             <View key={r.label} style={{ marginBottom: 10 }}>
@@ -205,19 +205,19 @@ export default function ClientTrackingScreen({ navigation, route }) {
         {role !== 'vendor' && (
           <>
             <KGButton kind="primary" size="lg" icon="check" onPress={() => navigation.navigate('ClientReception', params)}>
-              Confirmer la rÃ©ception
+              Confirmer la réception
             </KGButton>
             <KGButton kind="ghost" size="md" icon="flag" onPress={() => navigation.navigate('ReportIssue', { deliveryId: params.orderId })}>
-              Signaler un problÃ¨me
+              Signaler un problème
             </KGButton>
           </>
         )}
       </ScrollView>
 
-      {/* Floating home button â€” always visible */}
+      {/* Floating home button â€" always visible */}
       <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 16, paddingVertical: 14, paddingBottom: 28, backgroundColor: colors.cream, borderTopWidth: 1, borderTopColor: colors.ink06 }}>
         <KGButton kind="soft" size="md" icon="home" onPress={goHome}>
-          Retour Ã  l'accueil
+          Retour à l'accueil
         </KGButton>
       </View>
     </SafeAreaView>

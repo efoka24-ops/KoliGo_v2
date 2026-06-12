@@ -13,7 +13,7 @@ import KGTextarea from '../../components/KGTextarea';
 import Icon from '../../components/Icon';
 
 const ISSUES = [
-  { id: 'damaged',  label: 'Colis endommagÃ©',  icon: 'package', color: colors.orange },
+  { id: 'damaged',  label: 'Colis endommagé',  icon: 'package', color: colors.orange },
   { id: 'missing',  label: 'Colis manquant',   icon: 'flag',    color: '#B43A1B' },
   { id: 'address',  label: 'Mauvaise adresse', icon: 'pin',     color: '#1F5BB0' },
   { id: 'behavior', label: 'Comportement',     icon: 'user',    color: colors.ink },
@@ -34,7 +34,7 @@ export default function ReportIssueScreen({ navigation, route }) {
       if (status !== 'granted') {
         const cam = await ImagePicker.requestCameraPermissionsAsync();
         if (cam.status !== 'granted') {
-          Alert.alert('Permission requise', "Autorise l'accÃ¨s Ã  la galerie ou Ã  l'appareil photo.");
+          Alert.alert('Permission requise', "Autorise l'accès à la galerie ou à l'appareil photo.");
           return;
         }
       }
@@ -60,7 +60,7 @@ export default function ReportIssueScreen({ navigation, route }) {
         { text: 'Annuler', style: 'cancel' },
       ]);
     } catch {
-      showToast('Erreur lors de la sÃ©lection de la photo', 'error');
+      showToast('Erreur lors de la sélection de la photo', 'error');
     }
   };
 
@@ -90,7 +90,7 @@ export default function ReportIssueScreen({ navigation, route }) {
           photos: photoBase64s.length > 0 ? photoBase64s : undefined,
         }),
       });
-      showToast('Signalement envoyÃ© Â· rÃ©ponse sous 1h');
+      showToast('Signalement envoyé Â· réponse sous 1h');
       navigation.goBack();
     } catch (err) {
       showToast(err?.message || 'Erreur lors de l\'envoi', 'error');
@@ -103,12 +103,12 @@ export default function ReportIssueScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
-      <KGTopBar title="Signaler un problÃ¨me" onBack={() => navigation.goBack()} />
+      <KGTopBar title="Signaler un problème" onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ padding: 20, gap: 14, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
 
         <View>
           <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: colors.ink, letterSpacing: -0.02 * 22 }}>
-            Qu'est-ce qui s'est passÃ© ?
+            Qu'est-ce qui s'est passé ?
           </Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13.5, color: colors.ink70, marginTop: 6 }}>
             Choisis le type. On te rappelle sous 1h.
@@ -142,8 +142,8 @@ export default function ReportIssueScreen({ navigation, route }) {
         </View>
 
         <View style={{ gap: 10 }}>
-          <KGSectionTitle>DÃ©tails</KGSectionTitle>
-          <KGTextarea placeholder="DÃ©cris la situation en quelques motsâ€¦" value={details} onChangeText={setDetails} rows={3} />
+          <KGSectionTitle>Détails</KGSectionTitle>
+          <KGTextarea placeholder="Décris la situation en quelques motsâ€¦" value={details} onChangeText={setDetails} rows={3} />
         </View>
 
         {showPhotos && (

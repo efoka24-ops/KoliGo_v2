@@ -1,9 +1,27 @@
 import axios from 'axios';
+import { Platform } from 'react-native';
 import { storage } from '../utils/storage';
 
-export const BASE_URL = __DEV__
-  ? 'http://10.0.2.2:3000'   // Android emulator → host machine
-  : 'https://api.koligo.cm';
+function getBaseUrl() {
+  if (!__DEV__) return 'https://api.koligo.cm';
+  if (Platform.OS === 'web') return 'http://localhost:3001';
+  if (Platform.OS === 'ios') return 'http://localhost:3001';
+  return 'http://10.0.2.2:3000'; // Android emulator → host machine
+}
+
+export const BASE_URL = getBaseUrl();
+
+// Called by AppContext to receive logout notifications when token refresh fails
+let _authFailureHandler: (() => void) | null = null;
+export const setAuthFailureHandler = (handler: () => void) => { _authFailureHandler = handler; };
+
+async function clearAuthTokens() {
+  await Promise.allSettled([
+    storage.deleteItem('access_token'),
+    storage.deleteItem('refresh_token'),
+    storage.deleteItem('user_phone'),
+  ]);
+}
 
 export const api = axios.create({ baseURL: BASE_URL, timeout: 15000 });
 
@@ -19,13 +37,22 @@ api.interceptors.response.use(
     const original = err.config;
     if (err.response?.status === 401 && !original._retry) {
       original._retry = true;
-      const refresh = await storage.getItem('refresh_token');
-      if (refresh) {
-        const { data } = await axios.post(`${BASE_URL}/auth/refresh`, { token: refresh });
-        await storage.setItem('access_token', data.accessToken);
-        original.headers.Authorization = `Bearer ${data.accessToken}`;
-        return api(original);
+      try {
+        const refresh = await storage.getItem('refresh_token');
+        if (refresh) {
+          const { data } = await axios.post(`${BASE_URL}/auth/refresh`, { token: refresh });
+          await storage.setItem('access_token', data.accessToken);
+          original.headers.Authorization = `Bearer ${data.accessToken}`;
+          return api(original);
+        }
+      } catch {
+        // Refresh failed (expired, user deleted, etc.) — force logout
+        await clearAuthTokens();
+        _authFailureHandler?.();
       }
+      // No refresh token or refresh failed → force logout
+      await clearAuthTokens();
+      _authFailureHandler?.();
     }
     return Promise.reject(err);
   }
@@ -51,10 +78,12 @@ export function normalizeDelivery(d: any) {
     code: d.deliverCode ?? d.code,
     collectCode: d.collectCode,
     recipient: d.recipientName ?? d.recipient ?? null,
+    recipientPhone: d.recipientPhone ?? null,
     recipientId: d.recipientId ?? null,
     vendor: d.vendor?.name ?? d.vendorName ?? d.vendor ?? null,
     vendorRating: d.vendor?.rating ?? d.vendorRating ?? null,
     delivererEarning: d.delivererEarning ?? null,
+    distanceKm: d.distanceKm ?? d.distance ?? null,
     distance: d.distanceKm ?? d.distance ?? null,
     description: d.description ?? null,
     time: d.createdAt
@@ -69,6 +98,9 @@ export function normalizeDelivery(d: any) {
 
 // Compatibility shim for prototype screens that call apiFetch(path, options?, token?)
 export async function apiFetch(path: string, options: RequestInit = {}, token?: string | null): Promise<any> {
+  // Normalize legacy /api/ prefix — backend routes are mounted without it
+  const normalPath = path.startsWith('/api/') ? path.slice(4) : path;
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
@@ -77,7 +109,7 @@ export async function apiFetch(path: string, options: RequestInit = {}, token?: 
 
   try {
     const res = await axios({
-      url: `${BASE_URL}${path}`,
+      url: `${BASE_URL}${normalPath}`,
       method: (options.method as any) || 'GET',
       headers,
       data: options.body,

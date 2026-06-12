@@ -58,10 +58,9 @@ function AvailableCard({ d, onPress }) {
 }
 
 export default function DelivererHomeScreen({ navigation }) {
-  const { toast, user, token, api } = useApp();
+  const { toast, user, token, api, online, setOnline } = useApp();
   const { t } = useI18n();
   const isDemo = user?.isTest === true;
-  const [online, setOnline] = useState(true);
   const [stats, setStats] = useState(null);
 
   const { deliveries: availableDeliveries, loading: loadingDeliveries, fetchDeliveries } = useDeliveries();
@@ -69,7 +68,7 @@ export default function DelivererHomeScreen({ navigation }) {
   const fetchStats = useCallback(async () => {
     if (isDemo || !token) return;
     try {
-      const data = await api('/api/users/me/stats');
+      const data = await api('/api/user/stats');
       setStats(data);
     } catch {}
   }, [api, isDemo, token]);

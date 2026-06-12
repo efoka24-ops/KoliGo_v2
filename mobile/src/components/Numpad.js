@@ -1,21 +1,26 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, radius } from '../theme';
 
-const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'];
+const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'DEL'];
 
 export default function Numpad({ onKey }) {
   return (
     <View style={styles.grid}>
       {KEYS.map((k, i) => {
         if (k === '') return <View key={i} style={styles.key} />;
+        const isDel = k === 'DEL';
         return (
           <Pressable
             key={i}
-            onPress={() => onKey && onKey(k)}
+            onPress={() => onKey && onKey(isDel ? '⌫' : k)}
             style={({ pressed }) => [styles.key, styles.keyBox, pressed && { backgroundColor: colors.surface2 }]}
           >
-            <Text style={styles.txt}>{k}</Text>
+            {isDel
+              ? <Ionicons name="backspace-outline" size={22} color={colors.ink} />
+              : <Text style={styles.txt}>{k}</Text>
+            }
           </Pressable>
         );
       })}

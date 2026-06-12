@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, radius } from '../theme';
 
 // Reusable settings/profile row. Left icon (emoji or node), label, right node.
@@ -21,7 +22,7 @@ export default function ListItem({ icon, label, right, onPress, last }) {
         ) : null}
         <Text style={styles.label}>{label}</Text>
       </View>
-      {right != null ? right : onPress ? <Text style={styles.chev}>›</Text> : null}
+      {right != null ? right : onPress ? <Ionicons name="chevron-forward" size={18} color={colors.muted2} /> : null}
     </Pressable>
   );
 }

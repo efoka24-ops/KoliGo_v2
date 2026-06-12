@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme';
 
 // Generic top app bar. tone 'green' renders the brand header used on dashboards.
@@ -12,12 +13,12 @@ export default function ScreenHeader({ title, subtitle, onBack, right, tone = 'd
       style={[
         styles.wrap,
         { paddingTop: insets.top + 8 },
-        green ? { backgroundColor: colors.green } : { backgroundColor: colors.app, borderBottomColor: colors.line, borderBottomWidth: 1 },
+        green ? { backgroundColor: colors.green } : { backgroundColor: '#FFFFFF', borderBottomColor: colors.line, borderBottomWidth: 1 },
       ]}
     >
       {onBack ? (
         <Pressable onPress={onBack} hitSlop={10} style={styles.back}>
-          <Text style={[styles.backTxt, { color: green ? colors.white : colors.ink }]}>‹</Text>
+          <Ionicons name="chevron-back" size={24} color={green ? colors.white : colors.ink} />
         </Pressable>
       ) : null}
       <View style={{ flex: 1 }}>
@@ -38,7 +39,6 @@ export default function ScreenHeader({ title, subtitle, onBack, right, tone = 'd
 const styles = StyleSheet.create({
   wrap: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingBottom: 12 },
   back: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
-  backTxt: { fontSize: 30, fontWeight: '700', marginTop: -4 },
   title: { fontSize: 17, fontWeight: '800', letterSpacing: -0.2 },
   sub: { fontSize: 11.5, marginTop: 1 },
 });

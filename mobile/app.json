@@ -12,15 +12,31 @@
       "resizeMode": "contain",
       "backgroundColor": "#0E2A1C"
     },
-    "assetBundlePatterns": ["**/*"],
-    "ios": { "supportsTablet": false, "bundleIdentifier": "cm.koligo.app" },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "cm.koligo.app"
+    },
     "android": {
       "package": "cm.koligo.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/koligo-logo-1024.png",
         "backgroundColor": "#0E2A1C"
       },
-      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_BACKGROUND_LOCATION"]
-    }
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyA8J-zFffiVc2pjQj5Ut4Qf4MlMMMfBc7A"
+        }
+      }
+    },
+    "web": {
+      "favicon": "./assets/koligo-logo-1024.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-location"
+    ]
   }
 }

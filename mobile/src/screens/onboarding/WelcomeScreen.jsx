@@ -13,7 +13,7 @@ export default function WelcomeScreen({ navigation }) {
   const isEn = lang === 'en';
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream, overflow: 'hidden' }} edges={['top']}>
-      {/* Decorative circles â€” clipped by overflow hidden */}
+      {/* Decorative circles â€" clipped by overflow hidden */}
       <View style={{ position: 'absolute', top: -100, right: -60, width: 300, height: 300, borderRadius: 150, backgroundColor: colors.green, opacity: 0.12 }} />
       <View style={{ position: 'absolute', top: 90, left: -50, width: 180, height: 180, borderRadius: 90, backgroundColor: colors.orange, opacity: 0.18 }} />
 
@@ -28,12 +28,12 @@ export default function WelcomeScreen({ navigation }) {
         <View style={{ marginTop: 36 }}>
           <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 38, lineHeight: 40, letterSpacing: -0.03 * 38, color: colors.ink }}>
             {isEn ? 'Your parcel,\n' : 'Ton colis,\n'}
-            <Text style={{ color: colors.green }}>{isEn ? 'delivered go-go.' : 'livrÃ© go-go.'}</Text>
+            <Text style={{ color: colors.green }}>{isEn ? 'delivered go-go.' : 'livré go-go.'}</Text>
           </Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 15.5, lineHeight: 22, color: colors.ink70, marginTop: 14, maxWidth: 320 }}>
             {isEn
-              ? 'Collaborative delivery in Cameroon. Every Cameroonian can become a courier â€” you can earn too.'
-              : 'La livraison collaborative au Cameroun. Chaque camerounais est un livreur â€” toi aussi tu peux gagner.'}
+              ? 'Collaborative delivery in Cameroon. Every Cameroonian can become a courier â€" you can earn too.'
+              : 'La livraison collaborative au Cameroun. Chaque camerounais est un livreur â€" toi aussi tu peux gagner.'}
           </Text>
         </View>
 
@@ -52,8 +52,8 @@ export default function WelcomeScreen({ navigation }) {
                   <Icon name="moto" size={18} color="#fff" />
                 </View>
                 <View>
-                  <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 13, color: '#fff' }}>HervÃ© Â· Permanent</Text>
-                  <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>Bonamoussadi â†’ Akwa</Text>
+                  <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 13, color: '#fff' }}>Hervé Â· Permanent</Text>
+                  <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>Bonamoussadi â†' Akwa</Text>
                 </View>
               </View>
               <KGStatusPill status="en_route" />
@@ -61,7 +61,7 @@ export default function WelcomeScreen({ navigation }) {
 
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
               <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 34, color: '#fff', letterSpacing: -0.02 * 34 }}>1 955</Text>
-              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>XAF Â· arrivÃ©e 12 min</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>XAF Â· arrivée 12 min</Text>
             </View>
 
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -78,7 +78,7 @@ export default function WelcomeScreen({ navigation }) {
             backgroundColor: colors.orange, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999,
             shadowColor: colors.orange, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 8,
           }}>
-            <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 11, color: '#fff', letterSpacing: 0.04 * 11, textTransform: 'uppercase' }}>LivrÃ© vite, payÃ© cash</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 11, color: '#fff', letterSpacing: 0.04 * 11, textTransform: 'uppercase' }}>Livré vite, payé cash</Text>
           </View>
         </View>
 
@@ -86,11 +86,11 @@ export default function WelcomeScreen({ navigation }) {
 
         {/* CTAs */}
         <View style={{ paddingVertical: 20, gap: 10 }}>
-          <KGButton kind="primary" size="lg" iconRight="arrow" onPress={() => navigation.navigate('Auth', { mode: 'signup' })}>
-            {isEn ? 'Get started' : 'DÃ©marrer'}
+          <KGButton kind="primary" size="lg" iconRight="arrow" onPress={() => navigation.navigate('Signup')}>
+            {isEn ? 'Get started' : 'Démarrer'}
           </KGButton>
-          <KGButton kind="ghost" size="md" onPress={() => navigation.navigate('Auth', { mode: 'signin' })}>
-            {isEn ? 'I already have an account' : "J'ai dÃ©jÃ  un compte"}
+          <KGButton kind="ghost" size="md" onPress={() => navigation.navigate('Signin')}>
+            {isEn ? 'I already have an account' : "J'ai déjà un compte"}
           </KGButton>
         </View>
 

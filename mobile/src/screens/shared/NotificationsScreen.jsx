@@ -12,25 +12,25 @@ const SECTIONS = [
   {
     title: 'Livraisons',
     items: [
-      { key: 'newDelivery',      label: 'Nouvelles courses dispo',  sub: 'AlertÃ© quand une course est publiÃ©e dans ta zone' },
-      { key: 'deliveryAccepted', label: 'Course acceptÃ©e',          sub: 'Un livreur a pris en charge ta commande' },
-      { key: 'deliveryPickedUp', label: 'Colis collectÃ©',           sub: 'Le livreur a rÃ©cupÃ©rÃ© ton colis' },
-      { key: 'deliveryDelivered',label: 'Colis livrÃ©',              sub: 'Le destinataire a confirmÃ© la rÃ©ception' },
+      { key: 'newDelivery',      label: 'Nouvelles courses dispo',  sub: 'Alerté quand une course est publiée dans ta zone' },
+      { key: 'deliveryAccepted', label: 'Course acceptée',          sub: 'Un livreur a pris en charge ta commande' },
+      { key: 'deliveryPickedUp', label: 'Colis collecté',           sub: 'Le livreur a récupéré ton colis' },
+      { key: 'deliveryDelivered',label: 'Colis livré',              sub: 'Le destinataire a confirmé la réception' },
     ],
   },
   {
     title: 'Finances',
     items: [
-      { key: 'withdrawalValidated', label: 'Retrait validÃ©',   sub: 'Ton retrait MoMo a Ã©tÃ© traitÃ©' },
-      { key: 'gainReceived',        label: 'Gain reÃ§u',        sub: 'Nouvelle entrÃ©e sur ton wallet' },
+      { key: 'withdrawalValidated', label: 'Retrait validé',   sub: 'Ton retrait MoMo a été traité' },
+      { key: 'gainReceived',        label: 'Gain reçu',        sub: 'Nouvelle entrée sur ton wallet' },
     ],
   },
   {
     title: 'Messages & Compte',
     items: [
       { key: 'newMessage',   label: 'Nouveaux messages', sub: 'Messages des livreurs ou vendeurs' },
-      { key: 'kycUpdate',    label: 'Mise Ã  jour KYC',   sub: 'RÃ©sultat de la vÃ©rification d\'identitÃ©' },
-      { key: 'promoOffers',  label: 'Offres & promotions', sub: 'Annonces et nouveautÃ©s KoliGo' },
+      { key: 'kycUpdate',    label: 'Mise à jour KYC',   sub: 'Résultat de la vérification d\'identité' },
+      { key: 'promoOffers',  label: 'Offres & promotions', sub: 'Annonces et nouveautés KoliGo' },
     ],
   },
 ];
@@ -47,7 +47,7 @@ export default function NotificationsScreen({ navigation }) {
   const toggle = (key) => setPrefs(p => ({ ...p, [key]: !p[key] }));
 
   const save = () => {
-    showToast('PrÃ©fÃ©rences enregistrÃ©es âœ“');
+    showToast('Préférences enregistrées âœ"');
     navigation.goBack();
   };
 
@@ -92,13 +92,13 @@ export default function NotificationsScreen({ navigation }) {
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <Icon name="bell" size={18} color={colors.ink55} />
             <Text style={{ flex: 1, fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink70, lineHeight: 18 }}>
-              Les notifications push nÃ©cessitent que l'application soit installÃ©e et que les autorisations soient accordÃ©es dans les paramÃ¨tres de ton tÃ©lÃ©phone.
+              Les notifications push nécessitent que l'application soit installée et que les autorisations soient accordées dans les paramètres de ton téléphone.
             </Text>
           </View>
         </KGCard>
 
         <KGButton kind="primary" size="lg" icon="check" onPress={save}>
-          Enregistrer les prÃ©fÃ©rences
+          Enregistrer les préférences
         </KGButton>
       </ScrollView>
     </SafeAreaView>
