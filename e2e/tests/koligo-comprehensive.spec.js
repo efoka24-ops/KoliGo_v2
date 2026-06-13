@@ -15,8 +15,15 @@ const DELIV_PIN    = '1234';
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 async function openApp(page) {
-  await page.goto(APP, { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(3500);
+  // Clear localStorage BEFORE React runs (addInitScript fires before any page JS)
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto(APP, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  // Wait for React root to render (Metro bundler can take 30s+ on first load)
+  await page.waitForFunction(() => {
+    const root = document.getElementById('root');
+    return root && root.innerText.trim().length > 5;
+  }, { timeout: 90000 });
+  await page.waitForTimeout(1500);
 }
 
 // NFD-safe helpers (RN Web uses NFD Unicode, Playwright getByText uses NFC)
@@ -38,14 +45,18 @@ async function signIn(page, phone, pin) {
   await btnCompte(page).click();
   await page.waitForTimeout(1200);
 
-  const inputs = page.locator('input');
-  if (await inputs.count() > 0) {
-    await inputs.first().fill(phone);
+  // Phone step: fill input then press Enter (avoids tabindex issue on disabled Continuer button)
+  const phoneInput = page.locator('input').first();
+  if (await phoneInput.count() > 0) {
+    await phoneInput.click();
+    await phoneInput.fill(phone);
     await page.waitForTimeout(300);
-    await btnContinuer(page).click();
-    await page.waitForTimeout(1000);
+    // Press Enter triggers onSubmitEditing → handleIdentifierNext → setStep('pin')
+    await phoneInput.press('Enter');
+    await page.waitForTimeout(1200);
   }
 
+  // PIN step: click numpad digits
   for (const digit of pin) {
     await page.getByText(digit, { exact: true }).first().click();
     await page.waitForTimeout(200);
@@ -231,7 +242,7 @@ test.describe('03 — Connexion + Accueil Vendeur', () => {
     await signIn(page, VENDOR_PHONE, VENDOR_PIN);
 
     // Use exact:true to target the tab bar "Profil" specifically
-    await clickTab(page, /^Profil$/i);
+    await clickTab(page, /Profil/i);
     await page.waitForTimeout(1500);
     await shot(page, '03d-vendor-profile');
 
@@ -244,7 +255,7 @@ test.describe('03 — Connexion + Accueil Vendeur', () => {
     await openApp(page);
     await signIn(page, VENDOR_PHONE, VENDOR_PIN);
 
-    await clickTab(page, /^Profil$/i);
+    await clickTab(page, /Profil/i);
     await page.waitForTimeout(1200);
 
     const hasRoleLabel = await page.getByText(/Vendeur|Vendeuse/i).count() > 0;
@@ -429,7 +440,7 @@ test.describe('06 — Connexion + Accueil Livreur', () => {
     await openApp(page);
     await signIn(page, DELIV_PHONE, DELIV_PIN);
 
-    await clickTab(page, /^Profil$/i);
+    await clickTab(page, /Profil/i);
     await page.waitForTimeout(1200);
     await shot(page, '06e-deliverer-profile');
 
@@ -450,7 +461,7 @@ test.describe('07 — Courses Disponibles (Livreur)', () => {
     await signIn(page, DELIV_PHONE, DELIV_PIN);
 
     // Click "Courses" tab (exact:true avoids matching "Courses disponibles" or tab-link span)
-    await clickTab(page, /^Courses$/i);
+    await clickTab(page, /Courses/i);
     await page.waitForTimeout(2000);
     await shot(page, '07a-available-list');
 
@@ -463,7 +474,7 @@ test.describe('07 — Courses Disponibles (Livreur)', () => {
     await openApp(page);
     await signIn(page, DELIV_PHONE, DELIV_PIN);
 
-    await clickTab(page, /^Courses$/i);
+    await clickTab(page, /Courses/i);
     await page.waitForTimeout(2000);
 
     // Check filter chips
@@ -482,7 +493,7 @@ test.describe('07 — Courses Disponibles (Livreur)', () => {
     await openApp(page);
     await signIn(page, DELIV_PHONE, DELIV_PIN);
 
-    await clickTab(page, /^Courses$/i);
+    await clickTab(page, /Courses/i);
     await page.waitForTimeout(2000);
 
     // Click first offer card
@@ -510,7 +521,7 @@ test.describe('07 — Courses Disponibles (Livreur)', () => {
     await openApp(page);
     await signIn(page, DELIV_PHONE, DELIV_PIN);
 
-    await clickTab(page, /^Courses$/i);
+    await clickTab(page, /Courses/i);
     await page.waitForTimeout(2000);
 
     const offerCard = page.locator('[role="button"]').filter({ hasText: /XAF/i }).first();
@@ -541,7 +552,7 @@ test.describe('08 — Acceptation Livraison (Livreur)', () => {
     await signIn(page, DELIV_PHONE, DELIV_PIN);
 
     // Make sure we're OFFLINE (default state)
-    await clickTab(page, /^Courses$/i);
+    await clickTab(page, /Courses/i);
     await page.waitForTimeout(2000);
 
     const offerCard = page.locator('[role="button"]').filter({ hasText: /XAF/i }).first();
@@ -575,7 +586,7 @@ test.describe('08 — Acceptation Livraison (Livreur)', () => {
       }
     }
 
-    await clickTab(page, /^Courses$/i);
+    await clickTab(page, /Courses/i);
     await page.waitForTimeout(2000);
 
     const offerCard = page.locator('[role="button"]').filter({ hasText: /XAF/i }).first();
@@ -634,7 +645,7 @@ test.describe('09 — Soumission KYC (Livreur)', () => {
     await openApp(page);
     await signIn(page, DELIV_PHONE, DELIV_PIN);
 
-    await clickTab(page, /^Profil$/i);
+    await clickTab(page, /Profil/i);
     await page.waitForTimeout(1200);
     await shot(page, '09a-deliverer-profile-kyc');
 
@@ -647,7 +658,7 @@ test.describe('09 — Soumission KYC (Livreur)', () => {
     await openApp(page);
     await signIn(page, DELIV_PHONE, DELIV_PIN);
 
-    await clickTab(page, /^Profil$/i);
+    await clickTab(page, /Profil/i);
     await page.waitForTimeout(1200);
 
     // Click KYC menu item
@@ -669,7 +680,7 @@ test.describe('09 — Soumission KYC (Livreur)', () => {
     await signIn(page, DELIV_PHONE, DELIV_PIN);
 
     // Navigate directly to KYC screen via profile
-    await clickTab(page, /^Profil$/i);
+    await clickTab(page, /Profil/i);
     await page.waitForTimeout(1200);
 
     const kycBtn = page.locator('[role="button"]').filter({ hasText: /KYC|CNI|Identité/i }).first();
@@ -684,7 +695,7 @@ test.describe('09 — Soumission KYC (Livreur)', () => {
     await openApp(page);
     await signIn(page, VENDOR_PHONE, VENDOR_PIN);
 
-    await clickTab(page, /^Profil$/i);
+    await clickTab(page, /Profil/i);
     await page.waitForTimeout(1200);
     await shot(page, '09d-vendor-kyc-verified');
 
@@ -705,7 +716,7 @@ test.describe('10 — Changement de Profil (MARLY)', () => {
     await openApp(page);
     await signIn(page, DELIV_PHONE, DELIV_PIN);
 
-    await clickTab(page, /^Profil$/i);
+    await clickTab(page, /Profil/i);
     await page.waitForTimeout(1200);
     await shot(page, '10a-deliverer-profile-switch-option');
 
@@ -718,7 +729,7 @@ test.describe('10 — Changement de Profil (MARLY)', () => {
     await openApp(page);
     await signIn(page, DELIV_PHONE, DELIV_PIN);
 
-    await clickTab(page, /^Profil$/i);
+    await clickTab(page, /Profil/i);
     await page.waitForTimeout(1200);
 
     // Find and click role switch
@@ -1191,7 +1202,7 @@ test.describe('14 — Screenshots Visuels de Toutes les Pages', () => {
   test('Page 07 — Profil Vendeur', async ({ page }) => {
     await openApp(page);
     await signIn(page, VENDOR_PHONE, VENDOR_PIN);
-    await clickTab(page, /^Profil$/i);
+    await clickTab(page, /Profil/i);
     await page.waitForTimeout(1200);
     await shot(page, '14-07-vendor-profile');
   });
@@ -1205,7 +1216,7 @@ test.describe('14 — Screenshots Visuels de Toutes les Pages', () => {
   test('Page 09 — Courses Disponibles', async ({ page }) => {
     await openApp(page);
     await signIn(page, DELIV_PHONE, DELIV_PIN);
-    await clickTab(page, /^Courses$/i);
+    await clickTab(page, /Courses/i);
     await page.waitForTimeout(2000);
     await shot(page, '14-09-available-courses');
   });
@@ -1213,7 +1224,7 @@ test.describe('14 — Screenshots Visuels de Toutes les Pages', () => {
   test('Page 10 — Profil Livreur + KYC Status', async ({ page }) => {
     await openApp(page);
     await signIn(page, DELIV_PHONE, DELIV_PIN);
-    await clickTab(page, /^Profil$/i);
+    await clickTab(page, /Profil/i);
     await page.waitForTimeout(1200);
     await shot(page, '14-10-deliverer-profile');
     // Click KYC item
@@ -1228,7 +1239,7 @@ test.describe('14 — Screenshots Visuels de Toutes les Pages', () => {
   test('Page 11 — Offre Détail (OfferDetail)', async ({ page }) => {
     await openApp(page);
     await signIn(page, DELIV_PHONE, DELIV_PIN);
-    await clickTab(page, /^Courses$/i);
+    await clickTab(page, /Courses/i);
     await page.waitForTimeout(2000);
     const card = page.locator('[role="button"]').filter({ hasText: /XAF/i }).first();
     if (await card.count() > 0) {
@@ -1241,7 +1252,7 @@ test.describe('14 — Screenshots Visuels de Toutes les Pages', () => {
   test('Page 12 — Paramètres (Settings)', async ({ page }) => {
     await openApp(page);
     await signIn(page, VENDOR_PHONE, VENDOR_PIN);
-    await clickTab(page, /^Profil$/i);
+    await clickTab(page, /Profil/i);
     await page.waitForTimeout(1200);
     const settingsBtn = page.getByText(/Paramètres|Settings/i).first();
     if (await settingsBtn.count() > 0) {
