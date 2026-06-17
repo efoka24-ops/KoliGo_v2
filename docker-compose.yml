@@ -1,0 +1,47 @@
+# Compose de dev/test local — en production les services sont intégrés
+# au docker-compose central du serveur (voir DEPLOYMENT.md).
+services:
+  koligo-backend:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-efoka24-ops}/koligo-backend:${KOLIGO_TAG:-latest}
+    build: ./backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=file:/app/data/prod.db
+      - REDIS_URL=redis://koligo-redis:6379
+      - UPLOAD_DIR=/app/uploads
+      - JWT_ACCESS_SECRET=${KOLIGO_JWT_ACCESS_SECRET}
+      - JWT_REFRESH_SECRET=${KOLIGO_JWT_REFRESH_SECRET}
+      - JWT_ACCESS_EXPIRES=${KOLIGO_JWT_ACCESS_EXPIRES:-15m}
+      - JWT_REFRESH_EXPIRES=${KOLIGO_JWT_REFRESH_EXPIRES:-7d}
+      - BCRYPT_ROUNDS=${KOLIGO_BCRYPT_ROUNDS:-12}
+      - CINETPAY_API_KEY=${KOLIGO_CINETPAY_API_KEY}
+      - CINETPAY_SITE_ID=${KOLIGO_CINETPAY_SITE_ID}
+      - TWILIO_SID=${KOLIGO_TWILIO_SID}
+      - TWILIO_AUTH=${KOLIGO_TWILIO_AUTH}
+      - TWILIO_WHATSAPP_FROM=${KOLIGO_TWILIO_WHATSAPP_FROM:-whatsapp:+14155238886}
+      - EXPO_PUSH_URL=https://exp.host/--/api/v2/push/send
+    volumes:
+      - koligo_db:/app/data
+      - koligo_uploads:/app/uploads
+    restart: unless-stopped
+    depends_on:
+      - koligo-redis
+    networks:
+      - koligo-network
+
+  koligo-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks:
+      - koligo-network
+
+networks:
+  koligo-network:
+    driver: bridge
+
+volumes:
+  koligo_db:
+  koligo_uploads:

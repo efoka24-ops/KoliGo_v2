@@ -1,0 +1,83 @@
+name: CI + Docker + Deploy (GHCR)
+
+on:
+  push:
+    branches: [001-koligo-monorepo]
+    tags: ['v*']
+  pull_request:
+    branches: [001-koligo-monorepo]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/koligo-backend:${{ github.run_number }}
+            ghcr.io/${{ github.repository_owner }}/koligo-backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/001-koligo-monorepo' && github.event_name == 'push'
+
+    steps:
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+
+            echo "Connected to server"
+            whoami
+            pwd
+            cd "${{ secrets.DEPLOY_PATH }}"
+
+            echo "Login to GHCR"
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+
+            echo "Set image tag (KOLIGO_TAG=${{ github.run_number }})"
+            touch .env
+            if grep -q '^KOLIGO_TAG=' .env; then
+              sed -i 's/^KOLIGO_TAG=.*/KOLIGO_TAG=${{ github.run_number }}/' .env
+            else
+              echo 'KOLIGO_TAG=${{ github.run_number }}' >> .env
+            fi
+
+            echo "Pull latest image"
+            docker compose pull koligo-backend
+
+            echo "Recreate containers"
+            docker compose up -d koligo-redis
+            docker compose up -d --no-deps --force-recreate koligo-backend
+
+            echo "Deployment finished"

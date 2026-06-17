@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-const BASE_URL = __DEV__ ? 'http://10.0.2.2:3000' : 'https://api.koligo.cm';
+const BASE_URL = __DEV__ ? 'http://10.0.2.2:3000' : 'https://koligoapi.trugroup.cm';
 
 export const adminApi = axios.create({ baseURL: BASE_URL, timeout: 15000 });
 

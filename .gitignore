@@ -42,3 +42,6 @@ Thumbs.db
 *.mobileprovision
 *.orig.*
 web-build/
+
+# internal docs
+DEPLOYMENT.md

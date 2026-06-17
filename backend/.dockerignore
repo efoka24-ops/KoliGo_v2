@@ -1,0 +1,12 @@
+node_modules
+dist
+tests
+coverage
+uploads
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.*
+!.env.example
+npm-debug.log*
