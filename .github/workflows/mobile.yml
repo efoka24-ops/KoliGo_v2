@@ -42,25 +42,21 @@ jobs:
         working-directory: mobile
         run: npx expo prebuild --platform android --no-install
 
-      - name: Bundle JavaScript
-        working-directory: mobile
-        run: |
-          mkdir -p android/app/src/main/assets
-          npx react-native bundle \
-            --platform android \
-            --dev false \
-            --entry-file index.js \
-            --bundle-output android/app/src/main/assets/index.android.bundle \
-            --assets-dest android/app/src/main/res
-
-      - name: Build debug APK
+      - name: Build release APK
         working-directory: mobile/android
-        run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$HOME/.android/debug.keystore \
+            -Pandroid.injected.signing.store.password=android \
+            -Pandroid.injected.signing.key.alias=androiddebugkey \
+            -Pandroid.injected.signing.key.password=android \
+            --no-daemon
 
       - name: Rename APK
         run: |
-          mv mobile/android/app/build/outputs/apk/debug/app-debug.apk \
-             mobile/android/app/build/outputs/apk/debug/koligo-debug-${{ github.run_number }}.apk
+          mv mobile/android/app/build/outputs/apk/release/app-release.apk \
+             mobile/android/app/build/outputs/apk/release/koligo-${{ github.run_number }}.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -72,5 +68,6 @@ jobs:
             - Commit : `${{ github.sha }}`
             - Branche : `${{ github.ref_name }}`
             - Par : ${{ github.actor }}
-          files: mobile/android/app/build/outputs/apk/debug/koligo-debug-${{ github.run_number }}.apk
+            - API : `https://koligoapi.trugroup.cm`
+          files: mobile/android/app/build/outputs/apk/release/koligo-${{ github.run_number }}.apk
           prerelease: true
