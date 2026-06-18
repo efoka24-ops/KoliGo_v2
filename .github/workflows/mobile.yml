@@ -5,6 +5,7 @@ on:
     branches: [001-koligo-monorepo]
     paths:
       - 'mobile/**'
+      - '.github/workflows/mobile.yml'
   workflow_dispatch:
 
 permissions:
