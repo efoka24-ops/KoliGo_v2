@@ -12,7 +12,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
   const token = global.__kgToken;
   if (!deliveryId || !token) return;
   try {
-    await fetch(`${API_BASE}/api/deliveries/${deliveryId}/location`, {
+    await fetch(`${API_BASE}/deliveries/${deliveryId}/location`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ lat: latitude, lng: longitude }),
