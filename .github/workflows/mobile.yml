@@ -44,6 +44,8 @@ jobs:
 
       - name: Build release APK
         working-directory: mobile/android
+        env:
+          EXPO_PUBLIC_API_URL: https://koligoapi.trugroup.cm
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease \

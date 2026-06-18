@@ -1,9 +1,8 @@
 import axios from 'axios';
 import { storage } from '../utils/storage';
 
-export const BASE_URL = __DEV__
-  ? 'http://10.0.2.2:3000'   // Android emulator → host machine
-  : 'https://koligoapi.trugroup.cm';
+export const BASE_URL =
+  process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:3000';
 
 export const api = axios.create({ baseURL: BASE_URL, timeout: 15000 });
 
