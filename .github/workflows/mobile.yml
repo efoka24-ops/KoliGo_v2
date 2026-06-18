@@ -69,10 +69,11 @@ jobs:
             -Pandroid.injected.signing.key.password=android \
             --no-daemon
 
-      - name: Rename APK
+      - name: Locate and rename APK
         run: |
-          mv mobile/android/app/build/outputs/apk/release/app-release.apk \
-             mobile/android/app/build/outputs/apk/release/koligo-${{ github.run_number }}.apk
+          APK=$(find mobile/android/app/build/outputs/apk/release -name "*.apk" | head -1)
+          echo "APK trouvé : $APK"
+          mv "$APK" mobile/android/app/build/outputs/apk/release/koligo-${{ github.run_number }}.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
