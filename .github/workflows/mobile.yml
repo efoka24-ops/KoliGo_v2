@@ -43,6 +43,19 @@ jobs:
         working-directory: mobile
         run: npx expo prebuild --platform android --no-install
 
+      - name: Create debug keystore
+        run: |
+          mkdir -p $HOME/.android
+          keytool -genkey -v \
+            -keystore $HOME/.android/debug.keystore \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
       - name: Build release APK
         working-directory: mobile/android
         env:
