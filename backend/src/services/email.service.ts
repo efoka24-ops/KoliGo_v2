@@ -1,7 +1,10 @@
 import nodemailer from 'nodemailer';
 
-const FROM = `"KoliGo" <${process.env.SMTP_USER ?? 'infos@trugroup.cm'}>`;
-const ADMIN = process.env.SMTP_USER ?? 'infos@trugroup.cm';
+// Credentials come from .env only — never hardcode them here, this file is
+// committed.
+const SMTP_USER = process.env.SMTP_USER ?? '';
+const FROM = `"KoliGo" <${SMTP_USER}>`;
+const ADMIN = SMTP_USER;
 
 // Green/orange brand palette for emails
 const GREEN = '#178A3C';
@@ -13,8 +16,8 @@ const transporter = nodemailer.createTransport({
   port: parseInt(process.env.SMTP_PORT ?? '587'),
   secure: false,
   auth: {
-    user: process.env.SMTP_USER ?? 'infos@trugroup.cm',
-    pass: process.env.SMTP_PASS ?? 'FM3F%hctXxsq',
+    user: SMTP_USER,
+    pass: process.env.SMTP_PASS ?? '',
   },
   tls: { rejectUnauthorized: false },
 });

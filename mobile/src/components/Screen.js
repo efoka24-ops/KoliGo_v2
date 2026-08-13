@@ -5,8 +5,11 @@ import { colors } from '../theme';
 
 // Standard page scaffold. Use `scroll` for content pages, `center` for hero/empty states.
 export default function Screen({ children, scroll = true, center = false, padded = true, footer, style, bg }) {
+  // Without scroll the body is the only child of the SafeAreaView, so it has to
+  // claim the height itself. Left unflexed, any `flex: 1` child collapses to
+  // zero height and the whole page stacks on top of itself.
   const body = (
-    <View style={[padded && styles.pad, center && styles.center, { flex: center ? 1 : undefined }, style]}>
+    <View style={[padded && styles.pad, center && styles.center, { flex: (center || !scroll) ? 1 : undefined }, style]}>
       {children}
     </View>
   );
