@@ -7,6 +7,7 @@ import * as Location from 'expo-location';
 import { storage as SecureStore } from '../utils/storage';
 import { apiFetch, setAuthFailureHandler } from '../services/api';
 import { setCurrentLang } from '../i18n/translations.js';
+import { useI18n } from '../i18n';
 import { getInitials } from '../utils/helpers';
 
 const AppContext = createContext(null);
@@ -55,6 +56,8 @@ const DEMO_CONV_DELIVERER = {
 
 
 export function AppProvider({ children, initialLang = 'fr' }) {
+  // AppProvider sits inside I18nProvider (see App.tsx), so it can drive it.
+  const { setLang: i18nSetLang } = useI18n();
   const [role, setRole] = useState('vendor');
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
@@ -100,6 +103,10 @@ export function AppProvider({ children, initialLang = 'fr' }) {
     setCurrentLang(l);
     setLangState(l);
     SecureStore.setItem('kg_lang', l).catch(() => {});
+    // The screens using useI18n().t keep their own language state. Without
+    // this the UI ends up half translated: whichever provider was not updated
+    // stays on the previous language.
+    i18nSetLang(l);
   };
 
   const enableBiometric = (enabled) => {

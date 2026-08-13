@@ -137,7 +137,7 @@ export default function AuthScreen({ navigation, route }) {
         body: JSON.stringify({ phone: phoneNorm, password: code }),
       });
       const roleNorm = (result.user.role || 'vendor').toLowerCase();
-      loginAs({ ...result.user, role: roleNorm, avatar: getInitials(result.user.name) }, result.token);
+      loginAs({ ...result.user, role: roleNorm, avatar: getInitials(result.user.name) }, result.accessToken);
       navigation.replace(roleNorm === 'vendor' ? 'VendorHome' : 'DelivererHome');
     } catch (err) {
       setError(err.message);
@@ -156,7 +156,7 @@ export default function AuthScreen({ navigation, route }) {
         method: 'POST',
         body: JSON.stringify({ phone: phoneNorm, name: name.trim(), password: code }),
       });
-      loginAs({ ...result.user, role: (result.user.role || 'vendor').toLowerCase(), avatar: getInitials(result.user.name) }, result.token);
+      loginAs({ ...result.user, role: (result.user.role || 'vendor').toLowerCase(), avatar: getInitials(result.user.name) }, result.accessToken);
       setPendingUser(null);
       navigation.navigate('Verification');
     } catch (err) {

@@ -85,7 +85,7 @@ export default function ProfileScreen({ navigation }) {
           method: 'POST',
           body: JSON.stringify({ role: newRoleUpper }),
         });
-        loginAs({ ...result.user, role: newRole }, result.token);
+        loginAs({ ...result.user, role: newRole }, result.accessToken);
       } catch {
         setRole(newRole);
       }

@@ -174,7 +174,9 @@ export default function SigninScreen({ navigation }) {
             <>
               <Text style={[type.h1, { marginTop: 16 }]}>{t('welcomeBack')}</Text>
               <Text style={type.lead}>
-                {storedPhone ? `+237 ${storedPhone}` : identifier}
+                {/* storedPhone is persisted in full international form, so
+                    prefixing blindly printed "+237 +2376…". */}
+                {storedPhone ? `+237 ${storedPhone.replace(/^\+237/, '')}` : identifier}
               </Text>
 
               <View style={styles.dots}>

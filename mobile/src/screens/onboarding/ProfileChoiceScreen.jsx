@@ -22,7 +22,7 @@ export default function ProfileChoiceScreen({ navigation }) {
     try {
       const roleUpper = role === 'vendor' ? 'VENDOR' : 'DELIVERER';
       const result = await api('/api/auth/switch-role', { method: 'POST', body: JSON.stringify({ role: roleUpper }) });
-      loginAs({ ...result.user, role: (result.user.role || role).toLowerCase() }, result.token);
+      loginAs({ ...result.user, role: (result.user.role || role).toLowerCase() }, result.accessToken);
       setPendingUser(null);
       navigation.replace(role === 'vendor' ? 'VendorHome' : 'DelivererHome');
     } catch (err) {

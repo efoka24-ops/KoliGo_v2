@@ -68,7 +68,9 @@ export default function VendorProfileScreen({ navigation }) {
     try {
       if (token) {
         const result = await api('/auth/switch-role', { method: 'POST', body: JSON.stringify({ role: 'DELIVERER' }) });
-        loginAs(Object.assign({}, result.user, { role: 'deliverer' }), result.token);
+        // The API returns accessToken; reading result.token kept the old
+        // vendor token, so every deliverer route answered 403.
+        loginAs(Object.assign({}, result.user, { role: 'deliverer' }), result.accessToken);
       }
       setRole('deliverer');
       navigation.getParent()?.reset({ index: 0, routes: [{ name: 'DelivererApp' }] });

@@ -81,7 +81,7 @@ export default function DelivererProfileScreen({ navigation }) {
     try {
       if (token) {
         const result = await api('/auth/switch-role', { method: 'POST', body: JSON.stringify({ role: 'VENDOR' }) });
-        loginAs({ ...result.user, role: 'vendor' }, result.token);
+        loginAs({ ...result.user, role: 'vendor' }, result.accessToken);
       } else {
         setRole('vendor');
       }

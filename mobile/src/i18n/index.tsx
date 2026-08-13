@@ -12,13 +12,20 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>('fr');
 
   useEffect(() => {
-    storage.getItem('koligo_lang').then((v) => {
+    // kg_lang is what AppContext persists; koligo_lang is the older key kept
+    // for sessions written before the two were reconciled.
+    Promise.all([
+      storage.getItem('kg_lang').catch(() => null),
+      storage.getItem('koligo_lang').catch(() => null),
+    ]).then(([shared, legacy]) => {
+      const v = shared ?? legacy;
       if (v === 'fr' || v === 'en') setLangState(v as Lang);
     }).catch(() => {});
   }, []);
 
   const setLang = (l: Lang) => {
     setLangState(l);
+    storage.setItem('kg_lang', l).catch(() => {});
     storage.setItem('koligo_lang', l).catch(() => {});
   };
 
