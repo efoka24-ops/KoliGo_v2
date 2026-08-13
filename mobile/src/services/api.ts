@@ -22,6 +22,8 @@ async function clearAuthTokens() {
 export const api = axios.create({ baseURL: BASE_URL, timeout: 15000 });
 
 api.interceptors.request.use(async (config) => {
+  // Never clobber a caller-supplied header (apiFetch takes an explicit token).
+  if (config.headers.Authorization) return config;
   const token = await storage.getItem('access_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
@@ -104,8 +106,11 @@ export async function apiFetch(path: string, options: RequestInit = {}, token?: 
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   try {
-    const res = await axios({
-      url: `${BASE_URL}${normalPath}`,
+    // Go through the `api` instance, not bare axios: it carries the auth
+    // header and the 401-refresh retry. On bare axios every call here failed
+    // permanently once the access token expired.
+    const res = await api.request({
+      url: normalPath,
       method: (options.method as any) || 'GET',
       headers,
       data: options.body,

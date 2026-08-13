@@ -4,6 +4,11 @@ import { api } from './api';
 export const authService = {
   async signup(payload: { name: string; phone: string; email?: string; pin: string; role: string; gender?: string; shopName?: string }) {
     const { data } = await api.post('/auth/signup', payload);
+    // Persist both tokens, as signin does. Without the refresh token the
+    // session dies the moment the 15-minute access token expires.
+    await storage.setItem('access_token', data.accessToken);
+    await storage.setItem('refresh_token', data.refreshToken);
+    await storage.setItem('user_phone', payload.phone);
     return data;
   },
 
