@@ -3,7 +3,8 @@ import { View, Text, Pressable, TouchableOpacity, ActivityIndicator, Alert, Styl
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-const API_BASE = 'http://localhost:3001';
+import { API_BASE } from '../../config';
+
 const TAGS = ['Rapide', 'Professionnel', 'Sympa', 'Soigneux', 'Ponctuel'];
 
 export default function ClientRatingScreen({ navigation, route }) {

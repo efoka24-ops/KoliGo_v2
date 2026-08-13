@@ -36,7 +36,8 @@
     },
     "plugins": [
       "expo-secure-store",
-      "expo-location"
+      "expo-location",
+      "expo-font"
     ]
   }
 }

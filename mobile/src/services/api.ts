@@ -6,7 +6,7 @@ function getBaseUrl() {
   if (!__DEV__) return 'https://api.koligo.cm';
   if (Platform.OS === 'web') return 'http://localhost:3001';
   if (Platform.OS === 'ios') return 'http://localhost:3001';
-  return 'http://10.0.2.2:3000'; // Android emulator → host machine
+  return 'http://10.0.2.2:3001'; // Android emulator → host machine
 }
 
 export const BASE_URL = getBaseUrl();

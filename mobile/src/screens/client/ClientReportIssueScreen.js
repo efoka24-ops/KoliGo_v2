@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, Alert, Styl
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-const API_BASE = 'http://localhost:3001';
+import { API_BASE } from '../../config';
 
 const ISSUE_TYPES = [
   { id: 'DAMAGED',       label: 'Colis endommagé',       icon: 'warning',          color: '#DC2626' },
