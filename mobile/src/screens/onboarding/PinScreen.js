@@ -62,6 +62,7 @@ export default function PinScreen({ navigation }) {
           phone: pendingUser?.phone ?? '',
           email: pendingUser?.email,
           gender: pendingUser?.gender,
+          shopName: pendingUser?.shopName,
           pin: next,
           role: 'VENDOR',
         });
@@ -75,6 +76,7 @@ export default function PinScreen({ navigation }) {
             phone: data.user?.phone,
             kycStatus: data.user?.kycStatus,
             gender: data.user?.gender,
+            shopName: data.user?.shopName,
             role: data.user?.activeRole?.toLowerCase() || 'vendor',
           },
           data.accessToken

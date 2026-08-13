@@ -26,6 +26,7 @@ model User {
   kycStatus           String    @default("NONE")
   kycRejectionReason  String?
   gender          String?   // HOMME | FEMME
+  shopName        String?   // Captured once at signup, reused for every delivery
   biometryEnabled Boolean   @default(false)
   language        String    @default("fr")
   theme           String    @default("light")

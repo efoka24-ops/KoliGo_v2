@@ -41,7 +41,7 @@ export const switchRole = wrap(async (req: AuthRequest) =>
 export const getProfile = wrap(async (req: AuthRequest) =>
   prisma.user.findUniqueOrThrow({
     where: { id: req.user!.userId },
-    select: { id: true, name: true, phone: true, activeRole: true, kycStatus: true, gender: true, language: true, theme: true },
+    select: { id: true, name: true, phone: true, activeRole: true, kycStatus: true, gender: true, shopName: true, language: true, theme: true },
   })
 );
 

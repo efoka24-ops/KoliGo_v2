@@ -44,7 +44,7 @@ export const authService = {
     return true;
   },
 
-  async signup(payload: { name: string; phone: string; email?: string; pin: string; role: 'VENDOR' | 'DELIVERER'; gender?: string }) {
+  async signup(payload: { name: string; phone: string; email?: string; pin: string; role: 'VENDOR' | 'DELIVERER'; gender?: string; shopName?: string }) {
     const existing = await prisma.user.findUnique({ where: { phone: payload.phone } });
     if (existing) throw new Error('Numéro déjà enregistré');
 
@@ -55,6 +55,7 @@ export const authService = {
         phone: payload.phone,
         email: payload.email,
         gender: payload.gender ?? null,
+        shopName: payload.shopName?.trim() || null,
         pinHash,
         roles: JSON.stringify([payload.role]),
         activeRole: payload.role,
@@ -147,14 +148,14 @@ export const authService = {
     return { reset: true };
   },
 
-  issueTokens(user: { id: string; phone: string; name?: string; activeRole: string; roles?: string; kycStatus?: string; gender?: string | null }) {
+  issueTokens(user: { id: string; phone: string; name?: string; activeRole: string; roles?: string; kycStatus?: string; gender?: string | null; shopName?: string | null }) {
     const payload = { userId: user.id, phone: user.phone, activeRole: user.activeRole };
     let parsedRoles: string[] = [user.activeRole];
     try { parsedRoles = user.roles ? JSON.parse(user.roles) : [user.activeRole]; } catch {}
     return {
       accessToken: signAccess(payload),
       refreshToken: signRefresh(payload),
-      user: { id: user.id, phone: user.phone, name: user.name ?? '', activeRole: user.activeRole, roles: parsedRoles, kycStatus: user.kycStatus ?? null, gender: user.gender ?? null },
+      user: { id: user.id, phone: user.phone, name: user.name ?? '', activeRole: user.activeRole, roles: parsedRoles, kycStatus: user.kycStatus ?? null, gender: user.gender ?? null, shopName: user.shopName ?? null },
     };
   },
 };

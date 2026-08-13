@@ -1,15 +1,11 @@
 import axios from 'axios';
-import { Platform } from 'react-native';
 import { storage } from '../utils/storage';
+import { API_BASE } from '../config';
 
-function getBaseUrl() {
-  if (!__DEV__) return 'https://api.koligo.cm';
-  if (Platform.OS === 'web') return 'http://localhost:3001';
-  if (Platform.OS === 'ios') return 'http://localhost:3001';
-  return 'http://10.0.2.2:3001'; // Android emulator → host machine
-}
-
-export const BASE_URL = getBaseUrl();
+// Single source of truth for the API host — see src/config.js. This used to
+// duplicate the resolution logic and drifted (wrong port on Android, a stale
+// production domain).
+export const BASE_URL = API_BASE;
 
 // Called by AppContext to receive logout notifications when token refresh fails
 let _authFailureHandler: (() => void) | null = null;

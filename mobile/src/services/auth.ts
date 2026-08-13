@@ -2,7 +2,7 @@ import { storage } from '../utils/storage';
 import { api } from './api';
 
 export const authService = {
-  async signup(payload: { name: string; phone: string; email?: string; pin: string; role: string; gender?: string }) {
+  async signup(payload: { name: string; phone: string; email?: string; pin: string; role: string; gender?: string; shopName?: string }) {
     const { data } = await api.post('/auth/signup', payload);
     return data;
   },

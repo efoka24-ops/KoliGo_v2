@@ -16,6 +16,7 @@ export default function Icon({ name, size = 22, color, strokeWidth = 1.7, style 
     user:     <><Circle cx="12" cy="8" r="4" {...p}/><Path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" {...p}/></>,
     bell:     <><Path d="M6 17V10a6 6 0 0 1 12 0v7M4 17h16M10 20a2 2 0 0 0 4 0" {...p}/></>,
     chat:     <Path d="M4 5h16v11H10l-4 4v-4H4z" {...p}/>,
+    mail:     <><Rect x="3" y="5" width="18" height="14" rx="2" {...p}/><Path d="m3.5 7 8.5 6 8.5-6" {...p}/></>,
     arrow:    <><Path d="M5 12h14M13 6l6 6-6 6" {...p}/></>,
     back:     <><Path d="M19 12H5M11 6l-6 6 6 6" {...p}/></>,
     check:    <Path d="m5 12 5 5L20 7" {...p}/>,

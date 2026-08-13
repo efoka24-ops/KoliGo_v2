@@ -104,7 +104,7 @@ function FieldError({ msg }) {
 }
 
 export default function PostDeliveryScreen({ navigation }) {
-  const { api, token, showToast, pricing, lang } = useApp();
+  const { api, token, showToast, pricing, lang, user } = useApp();
   const { t } = useI18n();
   const isEn = lang === 'en';
 
@@ -129,7 +129,8 @@ export default function PostDeliveryScreen({ navigation }) {
     { id: 'VVIP',       title: t('VVIP'),     sub: t('Certifié premium'), mul: 'x1.40', icon: 'crown' },
   ], [t]);
 
-  const [shopName, setShopName]     = useState('');
+  // Captured once at signup; the vendor never retypes it per delivery.
+  const [shopName, setShopName]     = useState(user?.shopName ?? '');
   const [from, setFrom]             = useState('Akwa');
   const [parcelDesc, setParcelDesc] = useState('');
   const [parcelType, setParcelType] = useState('Vêtements');
@@ -149,18 +150,16 @@ export default function PostDeliveryScreen({ navigation }) {
   const [fetchedDistance, setFetchedDistance] = useState(null);
   const [distanceFetching, setDistanceFetching] = useState(false);
 
-  // Load cities for cascade picker + auto-fill shop name from most recent delivery
+  // Load cities for cascade picker.
   useEffect(() => {
     apiFetch('/api/public/cities').then(data => { if (Array.isArray(data)) setCities(data); }).catch(() => {});
+  }, []);
 
-    if (token) {
-      api('/api/deliveries').then(list => {
-        if (Array.isArray(list) && list.length > 0 && list[0].shopName) {
-          setShopName(list[0].shopName);
-        }
-      }).catch(() => {});
-    }
-  }, [token]);
+  // The profile can land after first render (cold start restores the session
+  // asynchronously), so adopt its shop name once it arrives.
+  useEffect(() => {
+    if (user?.shopName) setShopName(user.shopName);
+  }, [user?.shopName]);
 
   // Fetch real road distance from backend when from/to changes
   useEffect(() => {
@@ -187,7 +186,8 @@ export default function PostDeliveryScreen({ navigation }) {
 
   const validateStep1 = () => {
     const errs = {};
-    if (!shopName.trim())   errs.shopName   = t('Indique le nom de ta boutique');
+    // Only legacy accounts still type this; new ones inherit it from the profile.
+    if (!shopName.trim() && !user?.shopName) errs.shopName = t('Indique le nom de ta boutique');
     if (!parcelDesc.trim()) errs.parcelDesc = t('Décris le colis');
     if (!recipient.trim())  errs.recipient  = t('Indique le nom du destinataire');
     if (!phoneNorm)         errs.clientPhone = t('Numéro requis');
@@ -262,16 +262,27 @@ export default function PostDeliveryScreen({ navigation }) {
           <>
             <KGSectionTitle>{t('Ta boutique')}</KGSectionTitle>
             <KGCard padding={14} style={{ gap: 10 }}>
-              <View>
-                <KGInput
-                  label={t('Nom de ta boutique')}
-                  value={shopName}
-                  onChangeText={v => { setShopName(v); setFieldErrors(e => ({ ...e, shopName: null })); }}
-                  icon="package"
-                  placeholder={t('Nom de ta boutique')}
-                />
-                <FieldError msg={fieldErrors.shopName} />
-              </View>
+              {user?.shopName ? (
+                // Set once at signup — shown for confirmation, not re-entry.
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 }}>
+                  <Icon name="package" size={16} color={colors.green} />
+                  <Text style={{ flex: 1, fontFamily: `${fonts.ui}-SemiBold`, fontSize: 15, color: colors.ink }}>
+                    {user.shopName}
+                  </Text>
+                </View>
+              ) : (
+                // Accounts created before the shop name moved onto the profile.
+                <View>
+                  <KGInput
+                    label={t('Nom de ta boutique')}
+                    value={shopName}
+                    onChangeText={v => { setShopName(v); setFieldErrors(e => ({ ...e, shopName: null })); }}
+                    icon="package"
+                    placeholder={t('Nom de ta boutique')}
+                  />
+                  <FieldError msg={fieldErrors.shopName} />
+                </View>
+              )}
               <LocationPicker
                 label={isEn ? 'Pickup area' : 'Quartier de départ (retrait)'}
                 value={from}
