@@ -26,7 +26,13 @@ export const authService = {
     ]);
 
     const viaWhatsApp = whatsAppSent.status === 'fulfilled' && whatsAppSent.value === true;
-    return { sent: true, whatsApp: viaWhatsApp };
+
+    // Outside production the code travels back to the client so the app can
+    // show/prefill it. NEVER enable this in production: it hands the code to
+    // whoever asked for it, so the OTP would no longer prove that the person
+    // signing up controls the email or phone number.
+    const devCode = process.env.NODE_ENV === 'production' ? undefined : code;
+    return { sent: true, whatsApp: viaWhatsApp, devCode };
   },
 
   async verifyOtp(phone: string, code: string): Promise<boolean> {

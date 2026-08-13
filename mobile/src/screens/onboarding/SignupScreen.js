@@ -34,8 +34,9 @@ export default function SignupScreen({ navigation, route }) {
     setLoading(true);
     try {
       const fullPhone = '+237' + normalized;
-      await authService.sendOtp(fullPhone, email.trim(), name.trim());
-      setPendingUser({ name: name.trim(), shopName: shopName.trim(), phone: fullPhone, email: email.trim(), gender });
+      const res = await authService.sendOtp(fullPhone, email.trim(), name.trim());
+      // Present only outside production — see backend authService.sendOtp.
+      setPendingUser({ name: name.trim(), shopName: shopName.trim(), phone: fullPhone, email: email.trim(), gender, devCode: res?.devCode });
       navigation.navigate('Otp');
     } catch (e) {
       showToast(e?.response?.data?.error || 'Erreur réseau', 'error');

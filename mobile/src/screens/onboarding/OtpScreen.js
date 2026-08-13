@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, ScreenHeader, CodeBoxes, Numpad, Button } from '../../components';
@@ -9,7 +9,7 @@ import { authService } from '../../services/auth';
 
 export default function OtpScreen({ navigation }) {
   const { t } = useI18n();
-  const { pendingUser, showToast } = useApp();
+  const { pendingUser, setPendingUser, showToast } = useApp();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
@@ -17,6 +17,15 @@ export default function OtpScreen({ navigation }) {
   const phone = pendingUser?.phone ?? '+237 6•• ••• •12';
   const email = pendingUser?.email;
   const dest = email ?? phone;
+
+  // The backend only returns devCode outside production; there it is undefined
+  // and this whole block stays hidden.
+  const [devCode, setDevCode] = useState(pendingUser?.devCode);
+
+  // Prefill so the code never has to be read from an inbox during testing.
+  useEffect(() => {
+    if (devCode) setCode(devCode);
+  }, [devCode]);
 
   const onKey = (k) => {
     if (k === '⌫') setCode(c => c.slice(0, -1));
@@ -40,7 +49,11 @@ export default function OtpScreen({ navigation }) {
   const handleResend = async () => {
     setResending(true);
     try {
-      await authService.sendOtp(phone, email, pendingUser?.name);
+      const res = await authService.sendOtp(phone, email, pendingUser?.name);
+      // Resending invalidates the previous code, so replace the shown one.
+      setCode('');
+      setDevCode(res?.devCode);
+      setPendingUser(u => ({ ...(u ?? {}), devCode: res?.devCode }));
       showToast(email ? `Code renvoyé à ${email}` : 'Code renvoyé');
     } catch {
       showToast('Erreur réseau', 'error');
@@ -70,6 +83,18 @@ export default function OtpScreen({ navigation }) {
             </Text>
           </View>
         </View>
+
+        {devCode ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FEF3C7', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#F59E0B' }}>
+            <Ionicons name="key" size={18} color="#B45309" />
+            <View style={{ flex: 1 }}>
+              <Text style={[type.h3, { color: '#92400E' }]}>Ton code : {devCode}</Text>
+              <Text style={[type.lead, { marginTop: 2, color: '#92400E' }]}>
+                Affiché ici car l'envoi email/WhatsApp est indisponible.
+              </Text>
+            </View>
+          </View>
+        ) : null}
 
         <Text style={type.lead}>{t('otpHint')}</Text>
         <CodeBoxes value={code} length={4} />
