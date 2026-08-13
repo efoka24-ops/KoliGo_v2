@@ -2,7 +2,7 @@
   "name": "koligo-backend",
   "version": "1.0.0",
   "scripts": {
-    "dev": "ts-node-dev --respawn src/app.ts",
+    "dev": "ts-node-dev --respawn src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "db:migrate": "prisma migrate dev",
