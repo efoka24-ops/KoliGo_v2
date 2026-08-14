@@ -28,13 +28,13 @@ router.post('/cashout', verifyJWT, async (req: AuthRequest, res: Response) => {
       description:       `KoliGo livraison #${deliveryId.slice(-6)} · ${delivery.pickupAddress} → ${delivery.dropoffAddress}`,
     });
 
-    // Save Camoo transaction ID on delivery
+    // Save the provider transaction id on the delivery
     await prisma.delivery.update({
       where: { id: deliveryId },
-      data:  { momoRef: result.cashOut?.id ?? extRef },
+      data:  { momoRef: result.transactionId || extRef },
     });
 
-    res.json({ transactionId: result.cashOut?.id, extRef, status: result.cashOut?.status, network: result.cashOut?.network });
+    res.json({ transactionId: result.transactionId, extRef, status: result.status, network: result.network });
   } catch (e: any) {
     res.status(500).json({ error: e.response?.data?.message ?? e.message });
   }
@@ -44,7 +44,7 @@ router.post('/cashout', verifyJWT, async (req: AuthRequest, res: Response) => {
 router.get('/verify/:id', verifyJWT, async (req: Request, res: Response) => {
   try {
     const result = await paymentService.verify(req.params.id);
-    res.json(result.verify ?? result);
+    res.json(result);
   } catch (e: any) {
     res.status(500).json({ error: e.response?.data?.message ?? e.message });
   }
@@ -54,7 +54,7 @@ router.get('/verify/:id', verifyJWT, async (req: Request, res: Response) => {
 router.get('/balance', verifyJWT, async (_req: Request, res: Response) => {
   try {
     const result = await paymentService.getBalance();
-    res.json(result.account ?? result);
+    res.json(result);
   } catch (e: any) {
     res.status(500).json({ error: e.response?.data?.message ?? e.message });
   }

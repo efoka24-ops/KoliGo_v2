@@ -162,14 +162,14 @@ export const clientPay = wrap(async (req: Request) => {
       description:       `KoliGo livraison #${deliveryId.slice(-6)} · ${d.pickupAddress} → ${d.dropoffAddress}`,
     });
   } catch (err: any) {
-    const camooMsg  = err.response?.data?.message ?? err.response?.data?.error ?? err.message;
-    const camooCode = err.response?.status ?? 0;
-    throw new Error(`Paiement MoMo échoué (Camoo ${camooCode}): ${camooMsg}`);
+    const msg  = err.response?.data?.message ?? err.response?.data?.error ?? err.message;
+    const code = err.response?.status ?? 0;
+    throw new Error(`Paiement MoMo échoué (${paymentService.name} ${code}): ${msg}`);
   }
 
-  await prisma.delivery.update({ where: { id: deliveryId }, data: { momoRef: result.cashOut?.id ?? extRef } });
+  await prisma.delivery.update({ where: { id: deliveryId }, data: { momoRef: result.transactionId || extRef } });
 
-  return { transactionId: result.cashOut?.id ?? extRef, extRef, amount: d.priceXAF };
+  return { transactionId: result.transactionId || extRef, extRef, amount: d.priceXAF };
 });
 
 // GET /deliveries/client-payment-status?transactionId=&clientToken= — poll + confirm on success
@@ -196,17 +196,20 @@ export const clientPaymentStatus = wrap(async (req: Request) => {
     return { status: 'pending', mock: true };
   }
 
-  let camooStatus = 'pending';
+  let settled = false;
+  let failed = false;
   let amount = 0;
   try {
     const result = await paymentService.verify(transactionId);
-    camooStatus = (result.verify?.status ?? 'pending').toLowerCase();
-    amount = result.verify?.amount ?? 0;
+    // Status vocabulary differs per provider — let the provider judge.
+    settled = paymentService.isSettled(result.status);
+    failed = paymentService.isFailed(result.status);
+    amount = result.amount ?? 0;
   } catch {
     return { status: 'pending' };
   }
 
-  if (camooStatus === 'success' || camooStatus === 'completed') {
+  if (settled) {
     await deliveryService.confirmDeliverByPayment(deliveryId, transactionId).catch(() => {});
     const d = await prisma.delivery.findUnique({
       where: { id: deliveryId },
@@ -219,7 +222,7 @@ export const clientPaymentStatus = wrap(async (req: Request) => {
     };
   }
 
-  if (camooStatus === 'failed' || camooStatus === 'rejected' || camooStatus === 'error') {
+  if (failed) {
     return { status: 'failed' };
   }
 
@@ -303,7 +306,7 @@ export const clientConfirm = wrap(async (req: Request) => {
     throw new Error(`Paiement MoMo échoué: ${msg}`);
   }
 
-  const transactionId = result.cashOut?.id ?? extRef;
+  const transactionId = result.transactionId || extRef;
   await prisma.delivery.update({ where: { id: d.id }, data: { momoRef: transactionId } });
   return { ok: true, transactionId, pending: true };
 });
