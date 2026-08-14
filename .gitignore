@@ -42,3 +42,6 @@ Thumbs.db
 *.mobileprovision
 *.orig.*
 web-build/
+
+# Bases temporaires des tests de bout en bout
+backend/e2e-*.db
