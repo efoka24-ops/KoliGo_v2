@@ -1,10 +1,12 @@
 import type { PaymentProvider } from './provider';
 import { camooProvider } from './camoo.provider';
+import { apisungkuProvider } from './apisungku.provider';
 
 // PAYMENT_PROVIDER selects the backend at boot. Unknown values fall back to
 // camoo rather than crashing, and say so, so a typo cannot take payments down.
 const providers: Record<string, PaymentProvider> = {
   camoo: camooProvider,
+  apisungku: apisungkuProvider,
 };
 
 const requested = (process.env.PAYMENT_PROVIDER ?? 'camoo').toLowerCase();

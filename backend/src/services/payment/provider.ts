@@ -7,6 +7,8 @@ export interface CashoutOptions {
   externalReference: string;
   notificationUrl?: string;
   description?: string;
+  /** Donnees libres, restituees telles quelles dans le webhook. */
+  metadata?: Record<string, unknown>;
 }
 
 export interface CashoutResult {
@@ -30,12 +32,20 @@ export interface VerifyResult {
 
 export interface PaymentProvider {
   readonly name: string;
+  /** Collect money from the customer. */
   cashout(opts: CashoutOptions): Promise<CashoutResult>;
+  /** Send money out to a deliverer. Not every provider supports it. */
+  payout?(opts: CashoutOptions): Promise<CashoutResult>;
   verify(transactionId: string): Promise<VerifyResult>;
   getBalance(): Promise<{ balance: number; currency: string }>;
   /** Query params or body of the provider callback. */
-  verifyWebhookSignature(params: Record<string, string>): boolean;
+  verifyWebhookSignature(params: Record<string, string>, rawBody?: string): boolean;
   /** Whether a status string means the money arrived. */
   isSettled(status: string): boolean;
   isFailed(status: string): boolean;
+  /**
+   * Status that is neither settled nor failed and must not be resolved
+   * automatically — a human has to look at it.
+   */
+  needsAttention?(status: string): boolean;
 }

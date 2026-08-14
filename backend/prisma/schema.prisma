@@ -134,6 +134,7 @@ model Wallet {
   user         User          @relation(fields: [userId], references: [id])
   transactions Transaction[]
   withdrawals  Withdrawal[]
+  topUps       TopUp[]
 }
 
 model Transaction {
@@ -155,8 +156,31 @@ model Withdrawal {
   provider    String   // MTN | ORANGE
   phone       String
   status      String   @default("PENDING") // PENDING | SUCCESS | FAILED
-  externalRef String?
+  /// Reference que nous emettons vers la passerelle. Unique : c'est elle qui
+  /// rend un rejeu de webhook sans effet.
+  externalRef String?  @unique
+  /// Identifiant de la transaction cote passerelle.
+  paymentId   String?
   createdAt   DateTime @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id])
+}
+
+/// Rechargement de portefeuille par mobile money.
+/// Le solde n'est credite qu'a la reception du statut final : creer la ligne
+/// des l'initiation permet de retrouver le portefeuille au webhook, et
+/// l'unicite de externalRef empeche un double credit si le webhook est rejoue.
+model TopUp {
+  id          String   @id @default(cuid())
+  walletId    String
+  amountXAF   Int
+  provider    String   // MTN | ORANGE
+  phone       String
+  status      String   @default("PENDING") // PENDING | SUCCESS | FAILED
+  externalRef String   @unique
+  paymentId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   wallet Wallet @relation(fields: [walletId], references: [id])
 }

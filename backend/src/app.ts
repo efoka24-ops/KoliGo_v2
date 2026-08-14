@@ -18,7 +18,16 @@ export function createApp() {
 
   app.use(helmet());
   app.use(cors());
-  app.use(express.json({ limit: '5mb' }));
+  // Le corps brut est conserve au passage : les webhooks de paiement signent
+  // les octets recus, et re-serialiser le JSON invaliderait la signature.
+  app.use(
+    express.json({
+      limit: '5mb',
+      verify: (req, _res, buf) => {
+        (req as express.Request & { rawBody?: string }).rawBody = buf.toString('utf8');
+      },
+    })
+  );
 
   app.use(rateLimit({ windowMs: 60_000, max: 120, standardHeaders: true }));
 
