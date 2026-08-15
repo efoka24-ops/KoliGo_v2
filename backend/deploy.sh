@@ -16,7 +16,17 @@ npm ci --omit=dev || npm install --omit=dev
 echo "==> Applying database migrations"
 # migrate deploy only replays committed migrations; it never prompts and never
 # drops data, unlike `migrate dev`.
-npx prisma migrate deploy
+#
+# The drift migration is a special case: on a database that already grew
+# Message, distanceKm and gender by hand, replaying it fails on objects that
+# exist. Marking it applied records it without re-running the SQL. Harmless
+# when the migration is already recorded.
+DRIFT_MIGRATION="20260813235900_sync_schema_drift"
+if ! npx prisma migrate deploy; then
+  echo "==> migrate deploy failed — marking $DRIFT_MIGRATION as applied and retrying"
+  npx prisma migrate resolve --applied "$DRIFT_MIGRATION" || true
+  npx prisma migrate deploy
+fi
 npx prisma generate
 
 echo "==> Building"
