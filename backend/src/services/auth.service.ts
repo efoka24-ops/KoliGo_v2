@@ -27,12 +27,16 @@ export const authService = {
 
     const viaWhatsApp = whatsAppSent.status === 'fulfilled' && whatsAppSent.value === true;
 
-    // Outside production the code travels back to the client so the app can
-    // show/prefill it. NEVER enable this in production: it hands the code to
-    // whoever asked for it, so the OTP would no longer prove that the person
-    // signing up controls the email or phone number.
-    const devCode = process.env.NODE_ENV === 'production' ? undefined : code;
-    return { sent: true, whatsApp: viaWhatsApp, devCode };
+    // The code travels back to the client so the app fills and submits it on
+    // its own, with no typing. Set OTP_RETURN_CODE=false to stop returning it.
+    //
+    // Understand the trade-off before leaving this on: whoever calls this
+    // endpoint receives the code, so the OTP no longer proves that the person
+    // signing up controls that email or phone number. Anyone can register with
+    // someone else's address. Turning it off restores that guarantee, at the
+    // cost of making the user read their inbox again.
+    const returnCode = (process.env.OTP_RETURN_CODE ?? 'true').toLowerCase() !== 'false';
+    return { sent: true, whatsApp: viaWhatsApp, devCode: returnCode ? code : undefined };
   },
 
   async verifyOtp(phone: string, code: string): Promise<boolean> {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, ScreenHeader, CodeBoxes, Numpad, Button } from '../../components';
@@ -18,40 +18,51 @@ export default function OtpScreen({ navigation }) {
   const email = pendingUser?.email;
   const dest = email ?? phone;
 
-  // The backend only returns devCode outside production; there it is undefined
-  // and this whole block stays hidden.
+  // Code handed back by the backend so the screen can complete on its own.
+  // Undefined when OTP_RETURN_CODE=false, in which case this screen behaves
+  // like a normal manual entry.
   const [devCode, setDevCode] = useState(pendingUser?.devCode);
+  // Guards against a second submit when the effect re-runs.
+  const autoSubmitted = useRef(false);
 
-  // Prefill so the code never has to be read from an inbox during testing.
+  const handleVerify = useCallback(async (value) => {
+    const submitted = value ?? code;
+    if (submitted.length < 4) return;
+    setLoading(true);
+    try {
+      await authService.verifyOtp(phone, submitted);
+      navigation.navigate('Pin');
+    } catch (e) {
+      showToast(e?.response?.data?.error || 'Code incorrect', 'error');
+      setCode('');
+      // Let the user retry by hand rather than looping on a rejected code.
+      autoSubmitted.current = true;
+    } finally {
+      setLoading(false);
+    }
+  }, [code, phone, navigation, showToast]);
+
+  // Fill and submit without the user touching anything.
   useEffect(() => {
-    if (devCode) setCode(devCode);
-  }, [devCode]);
+    if (!devCode || autoSubmitted.current) return;
+    autoSubmitted.current = true;
+    setCode(devCode);
+    handleVerify(devCode);
+  }, [devCode, handleVerify]);
 
   const onKey = (k) => {
     if (k === '⌫') setCode(c => c.slice(0, -1));
     else if (code.length < 4) setCode(c => c + k);
   };
 
-  const handleVerify = async () => {
-    if (code.length < 4) return;
-    setLoading(true);
-    try {
-      await authService.verifyOtp(phone, code);
-      navigation.navigate('Pin');
-    } catch (e) {
-      showToast(e?.response?.data?.error || 'Code incorrect', 'error');
-      setCode('');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleResend = async () => {
     setResending(true);
     try {
       const res = await authService.sendOtp(phone, email, pendingUser?.name);
-      // Resending invalidates the previous code, so replace the shown one.
+      // Resending invalidates the previous code, so replace the shown one and
+      // let the new one submit itself too.
       setCode('');
+      autoSubmitted.current = false;
       setDevCode(res?.devCode);
       setPendingUser(u => ({ ...(u ?? {}), devCode: res?.devCode }));
       showToast(email ? `Code renvoyé à ${email}` : 'Code renvoyé');
@@ -67,7 +78,7 @@ export default function OtpScreen({ navigation }) {
       <Button
         title={loading ? '...' : t('verify')}
         disabled={code.length < 4 || loading}
-        onPress={handleVerify}
+        onPress={() => handleVerify()}
       />
     }>
       <ScreenHeader title={t('verification')} subtitle={email ? `Code envoyé à ${email}` : phone} onBack={() => navigation.goBack()} />
@@ -85,18 +96,18 @@ export default function OtpScreen({ navigation }) {
         </View>
 
         {devCode ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FEF3C7', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#F59E0B' }}>
-            <Ionicons name="key" size={18} color="#B45309" />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#EFF8F1', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.green }}>
+            <Ionicons name="checkmark-circle" size={18} color={colors.green} />
             <View style={{ flex: 1 }}>
-              <Text style={[type.h3, { color: '#92400E' }]}>Ton code : {devCode}</Text>
-              <Text style={[type.lead, { marginTop: 2, color: '#92400E' }]}>
-                Affiché ici car l'envoi email/WhatsApp est indisponible.
+              <Text style={[type.h3, { color: colors.greenDark }]}>Code détecté : {devCode}</Text>
+              <Text style={[type.lead, { marginTop: 2, color: colors.greenDark }]}>
+                Vérification automatique, rien à saisir.
               </Text>
             </View>
           </View>
         ) : null}
 
-        <Text style={type.lead}>{t('otpHint')}</Text>
+        {!devCode && <Text style={type.lead}>{t('otpHint')}</Text>}
         <CodeBoxes value={code} length={4} />
 
         <Numpad onKey={onKey} />
