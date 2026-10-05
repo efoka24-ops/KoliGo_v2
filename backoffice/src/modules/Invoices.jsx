@@ -24,19 +24,21 @@ const PRINT_CSS = `
   .kg-noprint { display: none !important; }
 }`;
 
-function Party({ label, p }) {
-  if (!p) return null;
+const rowValue = (r) => (r.date ? dt(r.value) : r.value);
+
+function Party({ party, accent }) {
   return (
-    <div style={{ flex: 1, minWidth: 180 }}>
-      <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6, color: '#76746B', fontWeight: 700 }}>{label}</div>
-      <div style={{ fontWeight: 700 }}>{p.shopName || p.name || '—'}</div>
-      {p.shopName && p.name && <div style={{ fontSize: 12, color: '#555' }}>{p.name}</div>}
-      {p.phone && <div style={{ fontSize: 12, color: '#555' }}>{p.phone}</div>}
+    <div style={{ flex: 1, minWidth: 200, border: '1px solid #E7E7E0', borderRadius: 10, padding: '10px 14px' }}>
+      <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6, color: accent, fontWeight: 800 }}>{party.label}</div>
+      <div style={{ fontWeight: 700, marginTop: 3 }}>{party.name || '—'}</div>
+      {party.subname && <div style={{ fontSize: 12, color: '#555' }}>{party.subname}</div>}
+      {party.phone && <div style={{ fontSize: 12, color: '#555' }}>{party.phone}</div>}
     </div>
   );
 }
 
 function InvoiceView({ inv, onClose }) {
+  const accent = inv.accent || '#178A3C';
   return (
     <div className="kg-noprint-wrap" style={{ position: 'fixed', inset: 0, background: 'rgba(14,42,28,.55)', zIndex: 1000, overflowY: 'auto', padding: '30px 16px' }}>
       <style>{PRINT_CSS}</style>
@@ -46,31 +48,36 @@ function InvoiceView({ inv, onClose }) {
           <button className="btn" onClick={onClose}>Fermer</button>
         </div>
         <div id="kg-invoice" style={{ background: '#fff', borderRadius: 14, border: '1px solid #E7E7E0', padding: 32, color: '#15140F', boxShadow: '0 10px 40px rgba(0,0,0,.25)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, borderBottom: '3px solid #178A3C', paddingBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, borderBottom: `4px solid ${accent}`, paddingBottom: 16 }}>
             <div>
               <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: -1 }}>Koli<span style={{ color: '#E8551C' }}>Go</span></div>
               <div style={{ fontSize: 12, color: '#76746B' }}>La livraison collaborative au Cameroun</div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 20, fontWeight: 800 }}>{inv.title}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: accent }}>{inv.title}</div>
               <div style={{ fontFamily: 'ui-monospace, Consolas, monospace', fontSize: 13 }}>N° {inv.number}</div>
-              <div style={{ fontSize: 12, color: '#76746B' }}>{dt(inv.issuedAt)}</div>
+              <div style={{ fontSize: 12, color: '#76746B' }}>{dt(inv.issuedAt)} · Colis {inv.delivery.ref}</div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', margin: '20px 0' }}>
-            <Party label="Vendeur" p={inv.vendor} />
-            <Party label="Destinataire" p={inv.recipient} />
-            <Party label="Livreur" p={inv.deliverer} />
+          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', margin: '20px 0' }}>
+            <Party party={inv.issuer} accent={accent} />
+            <Party party={inv.billedTo} accent={accent} />
           </div>
 
-          <div style={{ background: '#F4F5F1', borderRadius: 10, padding: '10px 14px', fontSize: 13, marginBottom: 18 }}>
-            <b>Colis {inv.delivery.ref}</b> · {inv.delivery.pickupAddress} → {inv.delivery.dropoffAddress}
-            {inv.delivery.description ? ` · ${inv.delivery.description}` : ''}
-            {inv.delivery.weightKg ? ` · ${inv.delivery.weightKg} kg` : ''}
-          </div>
+          {(inv.details || []).map(b => (
+            <div key={b.title} style={{ borderLeft: `4px solid ${accent}`, background: '#FAFAF6', borderRadius: 8, padding: '10px 14px', marginBottom: 12 }}>
+              <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.6, color: '#76746B', fontWeight: 800, marginBottom: 6 }}>{b.title}</div>
+              {b.rows.map((r, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '3px 0', fontSize: 13 }}>
+                  <span style={{ color: '#555' }}>{r.label}</span>
+                  <span style={{ textAlign: 'right', fontWeight: r.bold ? 800 : 600, fontFamily: /^KOLIGO|^[0-9a-f-]{20,}$/.test(String(r.value)) ? 'ui-monospace, Consolas, monospace' : undefined }}>{rowValue(r)}</span>
+                </div>
+              ))}
+            </div>
+          ))}
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginTop: 8 }}>
             <thead>
               <tr style={{ textAlign: 'left', color: '#76746B', fontSize: 12 }}>
                 <th style={{ padding: '8px 0', borderBottom: '1px solid #E7E7E0' }}>Désignation</th>
@@ -85,23 +92,12 @@ function InvoiceView({ inv, onClose }) {
                 </tr>
               ))}
               <tr>
-                <td style={{ padding: '14px 0', fontWeight: 800 }}>TOTAL</td>
-                <td style={{ padding: '14px 0', textAlign: 'right', fontWeight: 900, fontSize: 20, color: '#095C2E', whiteSpace: 'nowrap' }}>{xaf(inv.total)}</td>
+                <td style={{ padding: '14px 0', fontWeight: 800 }}>{inv.totalLabel || 'TOTAL'}</td>
+                <td style={{ padding: '14px 0', textAlign: 'right', fontWeight: 900, fontSize: 20, color: accent, whiteSpace: 'nowrap' }}>{xaf(inv.total)}</td>
               </tr>
             </tbody>
           </table>
 
-          {inv.payment && (
-            <div style={{ marginTop: 10, border: '1px solid #E7E7E0', borderRadius: 10, padding: '12px 14px', fontSize: 13, lineHeight: 1.7 }}>
-              <b>Paiement</b> : {inv.payment.method} — <b style={{ color: '#178A3C' }}>{inv.payment.status}</b><br />
-              {inv.payment.reference && <>Référence : <span style={{ fontFamily: 'ui-monospace, Consolas, monospace' }}>{inv.payment.reference}</span><br /></>}
-              {inv.payment.transactionId && <>Transaction : <span style={{ fontFamily: 'ui-monospace, Consolas, monospace' }}>{inv.payment.transactionId}</span><br /></>}
-              {inv.payment.payerPhone && <>Numéro payeur : {inv.payment.payerPhone}<br /></>}
-              {inv.payment.paidAt && <>Payé le : {dt(inv.payment.paidAt)}</>}
-            </div>
-          )}
-
-          {(inv.notes || []).map((n, i) => <p key={i} style={{ fontSize: 12.5, color: '#444', marginTop: 12 }}>{n}</p>)}
           <p style={{ fontSize: 11, color: '#9A988E', marginTop: 18, borderTop: '1px solid #E7E7E0', paddingTop: 10 }}>{inv.disclaimer}</p>
         </div>
       </div>

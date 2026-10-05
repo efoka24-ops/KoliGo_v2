@@ -184,18 +184,21 @@ check('notation destinataire', call('POST', '/api/deliveries/client-rate', ['cli
 check('stats livreur', (call('GET', '/api/user/stats', null, $dTok)['json']['courses'] ?? 0) === 1);
 
 echo "== Factures\n";
+function row(array $inv, string $label) { foreach ($inv['details'] as $b) { foreach ($b['rows'] as $r) { if ($r['label'] === $label) { return $r['value']; } } } return null; }
+function titles(array $inv) { return array_column($inv['details'], 'title'); }
 $sale = call('GET', "/api/deliveries/$id/invoice/sale", null, $vTok)['json'];
 check('facture de VENTE (vendeur) : produit 5000 + transport', ($sale['number'] ?? '') === 'KG-V-' . gmdate('Ymd') . '-' . strtoupper(substr($id, -8)) && $sale['total'] === 5000 + $expected && count($sale['lines']) === 2, $sale);
 $pay = call('GET', "/api/deliveries/$id/invoice/payment", null, $vTok)['json'];
-check('facture de PAIEMENT : mobile money Sungku, reference + n° masque', ($pay['payment']['method'] ?? '') === 'Mobile money (Sungku)' && str_starts_with($pay['payment']['reference'] ?? '', 'KOLIGO-DELIV-') && $pay['payment']['payerPhone'] === '6*****001' && $pay['total'] === $expected, $pay);
+check('facture de PAIEMENT : recu Sungku (mode, reference, transaction, n° masque), encaisse par KoliGo', row($pay, 'Mode') === 'Mobile money (Sungku)' && str_starts_with((string)row($pay, 'Référence'), 'KOLIGO-DELIV-') && row($pay, 'Numéro payeur') === '6*****001' && row($pay, 'Statut') === 'Payé' && $pay['issuer']['name'] === 'KoliGo' && $pay['billedTo']['label'] === 'Payé par' && $pay['total'] === $expected, $pay);
 $dlv = call('GET', "/api/deliveries/$id/invoice/delivery", null, $dTok)['json'];
-check('facture de LIVRAISON (livreur) : prix - commission = gain net', ($dlv['total'] ?? 0) === $del['delivererEarning'] && $dlv['lines'][1]['amountXAF'] === -$del['commissionXAF'], $dlv);
+check('facture de LIVRAISON : releve de course, calcul du prix, commission, gain net', ($dlv['total'] ?? 0) === $del['delivererEarning'] && $dlv['lines'][1]['amountXAF'] === -$del['commissionXAF'] && in_array('Calcul du prix de la course', titles($dlv), true) && row($dlv, 'Coefficient Express') === '× 1,25' && $dlv['issuer']['name'] === 'Hervé Nkouamba', $dlv);
+check('les 3 factures sont DIFFERENTES (emetteur, destinataire, blocs, libelle du total, couleur)', count(array_unique([json_encode([$sale['issuer']['name'], $sale['billedTo']['label'], titles($sale), $sale['totalLabel'], $sale['accent']]), json_encode([$pay['issuer']['name'], $pay['billedTo']['label'], titles($pay), $pay['totalLabel'], $pay['accent']]), json_encode([$dlv['issuer']['name'], $dlv['billedTo']['label'], titles($dlv), $dlv['totalLabel'], $dlv['accent']])])) === 3 && $sale['issuer']['name'] === 'Chez Marie' && $sale['billedTo']['name'] === 'Paul Test' && row($sale, 'Prix du produit') === '5 000 XAF', [$sale['issuer'], $pay['issuer'], $dlv['issuer']]);
 check('livreur ne peut pas lire la facture de vente', call('GET', "/api/deliveries/$id/invoice/sale", null, $dTok)['code'] === 403);
 check('vendeur ne peut pas lire la facture de livraison', call('GET', "/api/deliveries/$id/invoice/delivery", null, $vTok)['code'] === 403);
 check('autre livreur : refuse', call('GET', "/api/deliveries/$id/invoice/delivery", null, $d2Tok)['code'] === 403);
 check('type inconnu -> refuse', call('GET', "/api/deliveries/$id/invoice/xyz", null, $vTok)['code'] === 403);
 $pub = call('GET', "/api/deliveries/$id/public-invoice");
-check('facture de paiement PUBLIQUE (destinataire) sans telephones', $pub['code'] === 200 && ($pub['json']['payment']['status'] ?? '') === 'Payé' && !str_contains($pub['raw'], '+237'), $pub['raw']);
+check('facture de paiement PUBLIQUE (destinataire) sans telephones', $pub['code'] === 200 && row($pub['json'], 'Statut') === 'Payé' && !str_contains($pub['raw'], '+237'), $pub['raw']);
 check('BACK-OFFICE : detail d\'une facture', (call('GET', "/api/admin/invoices/$id/delivery", null, $aTok)['json']['number'] ?? '') === 'KG-L-' . gmdate('Ymd') . '-' . strtoupper(substr($id, -8)));
 check('BACK-OFFICE : refuse a un non-admin', call('GET', '/api/admin/invoices', null, $vTok)['code'] === 403);
 
@@ -206,7 +209,7 @@ call('PATCH', "/api/deliveries/{$r2['id']}/confirm-collect", ['collectCode' => $
 check('confirm-deliver mauvais code', call('PATCH', "/api/deliveries/{$r2['id']}/confirm-deliver", ['deliverCode' => '0000'], $dTok)['json']['error'] === 'Wrong delivery code');
 check('confirm-deliver bon code -> LIVRE', call('PATCH', "/api/deliveries/{$r2['id']}/confirm-deliver", ['deliverCode' => $r2['deliverCode']], $dTok)['json']['status'] === 'LIVRE');
 $byCode = call('GET', "/api/deliveries/{$r2['id']}/invoice/payment", null, $vTok)['json'];
-check('livraison validee par code : paiement = "Code de reception"', str_starts_with($byCode['payment']['method'] ?? '', 'Code de réception'), $byCode);
+check('livraison validee par code : mode = "Code de reception"', str_starts_with((string)row($byCode, 'Mode'), 'Code de réception') && row($byCode, 'Statut') === 'Réglé', $byCode);
 $aInv = call('GET', '/api/admin/invoices', null, $aTok)['json'];
 check('BACK-OFFICE : liste des factures (livrees)', $aInv['total'] === 2 && count((array)$aInv['items'][0]['invoices']) === 3 && !isset($aInv['items'][0]['deliverCode']), $aInv);
 $r3 = call('POST', '/api/deliveries', ['pickupAddress' => 'Akwa', 'dropoffAddress' => 'Deido', 'weightKg' => 1], $vTok)['json'];

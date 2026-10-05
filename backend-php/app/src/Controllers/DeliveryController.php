@@ -190,11 +190,11 @@ final class DeliveryController
     public static function publicInvoice(Ctx $c): array
     {
         $inv = Invoices::build($c->param('id'), 'payment');
-        // Public : pas de numeros de telephone des autres parties.
-        $inv['vendor']['phone'] = null;
-        $inv['recipient']['phone'] = null;
-        if ($inv['deliverer']) {
-            $inv['deliverer']['phone'] = null;
+        // Public : aucun numero de telephone des autres parties (la forme issuer / billedTo les porte).
+        foreach (['issuer', 'billedTo'] as $k) {
+            if (isset($inv[$k]['phone'])) {
+                $inv[$k]['phone'] = null;
+            }
         }
         return $inv;
     }

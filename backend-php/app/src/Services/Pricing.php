@@ -17,6 +17,11 @@ final class Pricing
 
     public const DEFAULTS = ['baseRate' => 500, 'perKmRate' => 150, 'weightSurcharge' => 100, 'commissionRate' => 0.03];
 
+    public static function coefficient(string $type): float
+    {
+        return self::COEFFICIENTS[$type] ?? 1.0;
+    }
+
     public static function isValidType(string $type): bool
     {
         return isset(self::COEFFICIENTS[$type]);
