@@ -15,7 +15,7 @@ api.interceptors.response.use(
   err => {
     if (err.response?.status === 401) {
       localStorage.removeItem('kg_admin_token');
-      window.location.href = '/';
+      window.location.href = '/admin/';
     }
     return Promise.reject(err);
   }
@@ -37,6 +37,8 @@ export const adminApi = {
   payWithdrawal:   (id)          => api.patch(`/admin/withdrawals/${id}/pay`).then(r => r.data),
   settings:        ()            => api.get('/admin/settings').then(r => r.data),
   updateSetting:   (key, value)  => api.patch('/admin/settings', { key, value }).then(r => r.data),
+  siteContent:     ()            => api.get('/admin/site-content').then(r => r.data),
+  updateSiteContent: (payload)   => api.patch('/admin/site-content', payload).then(r => r.data),
 
   // Issues / Support
   issues:              (params)           => api.get('/admin/issues', { params }).then(r => r.data),
@@ -45,6 +47,10 @@ export const adminApi = {
   // Packages
   packages:            (params)           => api.get('/admin/packages', { params }).then(r => r.data),
   getPackage:          (id)               => api.get(`/admin/packages/${id}`).then(r => r.data),
+
+  // Factures (vente / paiement / livraison)
+  invoices:            (params)           => api.get('/admin/invoices', { params }).then(r => r.data),
+  invoice:             (id, type)         => api.get(`/admin/invoices/${id}/${type}`).then(r => r.data),
 
   // Wallets
   wallets:             (params)           => api.get('/admin/wallets', { params }).then(r => r.data),

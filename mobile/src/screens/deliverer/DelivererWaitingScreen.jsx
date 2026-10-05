@@ -139,7 +139,7 @@ export default function DelivererWaitingScreen({ navigation, route }) {
         </KGCard>
 
         <View style={{ flexDirection: 'row', gap: 10, width: '100%' }}>
-          <KGButton kind="ghost" full={false} style={{ flex: 1 }} icon="chat" onPress={() => navigation.navigate('Chat', { deliveryId: params.deliveryId })}>
+          <KGButton kind="ghost" full={false} style={{ flex: 1 }} icon="chat" onPress={() => navigation.navigate('DeliveryChat', { deliveryId: params.deliveryId, title: 'Chat livraison' })}>
             Chat
           </KGButton>
           <KGButton kind="ghost" full={false} style={{ flex: 1 }} icon="bell">
@@ -147,15 +147,6 @@ export default function DelivererWaitingScreen({ navigation, route }) {
           </KGButton>
         </View>
 
-        {/* Demo shortcut */}
-        <KGButton
-          kind="orange"
-          size="lg"
-          icon="check"
-          onPress={() => navigation.navigate('Rating', { partner: 'client' })}
-        >
-          (Démo) Simuler confirmation client
-        </KGButton>
       </ScrollView>
     </SafeAreaView>
   );

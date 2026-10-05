@@ -60,18 +60,12 @@ export default function WaitingScreen({ navigation, route }) {
   };
 
   const handleChat = () => {
-    if (!delivery?.recipientId) {
+    if (!deliveryId) {
       showToast('Chat indisponible', 'error');
       return;
     }
-    const name = delivery.recipient || 'Client';
-    const convId = startConversation({
-      id: delivery.recipientId,
-      name,
-      initials: getInitials(name),
-      role: 'client',
-    });
-    navigation.navigate('ChatDetail', { convId });
+    // Chat reel (API) : le destinataire n'a pas de compte, il ecrit depuis sa page de suivi.
+    navigation.navigate('DeliveryChat', { deliveryId, title: 'Chat destinataire' });
   };
 
   const handleConfirmDelivery = () => {

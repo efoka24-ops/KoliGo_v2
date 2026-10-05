@@ -89,6 +89,9 @@ export default function WelcomeScreen({ navigation }) {
           <KGButton kind="primary" size="lg" iconRight="arrow" onPress={() => navigation.navigate('Signup')}>
             {isEn ? 'Get started' : 'Démarrer'}
           </KGButton>
+          <KGButton kind="soft" size="md" icon="package" onPress={() => navigation.navigate('TrackParcel')}>
+            {isEn ? 'I am receiving a parcel' : 'Je reçois un colis · Suivre'}
+          </KGButton>
           <KGButton kind="ghost" size="md" onPress={() => navigation.navigate('Signin')}>
             {isEn ? 'I already have an account' : "J'ai déjà un compte"}
           </KGButton>

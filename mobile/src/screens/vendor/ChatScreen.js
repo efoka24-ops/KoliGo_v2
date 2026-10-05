@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts } from '../../constants/colors';
@@ -8,13 +8,35 @@ import Icon from '../../components/Icon';
 
 // Inbox tab — shows list of conversations
 export default function ChatScreen({ navigation }) {
-  const { conversations, role } = useApp();
+  const { api, token } = useApp();
+  const [convList, setConvList] = useState([]);
 
-  const convList = Object.values(conversations || {}).sort((a, b) => {
-    if (!a.lastTime) return 1;
-    if (!b.lastTime) return -1;
-    return a.lastTime > b.lastTime ? -1 : 1;
-  });
+  // Une conversation = une livraison (chat reel via l'API, partage vendeur / livreur / destinataire).
+  const load = useCallback(async () => {
+    if (!token) return;
+    try {
+      const rows = await api('/api/deliveries');
+      if (!Array.isArray(rows)) return;
+      setConvList(rows.filter(d => d.status !== 'ANNULE').map(d => {
+        const name = d.deliverer?.name || 'En attente d’un livreur';
+        return {
+          id: d.id,
+          contactName: name,
+          contactInitials: d.deliverer?.name ? d.deliverer.name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase() : '…',
+          contactRole: 'deliverer',
+          lastMessage: (d.pickupAddress || '') + ' → ' + (d.dropoffAddress || ''),
+          lastTime: new Date(d.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+          unread: 0,
+        };
+      }));
+    } catch {}
+  }, [api, token]);
+
+  useEffect(() => {
+    load();
+    const t = setInterval(load, 15000);
+    return () => clearInterval(t);
+  }, [load]);
 
   const roleColor = (contactRole) =>
     contactRole === 'deliverer' ? colors.green
@@ -47,7 +69,7 @@ export default function ChatScreen({ navigation }) {
           </View>
           <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 18, color: colors.ink }}>Aucune conversation</Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink55, textAlign: 'center', lineHeight: 20, maxWidth: 260 }}>
-            Tes échanges avec les livreurs et clients apparaîtront ici.
+            Tes échanges avec les livreurs et les destinataires apparaîtront ici, livraison par livraison.
           </Text>
         </View>
       ) : (
@@ -56,7 +78,7 @@ export default function ChatScreen({ navigation }) {
             <TouchableOpacity
               key={conv.id}
               activeOpacity={0.82}
-              onPress={() => navigation.navigate('ChatDetail', { convId: conv.id })}
+              onPress={() => navigation.navigate('DeliveryChat', { deliveryId: conv.id, title: conv.contactName })}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#fff', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#E8DCC8' }}
             >
               {/* Avatar */}

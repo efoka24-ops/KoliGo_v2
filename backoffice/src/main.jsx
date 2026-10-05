@@ -12,7 +12,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <QueryClientProvider client={qc}>
       <I18nProvider>
-        <BrowserRouter>
+        <BrowserRouter basename="/admin">
           <App />
         </BrowserRouter>
       </I18nProvider>

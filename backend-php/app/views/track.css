@@ -1,0 +1,97 @@
+ *{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#FBF5E6;min-height:100vh;padding-bottom:40px}
+.header{background:#0E2116;padding:16px 20px;display:flex;align-items:center;gap:12px}
+.logo{font-size:22px;font-weight:900;color:#D4991A;letter-spacing:-0.5px}
+.logo span{color:#fff}
+.container{max-width:480px;margin:0 auto;padding:20px 16px;display:flex;flex-direction:column;gap:14px}
+.card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 1px 8px rgba(0,0,0,.06)}
+.label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:10px}
+/* Greeting */
+.greeting{border-left:4px solid #D4991A}
+.greeting-hi{font-size:20px;font-weight:800;color:#1a1a1a;margin-bottom:4px}
+.greeting-sub{font-size:14px;color:#666;line-height:1.5}
+.ref-badge{display:inline-block;background:#F0F0EA;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;color:#555;margin-top:10px;letter-spacing:.06em}
+/* Status */
+.status-badge{border-radius:16px;padding:18px 20px;display:flex;align-items:center;gap:14px;background:#fff;border:2px solid;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.status-icon{font-size:36px;flex-shrink:0}
+.status-lbl{font-size:11px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.status-txt{font-size:20px;font-weight:800;margin-top:2px}
+/* Route */
+.route{display:flex;flex-direction:column;gap:8px}
+.route-row{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;color:#1a1a1a}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dot.from{background:#D4991A}.dot.to{background:#0D7A3E}
+.route-line{width:2px;height:16px;background:#e0e0e0;margin-left:4px}
+/* Deliverer */
+.deliverer-row{display:flex;align-items:center;gap:12px}
+.avatar{width:44px;height:44px;border-radius:14px;background:#0D7A3E;color:#fff;font-size:16px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dname{font-size:16px;font-weight:700;color:#1a1a1a}
+.dsub{font-size:13px;color:#888;margin-top:2px}
+/* Price */
+.price{font-size:30px;font-weight:900;color:#1a1a1a}
+.price span{font-size:14px;font-weight:500;color:#888}
+/* Confirm */
+.confirm-card{border:2px solid #0D7A3E}
+.confirm-info{font-size:13px;color:#555;line-height:1.6;margin-bottom:14px}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field-label{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em}
+.field-input{border:1.5px solid #E8DCC8;border-radius:10px;padding:12px 14px;font-size:15px;outline:none;font-family:inherit;transition:border-color .2s;width:100%}
+.field-input:focus{border-color:#0D7A3E}
+.btn-confirm{width:100%;background:#0D7A3E;color:#fff;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;transition:opacity .2s}
+.btn-confirm:disabled{opacity:.5;cursor:default}
+.confirm-msg{margin-top:10px;font-size:13px;text-align:center;font-weight:600;min-height:18px}
+.confirm-msg.ok{color:#0D7A3E}.confirm-msg.err{color:#D8472A}
+/* Receipt */
+.receipt-card{border:1.5px solid #D4991A}
+.receipt-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #F0EBE0}
+.receipt-logo{font-size:22px;font-weight:900;color:#D4991A;letter-spacing:-.5px}
+.receipt-logo span{color:#0E2116}
+.receipt-badge{background:#0D7A3E;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.04em}
+.receipt-rows{display:flex;flex-direction:column;gap:0}
+.receipt-row{display:flex;justify-content:space-between;align-items:flex-start;font-size:13px;padding:8px 0;border-bottom:1px solid #F5F0E8}
+.receipt-row span{color:#888;flex-shrink:0;margin-right:12px}
+.receipt-row strong{color:#1a1a1a;font-weight:700;text-align:right}
+.receipt-divider{height:1px;background:#E8DCC8;margin:14px 0}
+.receipt-total{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
+.receipt-total span{color:#555;font-size:14px;font-weight:600}
+.receipt-total strong{color:#0D7A3E;font-size:24px;font-weight:900}
+.receipt-status{text-align:center;font-size:14px;font-weight:700;color:#0D7A3E;margin:14px 0 4px}
+.receipt-footer{text-align:center;font-size:11px;color:#aaa;margin-bottom:14px}
+.btn-print{width:100%;background:#0E2116;color:#D4991A;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.02em}
+/* Pending payment banner */
+.pending-banner{background:#EFF8F1;border:1.5px solid #0D7A3E;border-radius:10px;padding:14px;text-align:center;font-size:13px;font-weight:600;color:#0D7A3E;margin-bottom:14px}
+.pending-dots{display:inline-flex;gap:5px;margin-bottom:8px}
+.pending-dots span{width:8px;height:8px;border-radius:50%;background:#0D7A3E;animation:pd .9s infinite alternate}
+.pending-dots span:nth-child(2){animation-delay:.3s}
+.pending-dots span:nth-child(3){animation-delay:.6s}
+@keyframes pd{from{opacity:.3;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+/* Chat */
+.chat-card{}
+.contacts-row{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.contact{display:flex;align-items:center;gap:8px}
+.contact-av{width:36px;height:36px;border-radius:10px;color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.contact-name{font-size:13px;font-weight:700;color:#1a1a1a}
+.contact-role{font-size:11px;color:#888}
+.chat-msgs{display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;margin-bottom:12px}
+.bubble{padding:8px 12px;border-radius:12px;font-size:13px;line-height:1.5;max-width:80%}
+.bubble.vendor{background:#EFF8F1;color:#0D7A3E;align-self:flex-start}
+.bubble.deliverer{background:#FEF0E3;color:#C4611A;align-self:flex-start}
+.bubble.recipient{background:#EEF2FF;color:#4338CA;align-self:flex-end}
+.bubble small{display:block;font-size:10px;opacity:.6;margin-top:3px}
+.chat-form{display:flex;gap:8px}
+.chat-input{flex:1;border:1.5px solid #E8DCC8;border-radius:20px;padding:9px 14px;font-size:14px;outline:none}
+.chat-btn{background:#0D7A3E;color:#fff;border:none;border-radius:20px;padding:0 16px;font-size:20px;cursor:pointer;flex-shrink:0}
+.chat-btn:disabled{background:#ccc}
+.chat-notice{font-size:11px;color:#aaa;text-align:center;margin-top:6px}
+.refresh-note{text-align:center;font-size:12px;color:#aaa}
+.footer{text-align:center;padding-top:20px;font-size:12px;color:#aaa}
+.footer b{color:#D4991A}
+/* Print: show only receipt */
+@media print {
+  body{background:#fff!important;padding:0}
+  .header,.greeting,.status-badge,.route-card,.deliverer-card,.price-card,.refresh-note,.confirm-card,.chat-card,.footer{display:none!important}
+  .container{padding:0;gap:0}
+  .receipt-card{box-shadow:none!important;border:1px solid #ccc;border-radius:8px;max-width:100%}
+  .btn-print{display:none!important}
+}
+  

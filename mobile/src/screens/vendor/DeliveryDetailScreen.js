@@ -14,6 +14,7 @@ import KGStatusPill from '../../components/KGStatusPill';
 import KGCourierBadge from '../../components/KGCourierBadge';
 import RouteLine from '../../components/RouteLine';
 import Icon from '../../components/Icon';
+import InvoiceButtons from '../../components/InvoiceButtons';
 import { useI18n } from '../../i18n';
 
 function formatReceipt(d) {
@@ -131,9 +132,9 @@ export default function DeliveryDetailScreen({ navigation, route }) {
     if (isDemo) {
       const convId = isDeliverer ? d.convIdDeliverer : d.convIdClient;
       if (convId) navigation.navigate('Chat', { convId });
-    } else if (partnerId && startConversation) {
-      const convId = startConversation({ id: partnerId, name: partnerName, initials: getInitials(partnerName), role: type });
-      navigation.navigate('Chat', { convId });
+    } else {
+      // Chat reel (API) partage entre vendeur, livreur et destinataire.
+      navigation.navigate('DeliveryChat', { deliveryId: d.id, title: isDeliverer ? 'Chat avec le livreur' : 'Chat destinataire' });
     }
   };
 
@@ -253,6 +254,8 @@ export default function DeliveryDetailScreen({ navigation, route }) {
             </View>
           </KGCard>
         )}
+
+        <InvoiceButtons navigation={navigation} deliveryId={d.id} status={d.status} role={role} />
 
         {d.status === 'livre' && (
           <TouchableOpacity

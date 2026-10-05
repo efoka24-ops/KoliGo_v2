@@ -11,11 +11,13 @@ const IconPackage   = (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke=
 const IconWallet    = (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 12h2"/></svg>;
 const IconShield    = (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
 const IconReset     = (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>;
+const IconContent   = (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>;
 
 const ICONS = {
   dashboard: IconDashboard, deliveries: IconBox,   users: IconUsers,    finance:   IconFinance,
   support:   IconSupport,   zones:      IconZones,  analytics: IconAnalytics, settings: IconSettings,
   packages:  IconPackage,   wallets:    IconWallet,  security: IconShield,    reset:    IconReset,
+  siteContent: IconContent, invoices: IconContent,
 };
 
 function Item({ to, id, label, badge }) {
@@ -47,6 +49,7 @@ export default function Sidebar({ onLogout, user }) {
       <div className="sb-sec">Vue d'ensemble</div>
       <Item to="/dashboard"  id="dashboard" />
       <Item to="/packages"   id="packages"  label="Colis" />
+      <Item to="/invoices"   id="invoices"  label="Factures" />
       <Item to="/deliveries" id="deliveries" />
       <Item to="/users"      id="users" />
       <Item to="/finance"    id="finance" />
@@ -58,6 +61,7 @@ export default function Sidebar({ onLogout, user }) {
       <Item to="/zones"      id="zones"    label="Zones & Tarifs" />
       <Item to="/analytics"  id="analytics" />
       <Item to="/settings"   id="settings" />
+      <Item to="/site-content" id="siteContent" label="Contenu du site" />
       <Item to="/reset"      id="reset"    label="Archivage / Reset" />
 
       <div className="sb-foot" onClick={onLogout} title={t('logout')}>

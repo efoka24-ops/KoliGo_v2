@@ -36,6 +36,8 @@ import ReportIssueScreen from '../screens/deliverer/ReportIssueScreen';
 import KycStatusScreen from '../screens/deliverer/KycStatusScreen';
 
 // Client flow
+import InvoiceScreen from '../screens/shared/InvoiceScreen';
+import TrackParcelScreen from '../screens/client/TrackParcelScreen';
 import ClientLandingScreen from '../screens/client/ClientLandingScreen';
 import ClientTrackingScreen from '../screens/client/ClientTrackingScreen';
 import ClientReceptionScreen from '../screens/client/ClientReceptionScreen';
@@ -93,6 +95,8 @@ export default function RootNavigator() {
       <Stack.Screen name="KycStatus" component={KycStatusScreen} />
 
       {/* Client */}
+      <Stack.Screen name="Invoice" component={InvoiceScreen} />
+      <Stack.Screen name="TrackParcel" component={TrackParcelScreen} />
       <Stack.Screen name="ClientLanding" component={ClientLandingScreen} />
       <Stack.Screen name="ClientTracking" component={ClientTrackingScreen} />
       <Stack.Screen name="ClientReception" component={ClientReceptionScreen} />

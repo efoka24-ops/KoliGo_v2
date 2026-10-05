@@ -1,0 +1,2 @@
+# Code, configuration, uploads KYC et journaux : jamais servis par Apache.
+Require all denied

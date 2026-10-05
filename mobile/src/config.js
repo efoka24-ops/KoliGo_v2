@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 const ENV_API_BASE = process.env.EXPO_PUBLIC_API_BASE;
 
 // Hosted backend — used by every release build.
-const PRODUCTION_API_BASE = 'https://koligoapi.trugroup.cm';
+const PRODUCTION_API_BASE = 'http://koligo.trugroup.cm';
 
 // Dev defaults, per platform:
 // - Web: local backend on 3001 (3000 is often taken by another app)

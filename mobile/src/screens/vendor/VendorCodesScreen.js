@@ -11,6 +11,7 @@ import KGButton from '../../components/KGButton';
 import KGCard from '../../components/KGCard';
 import KGStatusPill from '../../components/KGStatusPill';
 import Icon from '../../components/Icon';
+import InvoiceButtons from '../../components/InvoiceButtons';
 
 const POLL_INTERVAL = 5000;
 
@@ -132,26 +133,36 @@ export default function VendorCodesScreen({ navigation, route }) {
     return () => clearInterval(pollRef.current);
   }, [fetchStatus]);
 
+  // Numero camerounais lisible : le backend peut deja contenir +237, on ne le double pas.
+  const fmtPhone = (p) => {
+    const digits = String(p || '').replace(/D/g, '').replace(/^237/, '');
+    return digits ? '+237 ' + digits : '-';
+  };
+  const parcelRef = String(orderId || '').slice(-8).toUpperCase();
+  const routeFrom = trustDoc?.pickupAddress || fromQ || '-';
+  const routeTo = trustDoc?.dropoffAddress || toQ || '-';
+
   const buildTrustMessage = () => {
     const d = trustDoc?.deliverer;
     const today = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
     return (
       'FACTURE DE CONFIANCE -- KoliGo\n' +
       '--------------------------------\n' +
-      'Commande : ' + orderId + '\n' +
-      'Trajet : ' + fromQ + ' -> ' + toQ + '\n' +
+      'Reference : ' + parcelRef + '\n' +
+      'Trajet : ' + routeFrom + ' -> ' + routeTo + '\n' +
       'Date : ' + today + '\n\n' +
       'LIVREUR\n' +
       'Nom : ' + (d?.name || '-') + '\n' +
-      'Tel : +237 ' + (d?.phone || '-') + '\n' +
+      'Tel : ' + fmtPhone(d?.phone) + '\n' +
       'N° CNI : ' + (d?.cniNumber || 'Non renseigne') + '\n' +
       'KYC : ' + (d?.kycStatus === 'VERIFIED' ? 'Verifie' : d?.kycStatus === 'REJECTED' ? 'Rejete' : 'En attente') + '\n\n' +
       'DESTINATAIRE\n' +
       'Nom : ' + (trustDoc?.recipientName || recipientName || '-') + '\n' +
-      (trustDoc?.recipientPhone ? ('Tel : +237 ' + trustDoc.recipientPhone + '\n') : '') +
+      (trustDoc?.recipientPhone ? ('Tel : ' + fmtPhone(trustDoc.recipientPhone) + '\n') : '') +
       'Adresse : ' + (trustDoc?.recipientAddress || recipientAddress || toQ || '-') + '\n\n' +
       'SUIVI DU COLIS\n' +
-      trackingUrl + '\n' +
+      "Dans l'application KoliGo : Je recois un colis, puis la reference " + parcelRef + '\n' +
+      'Ou sur le web : ' + trackingUrl + '\n' +
       'Code reception : ' + codeReception + ' (confidentiel)\n\n' +
       'Ce livreur est verifie par KoliGo.\n' +
       'Conservez ce document en cas de litige.\n' +
@@ -163,10 +174,14 @@ export default function VendorCodesScreen({ navigation, route }) {
     (isEn ? 'Hello' : 'Salut') + ' ' + (trustDoc?.recipientName || recipientName || '') +
     ' ! ' + (isEn ? 'Your parcel from' : 'Ton colis de') + ' ' + (shopName || 'KoliGo') +
     ' ' + (isEn ? 'is on the way.' : 'est en route.') + '\n\n' +
-    (fromQ && toQ ? ((isEn ? 'Route' : 'Trajet') + ' : ' + fromQ + ' -> ' + toQ + '\n') : '') +
-    (isEn ? 'Order' : 'Commande') + ' : ' + orderId + '\n\n' +
+    (routeFrom !== '-' && routeTo !== '-' ? ((isEn ? 'Route' : 'Trajet') + ' : ' + routeFrom + ' -> ' + routeTo + '\n') : '') +
+    (isEn ? 'Reference' : 'Reference') + ' : ' + parcelRef + '\n\n' +
     (isEn ? 'Track your parcel live' : 'Suis ton colis en direct') + ' :\n' +
-    trackingUrl + '\n\n' +
+    (isEn
+      ? '- In the KoliGo app: "I am receiving a parcel", then enter the reference above\n'
+      : "- Dans l'application KoliGo : \"Je recois un colis\", puis saisis la reference ci-dessus\n") +
+    (isEn ? '- Download the app: ' : "- Telecharger l'application : ") + 'http://koligo.trugroup.cm/\n' +
+    (isEn ? '- Or on the web: ' : '- Ou sur le web : ') + trackingUrl + '\n\n' +
     (isEn ? 'Delivery code' : 'Code de reception') + ' : ' + codeReception + '\n' +
     (isEn
       ? 'Enter this code when the deliverer arrives to confirm delivery.'
@@ -348,19 +363,16 @@ export default function VendorCodesScreen({ navigation, route }) {
                     </KGButton>
                     {trustDoc.deliverer?.id && (
                       <KGButton kind="soft" size="sm" icon="chat" full={false} style={{ flex: 1 }}
-                        onPress={() => {
-                          const convId = startConversation({
-                            id: trustDoc.deliverer.id,
-                            name: trustDoc.deliverer.name || 'Livreur',
-                            initials: getInitials(trustDoc.deliverer.name || 'L'),
-                            role: 'deliverer',
-                          });
-                          navigation.navigate('ChatDetail', { convId });
-                        }}>
+                        onPress={() => navigation.navigate('DeliveryChat', { deliveryId: orderId, title: 'Chat avec le livreur' })}>
                         {isEn ? 'Contact' : 'Contacter'}
                       </KGButton>
                     )}
                   </View>
+                  {isRealId && (
+                    <View style={{ marginTop: 14 }}>
+                      <InvoiceButtons navigation={navigation} deliveryId={orderId} status={status} role="vendor" />
+                    </View>
+                  )}
                   <Text style={{ fontFamily: fonts.ui + '-Regular', fontSize: 11, color: colors.ink35, textAlign: 'center', marginTop: 8 }}>
                     {isEn ? 'Tip: take a screenshot to save as image.' : "Astuce : fais une capture d'ecran pour sauvegarder en image."}
                   </Text>

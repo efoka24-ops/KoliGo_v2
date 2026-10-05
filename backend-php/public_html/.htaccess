@@ -1,0 +1,25 @@
+# Front controller : toute URL qui n'est pas un fichier statique passe par index.php
+# (Options -Indexes est interdit par l'hebergeur : un 500 sur tout le site)
+RewriteEngine On
+
+# Apache/FastCGI retire parfois l'en-tete Authorization : on le reinjecte.
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Back-office (application a pages internes) : recharger /admin/<page> doit renvoyer l'application,
+# pas l'API. Le back-office appelle l'API sous /api/admin/..., jamais sous /admin/....
+RewriteCond %{REQUEST_METHOD} =GET
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^admin/.+$ admin/index.html [L]
+
+# La racine affiche la landing page (distribution de l'APK) ; l'API reste sous /api, /auth, etc.
+RewriteRule ^$ landing/index.html [L]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L]
+
+# Aucun fichier sensible ne doit etre servi, meme par erreur de placement.
+<FilesMatch "^\.(env|git)|\.(sql|log|md)$">
+    Require all denied
+</FilesMatch>

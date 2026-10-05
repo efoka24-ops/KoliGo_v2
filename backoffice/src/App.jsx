@@ -18,6 +18,8 @@ import Packages   from './modules/Packages.jsx';
 import Wallets    from './modules/Wallets.jsx';
 import Security   from './modules/Security.jsx';
 import Reset      from './modules/Reset.jsx';
+import SiteContent from './modules/SiteContent.jsx';
+import Invoices   from './modules/Invoices.jsx';
 
 const TITLES = {
   '/dashboard':  'dashboard',  '/deliveries': 'deliveries', '/users':     'users',
@@ -25,6 +27,8 @@ const TITLES = {
   '/analytics':  'analytics',  '/settings':   'settings',
   '/packages':   'Colis',      '/wallets':    'Portefeuilles',
   '/security':   'Sécurité & KYC', '/reset':  'Archivage',
+  '/site-content': 'Contenu du site',
+  '/invoices': 'Factures',
 };
 
 export default function App() {
@@ -67,6 +71,7 @@ export default function App() {
           <Route path="/"            element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard"   element={<Dashboard />} />
           <Route path="/packages"    element={<Packages />} />
+          <Route path="/invoices"    element={<Invoices />} />
           <Route path="/deliveries"  element={<Deliveries onOpen={setDrawer} />} />
           <Route path="/users"       element={<Users />} />
           <Route path="/finance"     element={<Finance />} />
@@ -76,6 +81,7 @@ export default function App() {
           <Route path="/zones"       element={<Zones />} />
           <Route path="/analytics"   element={<Analytics />} />
           <Route path="/settings"    element={<Settings />} />
+          <Route path="/site-content" element={<SiteContent />} />
           <Route path="/reset"       element={<Reset />} />
           <Route path="*"            element={<Navigate to="/dashboard" replace />} />
         </Routes>

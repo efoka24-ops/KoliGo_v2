@@ -22,6 +22,14 @@ async function clearAuthTokens() {
 export const api = axios.create({ baseURL: BASE_URL, timeout: 15000 });
 
 api.interceptors.request.use(async (config) => {
+  // The host rejects PUT/PATCH/DELETE with a 403 before PHP runs, so those go
+  // out as POST + X-HTTP-Method-Override (honoured by the PHP backend). Setting
+  // method to 'post' makes this idempotent when the 401 retry replays the config.
+  const verb = (config.method || 'get').toLowerCase();
+  if (verb === 'patch' || verb === 'put' || verb === 'delete') {
+    config.headers['X-HTTP-Method-Override'] = verb.toUpperCase();
+    config.method = 'post';
+  }
   // Never clobber a caller-supplied header (apiFetch takes an explicit token).
   if (config.headers.Authorization) return config;
   const token = await storage.getItem('access_token');

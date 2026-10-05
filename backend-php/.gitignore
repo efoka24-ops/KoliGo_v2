@@ -1,0 +1,6 @@
+app/.env
+app/storage/*
+!app/storage/.gitkeep
+public_html/_setup.php
+
+tests/.fake_sungku.log
