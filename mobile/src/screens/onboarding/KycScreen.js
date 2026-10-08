@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as ImagePicker from 'expo-image-picker';
+import { capturePhoto } from '../../utils/camera';
 import { colors, fonts } from '../../constants/colors';
 import { useApp } from '../../context/AppContext';
 import KGTopBar from '../../components/KGTopBar';
@@ -51,18 +51,14 @@ export default function KycScreen({ navigation, route }) {
   const canProceed = isCNIStep ? cniNumber.trim().length >= 6 : true;
 
   const captureStepPhoto = async () => {
-    const camPerm = await ImagePicker.requestCameraPermissionsAsync();
-    if (camPerm.status !== 'granted') return null;
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: 'images', quality: 0.75, base64: true,
-      allowsEditing: true, aspect: isSelfie ? [1, 1] : [4, 3],
-    });
-    if (result.canceled || !result.assets?.[0]?.base64) return null;
-    const dataUrl = `data:image/jpeg;base64,${result.assets[0].base64}`;
-    if (step === 1) setCniRecto(dataUrl);
-    if (step === 2) setCniVerso(dataUrl);
-    if (step === 3) setSelfie(dataUrl);
-    return dataUrl;
+    // Selfie : caméra avant. Toute erreur (permission refusée, caméra indisponible) est affichée.
+    const shot = await capturePhoto({ quality: 0.7, front: isSelfie });
+    if (shot.status === 'cancelled') return null;
+    if (shot.status !== 'ok') { showToast(shot.message, 'error'); return null; }
+    if (step === 1) setCniRecto(shot.dataUrl);
+    if (step === 2) setCniVerso(shot.dataUrl);
+    if (step === 3) setSelfie(shot.dataUrl);
+    return shot.dataUrl;
   };
 
   const handleBack = () => { if (step === 0) { if (!gate) navigation.goBack(); } else setStep(s => s - 1); };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal, ActivityIndicator, Image } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { capturePhoto } from '../../utils/camera';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts } from '../../constants/colors';
 import { KG_QUARTIERS } from '../../constants/data';
@@ -189,13 +189,11 @@ export default function PostDeliveryScreen({ navigation }) {
   })();
 
   const takePhoto = async () => {
-    const perm = await ImagePicker.requestCameraPermissionsAsync();
-    if (perm.status !== 'granted') { showToast(isEn ? 'Camera access is needed for the parcel photo' : "L'accès à la caméra est nécessaire pour la photo du colis", 'error'); return; }
-    const r = await ImagePicker.launchCameraAsync({ mediaTypes: 'images', quality: 0.6, base64: true });
-    if (!r.canceled && r.assets?.[0]?.base64) {
-      setPhoto({ uri: r.assets[0].uri, data: `data:image/jpeg;base64,${r.assets[0].base64}` });
-      setFieldErrors(e => ({ ...e, photo: null }));
-    }
+    const shot = await capturePhoto({ quality: 0.6 });
+    if (shot.status === 'cancelled') return;
+    if (shot.status !== 'ok') { showToast(shot.message, 'error'); return; }
+    setPhoto({ uri: shot.uri, data: shot.dataUrl });
+    setFieldErrors(e => ({ ...e, photo: null }));
   };
 
   const productVal  = parseInt(productPrice, 10) || 0;

@@ -35,7 +35,7 @@ async function pickImage(setter, showToast, { selfie = false } = {}) {
   }
 
   const result = await ImagePicker.launchCameraAsync({
-    mediaTypes: 'images',
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
     quality: 0.75,
     base64: true,
     allowsEditing: true,

@@ -44,7 +44,7 @@ export default function VerificationScreen({ navigation }) {
     const camPerm = await ImagePicker.requestCameraPermissionsAsync();
     if (camPerm.status !== 'granted') return null;
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: 'images',
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.75,
       base64: true,
       allowsEditing: true,
