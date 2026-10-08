@@ -409,6 +409,11 @@ final class DeliveryController
         }
 
         $p = Db::one('SELECT * FROM `DeliveryPayment` WHERE deliveryId = ? AND (externalRef = ? OR paymentId = ?) LIMIT 1', [$d['id'], $tx, $tx]);
+        if ($p && $p['status'] === 'PENDING') {
+            // Le webhook peut ne pas arriver : on interroge Sungku, puis on relit l'etat.
+            Payments::reconcile('DeliveryPayment', $p);
+            $p = Db::one('SELECT * FROM `DeliveryPayment` WHERE id = ?', [$p['id']]);
+        }
         if ($p && $p['status'] === 'SUCCESS') {
             return self::paymentResult(Deliveries::find($d['id']), false, (int)$p['amountXAF']);
         }

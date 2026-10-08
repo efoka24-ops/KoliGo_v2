@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useI18n } from '../i18n/I18nContext.jsx';
 import { Pill, Avatar, Skeleton } from '../components/ui.jsx';
 import { adminApi } from '../api.js';
-import { vendors, deliverersData } from '../data.js';
 
 const ROLE_FILTERS = [
   { key:'all',      label:'all',      role: undefined      },
@@ -45,8 +44,7 @@ export default function Users() {
     onSuccess:  () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); setDrawer(null); },
   });
 
-  const mockRows = [...vendors, ...deliverersData];
-  const rows = data?.items ?? mockRows;
+  const rows = data?.items ?? [];
 
   return (
     <section className="content">
@@ -76,6 +74,8 @@ export default function Users() {
               Array.from({length:5}).map((_,i) => (
                 <tr key={i}><td colSpan={7}><Skeleton h={18} /></td></tr>
               ))
+            ) : rows.length === 0 ? (
+              <tr><td colSpan={7} style={{ textAlign:'center', color:'var(--muted)', padding:28 }}>Aucun utilisateur pour ce filtre.</td></tr>
             ) : rows.map((u) => {
               const id    = u.id || u.name;
               const name  = u.name || u.fullName || '—';

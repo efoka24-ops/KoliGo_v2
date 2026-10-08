@@ -33,6 +33,7 @@ return function (Router $r): void {
         $r->get("$p/public/cities", [Pub::class, 'cities']);
         $r->get("$p/public/pricing", [Pub::class, 'pricing']);
         $r->get("$p/public/quote", [Pub::class, 'quote']);
+        $r->get("$p/public/config", [Pub::class, 'config']);
         $r->get("$p/public/cgu", [Pub::class, 'cgu']);
         $r->get("$p/public/distance", [Pub::class, 'distance']);
 
@@ -125,6 +126,7 @@ return function (Router $r): void {
         $r->patch("$a/withdrawals/:id/pay", [Admin::class, 'payWithdrawal'], ...$adm);
         $r->get("$a/settings", [Admin::class, 'getSettings'], ...$adm);
         $r->patch("$a/settings", [Admin::class, 'updateSetting'], ...$adm);
+        $r->get("$a/analytics", [Admin::class, 'analytics'], ...$adm);
         $r->post("$a/test-payment", [Admin::class, 'startTestPayment'], ...$adm);
         $r->get("$a/test-payment/:id", [Admin::class, 'testPaymentStatus'], ...$adm);
         $r->get("$a/pricing", [Admin::class, 'getPricing'], ...$adm);

@@ -38,6 +38,7 @@ export const adminApi = {
   adminEmailVerify: (email, code) => api.post('/auth/admin/email/verify', { email, code }).then(r => r.data),
   adminEmailSetPassword: (setupToken, password) => api.post('/auth/admin/email/set-password', { setupToken, password }).then(r => r.data),
   stats:           ()            => api.get('/admin/stats').then(r => r.data),
+  analytics:       (period)      => api.get('/admin/analytics', { params: { period } }).then(r => r.data),
   users:           (params)      => api.get('/admin/users', { params }).then(r => r.data),
   getUser:         (id)          => api.get(`/admin/users/${id}`).then(r => r.data),
   blockUser:       (id, blocked) => api.patch(`/admin/users/${id}/block`, { blocked }).then(r => r.data),

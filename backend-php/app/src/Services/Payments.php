@@ -123,10 +123,11 @@ final class Payments
     public static function handleWebhook(array $payload): void
     {
         $d = isset($payload['data']) && is_array($payload['data']) ? $payload['data'] : $payload;
-        $ref = (string)($d['reference'] ?? $d['externalReference'] ?? $d['depositReference'] ?? '');
         $status = (string)($d['status'] ?? '');
         $paymentId = (string)($d['id'] ?? $d['transactionId'] ?? $d['depositId'] ?? '');
+        $ref = self::resolveReference($d, $paymentId);
         if ($ref === '') {
+            error_log("[payment] webhook sans reference retrouvable (id '$paymentId', statut '$status') — ignore");
             return;
         }
 
@@ -146,6 +147,66 @@ final class Payments
             self::settleWithdrawal($ref, $settled);
         } elseif (str_starts_with($ref, 'KOLIGO-DELIV-')) {
             self::settleDelivery($ref, $settled, $paymentId);
+        }
+    }
+
+    /**
+     * Retrouve notre reference (KOLIGO-...) depuis une confirmation de Sungku. Sungku ne renvoie pas toujours la
+     * reference envoyee (client_reference_id peut etre vide) : on retombe alors sur l'identifiant du paiement
+     * enregistre a l'initiation, puis sur les metadonnees (topUpId, deliveryId).
+     */
+    private static function resolveReference(array $d, string $paymentId): string
+    {
+        foreach (['reference', 'externalReference', 'depositReference', 'client_reference_id', 'clientReferenceId'] as $k) {
+            if (!empty($d[$k]) && is_string($d[$k]) && str_starts_with($d[$k], 'KOLIGO-')) {
+                return $d[$k];
+            }
+        }
+        if ($paymentId !== '') {
+            foreach (['TopUp', 'DeliveryPayment', 'Withdrawal'] as $t) {
+                $r = Db::val("SELECT externalRef FROM `$t` WHERE paymentId = ?", [$paymentId]);
+                if ($r) {
+                    return (string)$r;
+                }
+            }
+        }
+        $meta = $d['metadata'] ?? null;
+        if (is_string($meta)) {
+            $meta = json_decode($meta, true);
+        }
+        if (is_array($meta)) {
+            if (!empty($meta['topUpId'])) {
+                $r = Db::val('SELECT externalRef FROM `TopUp` WHERE id = ?', [(string)$meta['topUpId']]);
+            } elseif (!empty($meta['deliveryId'])) {
+                $r = Db::val("SELECT externalRef FROM `DeliveryPayment` WHERE deliveryId = ? ORDER BY createdAt DESC LIMIT 1", [(string)$meta['deliveryId']]);
+            }
+            if (!empty($r)) {
+                return (string)$r;
+            }
+        }
+        return '';
+    }
+
+    /**
+     * Interroge Sungku sur un paiement encore en attente (le webhook peut ne jamais arriver) et applique le resultat
+     * par le meme chemin que le webhook. Ne change rien si Sungku repond « en attente » ou ne repond pas.
+     */
+    public static function reconcile(string $table, array $row): void
+    {
+        if (self::mock() || ($row['status'] ?? '') !== 'PENDING' || empty($row['paymentId'])
+            || strtotime(($row['createdAt'] ?? 'now') . ' UTC') > time() - 15) {
+            return;
+        }
+        try {
+            $res = Sungku::fetchDeposit((string)$row['paymentId']);
+        } catch (\Throwable $e) {
+            error_log("[payment] verification $table {$row['id']} : " . $e->getMessage());
+            return;
+        }
+        $data = $res['data'] ?? $res;
+        $status = (string)($data['status'] ?? '');
+        if (Sungku::isSettled($status) || Sungku::isFailed($status)) {
+            self::handleWebhook(['id' => $row['paymentId'], 'status' => $status, 'reference' => $row['externalRef']]);
         }
     }
 

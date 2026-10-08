@@ -71,8 +71,9 @@ final class WalletController
         $amount = $c->input('amount') ?? $c->input('amountXAF');
         $provider = (string)$c->input('provider', '');
         $phone = trim((string)($c->input('phone') ?? $c->input('phoneNumber', '')));
-        if (!is_numeric($amount) || (float)$amount < 500) {
-            throw new HttpError('Montant minimum 500 XAF');
+        $min = \Koligo\Services\Pricing::config()['minWithdrawal'];
+        if (!is_numeric($amount) || (float)$amount < $min) {
+            throw new HttpError('Montant minimum ' . $min . ' XAF');
         }
         $amount = (int)round((float)$amount);
         if (!in_array($provider, ['MTN', 'ORANGE'], true)) {

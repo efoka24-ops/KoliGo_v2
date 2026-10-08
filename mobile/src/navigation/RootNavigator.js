@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useApp } from '../context/AppContext';
+import MaintenanceGate from '../components/MaintenanceGate';
 
 // Onboarding
 import LanguageScreen from '../screens/onboarding/LanguageScreen';
@@ -59,7 +60,9 @@ import VendorHistoryScreen from '../screens/vendor/HistoryScreen';
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
-  const { role } = useApp();
+  const { role, maintenance, refreshConfig, lang } = useApp();
+
+  if (maintenance) return <MaintenanceGate onRetry={refreshConfig} lang={lang} />;
 
   return (
     <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#F4F5F1' } }}>

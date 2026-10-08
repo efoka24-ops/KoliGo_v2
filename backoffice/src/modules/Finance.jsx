@@ -5,7 +5,6 @@ import { Kpi, Pill, Skeleton } from '../components/ui.jsx';
 import { IconFinance } from '../components/icons.jsx';
 import { adminApi } from '../api.js';
 import TestPayment from '../components/TestPayment.jsx';
-import { transactions as mockTxs, withdrawalsData as mockWithdrawals } from '../data.js';
 
 const TX_TONE = { CREDIT:'ok', DEBIT:'orange', COMMISSION:'b', WITHDRAWAL:'mut', REFUND:'warn' };
 
@@ -25,8 +24,8 @@ export default function Finance() {
     onSuccess:  () => qc.invalidateQueries({ queryKey: ['admin-finance'] }),
   });
 
-  const txs         = data?.transactions        ?? mockTxs;
-  const withdrawals = data?.pendingWithdrawals   ?? mockWithdrawals;
+  const txs         = data?.transactions        ?? [];
+  const withdrawals = data?.pendingWithdrawals   ?? [];
   const balance     = data?.platformBalance      ?? 0;
   const totalWallet = data?.totalWallets         ?? 0;
   const pendingAmt  = data?.pendingAmount        ?? 0;

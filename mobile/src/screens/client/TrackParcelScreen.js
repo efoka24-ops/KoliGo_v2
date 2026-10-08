@@ -387,6 +387,9 @@ export default function TrackParcelScreen({ navigation, route }) {
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13.5, color: colors.ink70, lineHeight: 20 }}>
                 Quand le livreur est chez toi, entre ton <Text style={{ fontFamily: `${fonts.ui}-Bold` }}>code de réception</Text> (reçu du vendeur) et ton numéro mobile money. Tu valideras ensuite le paiement sur ton téléphone.
               </Text>
+              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12.5, color: '#C4611A', lineHeight: 18 }}>
+                À savoir : sur la demande de paiement de ton opérateur, le nom affiché sera « Kerry Pay », notre prestataire de paiement sécurisé. C'est normal : tu peux valider.
+              </Text>
               <Row label="Transport à payer" value={xaf(total)} bold />
               <Input label="Code de réception (4 chiffres)" value={code} onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" maxLength={4} placeholder="0000" />
               <Input label="Numéro mobile money (MTN / Orange)" value={momo} onChangeText={(t) => setMomo(t.replace(/\D/g, '').slice(0, 9))} keyboardType="number-pad" maxLength={9} placeholder="6XXXXXXXX" />

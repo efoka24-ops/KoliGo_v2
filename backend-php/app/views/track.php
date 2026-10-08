@@ -83,6 +83,7 @@ $dl = $d['deliverer'] ?? null;
     <div class="card confirm-card">
       <div class="label">Confirmer la réception</div>
       <p class="confirm-info">Quand le livreur arrive, entre ton <strong>code de réception</strong> (reçu du vendeur) et ton numéro MoMo pour confirmer et payer le transport.</p>
+      <p class="confirm-info" style="color:#C4611A;font-weight:600">À savoir : sur la demande de paiement de ton opérateur, le nom affiché sera « Kerry Pay », notre prestataire de paiement sécurisé. C'est normal : tu peux valider.</p>
       <div class="field">
         <label class="field-label">Code de réception</label>
         <input class="field-input" id="inp-code" placeholder="0000" maxlength="20" autocomplete="off" inputmode="numeric" style="letter-spacing:.08em;font-weight:700;font-size:17px">

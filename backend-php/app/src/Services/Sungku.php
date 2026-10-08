@@ -100,6 +100,31 @@ final class Sungku
     }
 
     /**
+     * GET {base}/api/partners/deposits/{id} : etat d'un paiement, pour rattraper un webhook qui n'est pas arrive.
+     *
+     * @return array<string,mixed>
+     * @throws SungkuUnavailable
+     */
+    public static function fetchDeposit(string $id): array
+    {
+        $ch = curl_init(self::baseUrl() . '/api/partners/deposits/' . rawurlencode($id));
+        curl_setopt_array($ch, [
+            CURLOPT_HTTPHEADER => ['Accept: application/json', 'X-Api-Key: ' . (Env::get('SUNGKU_API_KEY', '') ?? '')],
+            CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15, CURLOPT_CONNECTTIMEOUT => 8,
+        ]);
+        $raw = curl_exec($ch);
+        $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        $err = curl_error($ch);
+        curl_close($ch);
+        self::$last = ['httpStatus' => $status, 'curlError' => $err ?: null, 'body' => is_string($raw) ? mb_substr($raw, 0, 600) : null];
+        if ($raw === false || $status < 200 || $status >= 300) {
+            throw new SungkuUnavailable("verification impossible (HTTP $status " . ($err ?: '') . ')');
+        }
+        $data = json_decode((string)$raw, true);
+        return is_array($data) ? $data : [];
+    }
+
+    /**
      * Verifie la signature d'un webhook : sha256=HMAC(secret, "$timestamp.$rawBody").
      * Comparaison en temps constant. Sans cette verification, quiconque connait
      * l'URL pourrait annoncer un paiement reussi.

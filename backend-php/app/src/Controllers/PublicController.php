@@ -58,6 +58,13 @@ final class PublicController
         ];
     }
 
+    /** Etat de la plateforme lu par l'application (mode maintenance reglable depuis le back-office). */
+    public static function config(Ctx $c): array
+    {
+        $cfg = Pricing::config();
+        return ['maintenance' => $cfg['maintenance'], 'minWithdrawalXAF' => $cfg['minWithdrawal']];
+    }
+
     /** Devis : le meme calcul que la creation (distance, zone, gabarit, type de livreur). */
     public static function quote(Ctx $c): array
     {

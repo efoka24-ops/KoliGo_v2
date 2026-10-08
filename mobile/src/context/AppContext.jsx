@@ -66,10 +66,24 @@ export function AppProvider({ children, initialLang = 'fr' }) {
   const [conversations, setConversations] = useState({});
   const [pricing, setPricing] = useState({ baseRate: 300, perKmRate: 150, minPrice: 1000, weightSurcharge: 100, commissionRate: 15 });
   const [lang, setLangState] = useState(initialLang);
+  const [maintenance, setMaintenance] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [sessionRestored, setSessionRestored] = useState(false);
   const [online, setOnline] = useState(true);
   const toastTimer = useRef(null);
+
+  // Etat de la plateforme (mode maintenance reglable depuis le back-office) : lu au demarrage puis toutes les 60 s.
+  const refreshConfig = useCallback(async () => {
+    try {
+      const c = await apiFetch('/public/config');
+      if (c && typeof c.maintenance === 'boolean') setMaintenance(c.maintenance);
+    } catch { /* hors ligne : on garde l'etat connu */ }
+  }, []);
+  useEffect(() => {
+    refreshConfig();
+    const id = setInterval(refreshConfig, 60000);
+    return () => clearInterval(id);
+  }, [refreshConfig]);
 
   // Fetch pricing config from backend on mount
   useEffect(() => {
@@ -270,6 +284,7 @@ export function AppProvider({ children, initialLang = 'fr' }) {
       biometricEnabled, enableBiometric,
       sessionRestored,
       online, setOnline,
+      maintenance, refreshConfig,
     }}>
       {children}
     </AppContext.Provider>

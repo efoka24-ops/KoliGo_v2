@@ -9,7 +9,7 @@ use Koligo\Router;
 // autoloader (plusieurs classes partagent un fichier, ex. Http/HttpError/Out).
 foreach ([
     'Env', 'Db', 'Jwt', 'Http', 'Router', 'Auth', 'RateLimit', 'Rel',
-    'Services/Pricing', 'Services/Distance', 'Services/Sungku', 'Services/Notify',
+    'Services/Pricing', 'Services/Distance', 'Services/Sungku', 'Services/Smtp', 'Services/Notify',
     'Services/Accounts', 'Services/AdminLogin', 'Services/Uploads', 'Services/Kyc', 'Services/Cgu',
     'Services/Deliveries', 'Services/Payments', 'Services/Invoices', 'Setup',
     'Controllers/AuthController', 'Controllers/DeliveryController', 'Controllers/WalletController',
@@ -51,10 +51,17 @@ function koligo_run(): void
 
     \Koligo\Setup::ensureSchema();
 
+    $path = rtrim((string)parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH), '/') ?: '/';
+
+    // Mode maintenance (réglable depuis le back-office) : seuls l'état de la plateforme, la connexion,
+    // le back-office et les webhooks de paiement restent joignables.
+    if (\Koligo\Services\Pricing::config()['maintenance']
+        && !preg_match('#^(/api)?/(health|public|admin|auth|payments?)(/|$)#', $path)) {
+        Http::json(['error' => 'KoliGo est en maintenance. Réessayez dans quelques instants.', 'code' => 'MAINTENANCE'], 503);
+    }
+
     $router = new Router();
     (require __DIR__ . '/routes.php')($router);
-
-    $path = rtrim((string)parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH), '/') ?: '/';
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
     // L'hebergeur (Apache/WAF) rejette PUT, PATCH et DELETE par un 403 avant PHP.

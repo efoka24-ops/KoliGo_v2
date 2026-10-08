@@ -64,6 +64,8 @@ final class Pricing
         'cancel_grace_min' => '2',
         'strike_window_days' => '30',
         'strike_threshold' => '3',
+        'maintenance_mode' => 'false',
+        'min_withdrawal_xaf' => '500',
     ];
 
     private static ?array $cache = null;
@@ -109,6 +111,8 @@ final class Pricing
             'cancelGraceMin' => max(0, (int)$get('cancel_grace_min')),
             'strikeWindowDays' => max(1, (int)$get('strike_window_days')),
             'strikeThreshold' => max(1, (int)$get('strike_threshold')),
+            'maintenance' => in_array(strtolower((string)$get('maintenance_mode')), ['true', '1', 'on'], true),
+            'minWithdrawal' => max(100, (int)$get('min_withdrawal_xaf')),
         ];
     }
 

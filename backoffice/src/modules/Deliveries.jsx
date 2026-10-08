@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useI18n } from '../i18n/I18nContext.jsx';
 import { Pill, Avatar, Skeleton } from '../components/ui.jsx';
 import { adminApi } from '../api.js';
-import { deliveries as mockData } from '../data.js';
 
 const FILTERS = [
   { key:'all',       label:'all',       status: undefined         },
@@ -40,7 +39,7 @@ export default function Deliveries({ onOpen }) {
     onSuccess:  () => qc.invalidateQueries({ queryKey: ['admin-deliveries'] }),
   });
 
-  const rows = data?.items ?? mockData;
+  const rows = data?.items ?? [];
 
   return (
     <section className="content">
@@ -71,6 +70,8 @@ export default function Deliveries({ onOpen }) {
               Array.from({length:5}).map((_,i) => (
                 <tr key={i}><td colSpan={8}><Skeleton h={18} /></td></tr>
               ))
+            ) : rows.length === 0 ? (
+              <tr><td colSpan={8} style={{ textAlign:'center', color:'var(--muted)', padding:28 }}>Aucune livraison pour ce filtre.</td></tr>
             ) : rows.map((d) => {
               const id    = d.id || d.clientToken;
               const vName = d.vendor?.name  || d.vendor  || '—';

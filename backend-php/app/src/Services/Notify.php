@@ -21,6 +21,14 @@ final class Notify
         $html = '<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto">'
             . '<h2 style="color:#178A3C">KoliGo</h2>' . $bodyHtml
             . '<p style="color:#888;font-size:12px">KoliGo · La livraison collaborative au Cameroun</p></div>';
+        // SMTP authentifie quand il est configure (fiable) ; sinon repli sur mail() de l'hebergeur.
+        if (Smtp::configured()) {
+            $ok = Smtp::send($to, $subject, $html, (string)$from);
+            if (!$ok) {
+                error_log('[mail] SMTP : ' . Smtp::$lastError);
+            }
+            return $ok;
+        }
         $headers = "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\nFrom: KoliGo <$from>\r\n";
         try {
             $ok = @mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $html, $headers);

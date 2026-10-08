@@ -21,15 +21,13 @@ final class AdminController
 {
     private const SITE_CONTENT_KEY = 'site_content_json';
     private const DEFAULT_SITE_CONTENT = [
-        'heroTitle' => 'Livraison rapide et fiable',
-        'heroSubtitle' => 'KoliGo simplifie vos envois dans toute la ville.',
-        'aboutTitle' => 'A propos de nous',
-        'aboutText' => 'Nous aidons les vendeurs et livreurs a travailler plus vite avec une logistique moderne.',
-        'team' => [
-            ['name' => 'Marie N.', 'role' => 'Operations', 'bio' => 'Coordonne le reseau de livraison.'],
-            ['name' => 'Joel T.', 'role' => 'Produit', 'bio' => 'Ameliore l experience client.'],
-        ],
-        'news' => [['title' => 'Ouverture de nouvelles zones', 'summary' => 'De nouveaux quartiers sont maintenant couverts.']],
+        // Aucun contenu d'exemple : équipe et actualités sont saisies depuis le back-office.
+        'heroTitle' => '',
+        'heroSubtitle' => '',
+        'aboutTitle' => '',
+        'aboutText' => '',
+        'team' => [],
+        'news' => [],
     ];
 
     private static function page(int $size): array
@@ -247,6 +245,193 @@ final class AdminController
         }
     }
 
+    // ── Analyse : tout est calcule depuis la base, rien n'est inventé ────────────
+
+    /**
+     * GET /admin/analytics?period=7d|30d|12m
+     * Indicateurs de la periode et evolution par rapport a la periode precedente de meme longueur,
+     * courbes, repartition des statuts, classements, zones les plus actives et activite recente.
+     */
+    public static function analytics(Ctx $c): array
+    {
+        $period = in_array($_GET['period'] ?? '', ['7d', '30d', '12m'], true) ? (string)$_GET['period'] : '30d';
+        $now = time();
+        $dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+        $monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+        $midnight = fn(int $t): int => (int)strtotime(gmdate('Y-m-d', $t) . ' 00:00:00 UTC');
+
+        // Fenetre courante : liste de seaux [debut, fin, etiquette]
+        $buckets = [];
+        if ($period === '12m') {
+            $y = (int)gmdate('Y', $now);
+            $m = (int)gmdate('n', $now);
+            for ($i = 11; $i >= 0; $i--) {
+                $mm = $m - $i;
+                $yy = $y;
+                while ($mm < 1) {
+                    $mm += 12;
+                    $yy--;
+                }
+                $s = (int)strtotime(sprintf('%04d-%02d-01 00:00:00 UTC', $yy, $mm));
+                $e = (int)strtotime(sprintf('%04d-%02d-01 00:00:00 UTC', $mm === 12 ? $yy + 1 : $yy, $mm === 12 ? 1 : $mm + 1));
+                $buckets[] = [$s, $e, $monthNames[$mm - 1]];
+            }
+        } else {
+            $n = $period === '7d' ? 7 : 30;
+            $first = $midnight($now) - ($n - 1) * 86400;
+            for ($i = 0; $i < $n; $i++) {
+                $s = $first + $i * 86400;
+                $buckets[] = [$s, $s + 86400, $n === 7 ? $dayNames[(int)gmdate('w', $s)] : gmdate('d/m', $s)];
+            }
+        }
+        $from = $buckets[0][0];
+        $to = $buckets[count($buckets) - 1][1];
+        $prevFrom = $from - ($to - $from);
+
+        $rows = Db::all(
+            'SELECT id, vendorId, delivererId, pickupAddress, status, priceXAF, commissionXAF, createdAt, updatedAt FROM `Delivery` WHERE createdAt >= ? ORDER BY createdAt ASC LIMIT 100000',
+            [gmdate('Y-m-d H:i:s', min($prevFrom, $midnight($now) - 6 * 86400))]
+        );
+        foreach ($rows as &$r) {
+            $r['_t'] = (int)strtotime($r['createdAt'] . ' UTC');
+        }
+        unset($r);
+
+        $inRange = fn(array $set, int $a, int $b): array => array_values(array_filter($set, fn($r) => $r['_t'] >= $a && $r['_t'] < $b));
+        $sum = fn(array $set, string $k): int => (int)array_sum(array_column(array_filter($set, fn($r) => $r['status'] === 'LIVRE'), $k));
+        $actors = function (array $set): int {
+            $ids = [];
+            foreach ($set as $r) {
+                $ids[$r['vendorId']] = true;
+                if ($r['delivererId']) {
+                    $ids[$r['delivererId']] = true;
+                }
+            }
+            return count($ids);
+        };
+        $delta = fn(int|float $cur, int|float $prev): ?int => $prev > 0 ? (int)round(($cur - $prev) / $prev * 100) : null;
+
+        $cur = $inRange($rows, $from, $to);
+        $prev = $inRange($rows, $prevFrom, $from);
+
+        $series = [];
+        foreach ($buckets as [$s, $e, $label]) {
+            $b = $inRange($cur, $s, $e);
+            $series[] = ['label' => $label, 'gmv' => $sum($b, 'priceXAF'), 'count' => count($b)];
+        }
+
+        // Les sept derniers jours, toujours (courbe et mini-graphiques du tableau de bord).
+        $last7 = [];
+        $d0 = $midnight($now) - 6 * 86400;
+        for ($i = 0; $i < 7; $i++) {
+            $s = $d0 + $i * 86400;
+            $b = $inRange($rows, $s, $s + 86400);
+            $last7[] = ['label' => $dayNames[(int)gmdate('w', $s)], 'gmv' => $sum($b, 'priceXAF'), 'count' => count($b), 'actors' => $actors($b)];
+        }
+
+        $breakdown = [];
+        foreach ($cur as $r) {
+            $breakdown[$r['status']] = ($breakdown[$r['status']] ?? 0) + 1;
+        }
+
+        // Classements
+        $byVendor = [];
+        $byDeliverer = [];
+        $byZone = [];
+        foreach ($cur as $r) {
+            $byVendor[$r['vendorId']]['n'] = ($byVendor[$r['vendorId']]['n'] ?? 0) + 1;
+            $byVendor[$r['vendorId']]['gmv'] = ($byVendor[$r['vendorId']]['gmv'] ?? 0) + ($r['status'] === 'LIVRE' ? (int)$r['priceXAF'] : 0);
+            if ($r['delivererId'] && $r['status'] === 'LIVRE') {
+                $byDeliverer[$r['delivererId']] = ($byDeliverer[$r['delivererId']] ?? 0) + 1;
+            }
+            $z = trim((string)$r['pickupAddress']);
+            if ($z !== '') {
+                $byZone[$z] = ($byZone[$z] ?? 0) + 1;
+            }
+        }
+        $names = function (array $ids): array {
+            if (!$ids) {
+                return [];
+            }
+            $out = [];
+            foreach (Db::all('SELECT id, name, shopName FROM `User` WHERE id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')', array_values($ids)) as $u) {
+                $out[$u['id']] = $u;
+            }
+            return $out;
+        };
+        uasort($byVendor, fn($a, $b) => $b['n'] <=> $a['n']);
+        $topVendorIds = array_slice(array_keys($byVendor), 0, 5);
+        $vn = $names($topVendorIds);
+        $topVendors = array_map(fn($id) => [
+            'id' => $id, 'name' => ($vn[$id]['shopName'] ?? null) ?: ($vn[$id]['name'] ?? '—'),
+            'deliveries' => $byVendor[$id]['n'], 'gmv' => $byVendor[$id]['gmv'],
+        ], $topVendorIds);
+
+        arsort($byDeliverer);
+        $topDelIds = array_slice(array_keys($byDeliverer), 0, 5);
+        $dn = $names($topDelIds);
+        $topDeliverers = array_map(function ($id) use ($dn, $byDeliverer) {
+            $r = Db::one('SELECT AVG(score) AS a, COUNT(*) AS n FROM `Rating` WHERE toUserId = ?', [$id]);
+            return ['id' => $id, 'name' => $dn[$id]['name'] ?? '—', 'deliveries' => $byDeliverer[$id],
+                'rating' => $r && $r['a'] !== null ? round((float)$r['a'], 1) : null];
+        }, $topDelIds);
+
+        arsort($byZone);
+        $topZones = [];
+        foreach (array_slice($byZone, 0, 5, true) as $name => $n) {
+            $topZones[] = ['name' => $name, 'deliveries' => $n];
+        }
+
+        // Activite recente : evenements reels, tous types confondus
+        $events = [];
+        $ref = fn(string $id): string => 'KG-' . strtoupper(substr($id, -8));
+        $xaf = fn($n): string => number_format((int)$n, 0, ',', ' ') . ' XAF';
+        foreach (Db::all('SELECT id, status, priceXAF, updatedAt, pickupAddress, dropoffAddress FROM `Delivery` ORDER BY updatedAt DESC LIMIT 8') as $d) {
+            [$kind, $txt] = match ($d['status']) {
+                'LIVRE' => ['delivered', $ref($d['id']) . ' livrée à ' . $d['dropoffAddress'] . ' · ' . $xaf($d['priceXAF'])],
+                'EN_ROUTE' => ['inroute', $ref($d['id']) . ' en route vers ' . $d['dropoffAddress']],
+                'ACCEPTE' => ['accepted', $ref($d['id']) . ' acceptée par un livreur'],
+                'ANNULE' => ['cancelled', $ref($d['id']) . ' annulée'],
+                default => ['created', $ref($d['id']) . ' publiée : ' . $d['pickupAddress'] . ' → ' . $d['dropoffAddress']],
+            };
+            $events[] = ['kind' => $kind, 'text' => $txt, 'at' => $d['updatedAt']];
+        }
+        foreach (Db::all('SELECT i.id, i.type, i.createdAt, i.deliveryId FROM `Issue` i ORDER BY i.createdAt DESC LIMIT 5') as $i) {
+            $events[] = ['kind' => 'issue', 'text' => 'Incident signalé sur ' . $ref($i['deliveryId']) . ' (' . $i['type'] . ')', 'at' => $i['createdAt']];
+        }
+        foreach (Db::all("SELECT name, updatedAt FROM `User` WHERE kycStatus = 'PENDING' ORDER BY updatedAt DESC LIMIT 5") as $u) {
+            $events[] = ['kind' => 'kyc', 'text' => $u['name'] . ' a soumis ses documents KYC', 'at' => $u['updatedAt']];
+        }
+        foreach (Db::all('SELECT amountXAF, provider, createdAt FROM `Withdrawal` ORDER BY createdAt DESC LIMIT 5') as $w) {
+            $events[] = ['kind' => 'withdrawal', 'text' => 'Retrait de ' . $xaf($w['amountXAF']) . ' · ' . $w['provider'], 'at' => $w['createdAt']];
+        }
+        usort($events, fn($a, $b) => strcmp((string)$b['at'], (string)$a['at']));
+        $events = array_slice($events, 0, 8);
+
+        $curGmv = $sum($cur, 'priceXAF');
+        $prevGmv = $sum($prev, 'priceXAF');
+        $curComm = $sum($cur, 'commissionXAF');
+        $prevComm = $sum($prev, 'commissionXAF');
+        return [
+            'period' => $period,
+            'kpis' => [
+                'gmv' => ['value' => $curGmv, 'delta' => $delta($curGmv, $prevGmv)],
+                'deliveries' => ['value' => count($cur), 'delta' => $delta(count($cur), count($prev))],
+                'commission' => ['value' => $curComm, 'delta' => $delta($curComm, $prevComm)],
+                'activeUsers' => ['value' => $actors($cur), 'delta' => $delta($actors($cur), $actors($prev))],
+                'activeDeliverers' => (int)Db::val("SELECT COUNT(*) FROM `User` WHERE isOnline = 1 AND roles LIKE '%DELIVERER%'"),
+            ],
+            'series' => $series,
+            'last7' => $last7,
+            'statusBreakdown' => (object)$breakdown,
+            'topVendors' => $topVendors,
+            'topDeliverers' => $topDeliverers,
+            'topZones' => $topZones,
+            'activity' => $events,
+            'generatedAt' => gmdate('c'),
+        ];
+    }
+
     // ── Test de paiement Sungku : 100 F, sans toucher aux livraisons des clients ──
 
     /** Montant d'un test : 100 F par defaut, jamais plus de 500 F (borne cote serveur, pas cote navigateur). */
@@ -282,14 +467,18 @@ final class AdminController
     /** GET /admin/test-payment/:id : statut d'un test lance par cet administrateur. */
     public static function testPaymentStatus(Ctx $c): array
     {
-        $row = Db::one(
-            'SELECT t.id, t.status, t.amountXAF, t.phone, t.createdAt, t.updatedAt FROM `TopUp` t JOIN `Wallet` w ON w.id = t.walletId WHERE t.id = ? AND w.userId = ?',
-            [$c->param('id'), $c->user['userId']]
-        );
+        $q = 'SELECT t.id, t.status, t.amountXAF, t.phone, t.paymentId, t.externalRef, t.createdAt, t.updatedAt FROM `TopUp` t JOIN `Wallet` w ON w.id = t.walletId WHERE t.id = ? AND w.userId = ?';
+        $row = Db::one($q, [$c->param('id'), $c->user['userId']]);
         if (!$row) {
             throw new HttpError('Test introuvable', 404);
         }
-        return $row;
+        if ($row['status'] === 'PENDING') {
+            // Le webhook peut ne pas arriver : on interroge Sungku, puis on relit l'etat.
+            Payments::reconcile('TopUp', $row);
+            $row = Db::one($q, [$c->param('id'), $c->user['userId']]);
+        }
+        unset($row['paymentId'], $row['externalRef']);
+        return $row + ['gateway' => \Koligo\Services\Sungku::$last];
     }
 
     // ── Tarification (zones, gabarits, frais) : modifiable sans déploiement ──
