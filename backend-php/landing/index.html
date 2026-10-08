@@ -85,7 +85,7 @@ footer a{color:#cfe0d5}
   <div class="wrap">
     <div class="nav">
       <div class="logo">Koli<span>Go</span></div>
-      <nav><a class="link" href="#solution">La solution</a><a class="link" href="#tarifs">Tarifs</a><a class="link" href="#installer">Installer</a></nav>
+      <nav><a class="link" href="#solution">La solution</a><a class="link" href="#installer">Installer</a></nav>
     </div>
     <div class="hero">
       <div>
@@ -134,31 +134,6 @@ footer a{color:#cfe0d5}
   </div>
 </section>
 
-<section class="band" id="tarifs">
-  <div class="wrap">
-    <h2>Un tarif simple et transparent</h2>
-    <p class="sub">Le prix dépend de la zone, de la distance, de la taille du colis et du type de livreur choisi. Les montants ci-dessous sont lus en direct sur le serveur KoliGo.</p>
-    <div class="formula">
-      prix = ( <b>prise en charge</b> de la zone + <b>prix au km</b> × km + <b>poids de référence</b> du gabarit × <b id="w-rate">100</b> F ) × coefficient<br>
-      commission KoliGo : <b id="comm">3</b> % · le reste revient au livreur
-    </div>
-    <h3 style="margin:28px 0 10px">Zones tarifaires</h3>
-    <table id="zones"><tr><th>Zone</th><th>Régions</th><th>Prise en charge</th><th>Prix au km</th></tr><tr><td colspan="4">Chargement des tarifs…</td></tr></table>
-    <h3 style="margin:28px 0 10px">Tailles de colis (gabarits)</h3>
-    <table id="gabarits"><tr><th>Gabarit</th><th>Dimensions max</th><th>Jusqu'à</th><th>Exemples</th></tr><tr><td colspan="4">Chargement des tarifs…</td></tr></table>
-    <h3 style="margin:28px 0 10px">Type de livreur</h3>
-    <table>
-      <tr><th>Type de livreur</th><th>Coefficient</th></tr>
-      <tr><td>Temporaire</td><td>× 1,00</td></tr>
-      <tr><td>Permanent</td><td>× 1,15</td></tr>
-      <tr><td>Express</td><td>× 1,25</td></tr>
-      <tr><td>Froid / fragile</td><td>× 1,30</td></tr>
-      <tr><td>VVIP</td><td>× 1,40</td></tr>
-    </table>
-    <p class="note" id="fee-note"></p>
-  </div>
-</section>
-
 <section>
   <div class="wrap">
     <h2>Ce que ça change</h2>
@@ -200,31 +175,16 @@ footer a{color:#cfe0d5}
 
 <script>
 (function () {
-  var xaf = function (n) { return Number(n).toLocaleString('fr-FR') + ' XAF'; };
-  var esc = function (t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+  var el = document.getElementById('ex-price');
+  var note = document.getElementById('ex-note');
+  if (!el) return;
   fetch('/api/public/pricing').then(function (r) { return r.json(); }).then(function (p) {
-    if (!p || !p.zones) throw new Error('tarifs');
-    document.getElementById('w-rate').textContent = p.weightSurcharge;
-    document.getElementById('comm').textContent = p.commissionRate;
-    var z = '<tr><th>Zone</th><th>Régions</th><th>Prise en charge</th><th>Prix au km</th></tr>';
-    p.zones.forEach(function (x) { z += '<tr><td>' + esc(x.name) + '</td><td>' + esc((x.regions || []).join(', ')) + '</td><td>' + xaf(x.base) + '</td><td>' + xaf(x.perKm) + '</td></tr>'; });
-    document.getElementById('zones').innerHTML = z;
-    var g = '<tr><th>Gabarit</th><th>Dimensions max</th><th>Jusqu\'à</th><th>Exemples</th></tr>';
-    Object.keys(p.gabarits).forEach(function (k) {
-      var x = p.gabarits[k];
-      g += '<tr><td><b>' + esc(k) + '</b></td><td>' + (x.bookable === false ? 'Au-delà du XL' : esc(x.dims) + ' cm') + '</td><td>' + (x.bookable === false ? 'Sur devis' : esc(x.maxKg) + ' kg') + '</td><td>' + esc(x.examples && x.examples.fr) + '</td></tr>';
-    });
-    document.getElementById('gabarits').innerHTML = g;
-    document.getElementById('fee-note').textContent = "Prix minimum d'une course : " + xaf(p.minPrice) + ". Si le gabarit déclaré est inexact et que le vendeur refuse le nouveau prix, des frais d'annulation de " + xaf(p.cancelFeeXAF) + ' sont versés au livreur.';
-    // Exemple affiche sur le telephone : zone la plus chere, 6 km, gabarit S, livreur permanent
+    if (!p || !p.zones || !p.gabarits || !p.gabarits.S) throw new Error('tarifs');
     var top = p.zones.reduce(function (a, b) { return b.perKm > a.perKm ? b : a; }, p.zones[0]);
-    var s = p.gabarits.S, price = Math.max(p.minPrice, Math.round((top.base + 6 * top.perKm + p.weightSurcharge * s.refKg) * 1.15));
-    document.getElementById('ex-price').textContent = price.toLocaleString('fr-FR');
-    document.getElementById('ex-note').textContent = 'Exemple · 6 km, gabarit S, livreur permanent';
-  }).catch(function () {
-    ['zones', 'gabarits'].forEach(function (id) { document.getElementById(id).innerHTML = '<tr><td>Tarifs momentanément indisponibles : ils s\'affichent dans l\'application.</td></tr>'; });
-    document.getElementById('ex-price').textContent = '—';
-  });
+    var price = Math.max(p.minPrice, Math.round((top.base + 6 * top.perKm + p.weightSurcharge * p.gabarits.S.refKg) * 1.15));
+    el.textContent = price.toLocaleString('fr-FR');
+    note.textContent = 'Exemple · 6 km, gabarit S, livreur permanent';
+  }).catch(function () { el.textContent = '—'; });
 })();
 </script>
 </body>
