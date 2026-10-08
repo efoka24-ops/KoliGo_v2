@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { adminApi } from '../api.js';
 import { Pill } from '../components/ui.jsx';
+import { NavLink } from 'react-router-dom';
 
 const DELIVERY_TYPES = [
   { key: 'TEMPORAIRE',       label: 'Temporaire',     color: '#178A3C' },
@@ -171,91 +172,15 @@ export default function Zones() {
         <span className={`chip ${tab === 'cities'  ? 'on' : ''}`} onClick={() => setTab('cities')}>Villes &amp; Quartiers</span>
       </div>
 
-      {/* ── PRICING TAB ────────────────────────────────────────────────────── */}
+      {/* ── PRICING TAB : les tarifs se règlent désormais dans la page Tarification ── */}
       {tab === 'pricing' && (
-        <div>
-          {priceError && (
-            <div style={{ background:'#FEE', color:'#C00', padding:'10px 14px', borderRadius:8, marginBottom:12, fontSize:13 }}>
-              {priceError}<button className="x" onClick={() => setPriceError('')} style={{ float:'right' }}>✕</button>
-            </div>
-          )}
-
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, alignItems:'start' }}>
-            {/* Left: pricing fields */}
-            <div>
-              <div style={{ fontSize:11, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:12 }}>
-                Configuration tarifaire
-              </div>
-              {loadingPricing ? (
-                <div style={{ color:'var(--muted)', padding:20 }}>Chargement…</div>
-              ) : PRICING_KEYS.map(({ key, label, unit, desc }) => (
-                <div key={key} className="card pad" style={{ marginBottom:10 }}>
-                  <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontWeight:700, fontSize:13 }}>{label}</div>
-                      <div style={{ fontSize:11, color:'var(--muted)', marginTop:2 }}>{desc}</div>
-                    </div>
-                    <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-                      <div style={{ position:'relative' }}>
-                        <input
-                          type="number"
-                          value={editVals[key] ?? settings[key] ?? ''}
-                          onChange={e => setEditVals(v => ({ ...v, [key]: e.target.value }))}
-                          style={{ width:90, padding:'6px 10px', borderRadius:8, border:'1px solid var(--line)', fontFamily:'var(--mono)', fontSize:13, outline:'none', textAlign:'right' }}
-                          onFocus={e => e.target.style.borderColor = 'var(--green)'}
-                          onBlur={e  => e.target.style.borderColor = 'var(--line)'}
-                        />
-                        <span style={{ position:'absolute', right:6, top:'50%', transform:'translateY(-50%)', fontSize:9, color:'var(--muted)', pointerEvents:'none' }}>{unit}</span>
-                      </div>
-                      <button className="btn sm"
-                        onClick={() => saveKey(key)}
-                        disabled={savingKey === key}
-                        style={savedKey === key ? { color:'var(--green)' } : {}}>
-                        {savedKey === key ? '✓' : savingKey === key ? '…' : 'Sauv.'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Right: price simulator */}
-            <div>
-              <div style={{ fontSize:11, fontWeight:800, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:12 }}>
-                Simulateur — 5 km, 1 kg
-              </div>
-              <div className="card" style={{ overflow:'hidden' }}>
-                <table className="tbl">
-                  <thead>
-                    <tr><th>Type</th><th>Prix client</th><th>Commission</th><th>Livreur</th></tr>
-                  </thead>
-                  <tbody>
-                    {DELIVERY_TYPES.map(d => {
-                      const price = samplePrice(d);
-                      const commission = Math.round(price * comm);
-                      const earning = price - commission;
-                      return (
-                        <tr key={d.key}>
-                          <td>
-                            <span style={{ display:'inline-flex', alignItems:'center', gap:6 }}>
-                              <i style={{ display:'inline-block', width:8, height:8, borderRadius:'50%', background: d.color }} />
-                              <span style={{ fontWeight:700, fontSize:12 }}>{d.label}</span>
-                            </span>
-                          </td>
-                          <td className="amt">{price.toLocaleString('fr-FR')} XAF</td>
-                          <td style={{ fontSize:12, color:'#E8551C' }}>{commission.toLocaleString('fr-FR')}</td>
-                          <td style={{ fontSize:12, color:'var(--green)', fontWeight:600 }}>{earning.toLocaleString('fr-FR')}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              <div style={{ fontSize:11, color:'var(--muted)', padding:'8px 4px' }}>
-                Les tarifs s'appliquent immédiatement sur le mobile après sauvegarde.
-              </div>
-            </div>
-          </div>
+        <div className="card pad" style={{ maxWidth: 560 }}>
+          <h3 style={{ marginTop: 0 }}>Les tarifs ont une nouvelle page</h3>
+          <p style={{ color: 'var(--muted)', fontSize: 13, lineHeight: 1.6 }}>
+            Les prix se calculent maintenant par zone (prise en charge et prix au km par région), par gabarit de colis et selon les frais d'annulation.
+            Modifiez-les dans <b>Tarification</b>.
+          </p>
+          <NavLink to="/pricing" className="btn pri" style={{ display: 'inline-block', textDecoration: 'none' }}>Ouvrir Tarification</NavLink>
         </div>
       )}
 

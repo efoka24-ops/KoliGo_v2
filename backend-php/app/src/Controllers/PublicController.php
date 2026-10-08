@@ -10,6 +10,7 @@ use Koligo\Env;
 use Koligo\Http;
 use Koligo\HttpError;
 use Koligo\Rel;
+use Koligo\Services\Cgu;
 use Koligo\Services\Distance;
 use Koligo\Services\Pricing;
 
@@ -30,17 +31,53 @@ final class PublicController
         return $cities;
     }
 
-    /** Tarifs publics : les memes constantes que le calcul serveur, pour que l'estimation de l'app colle au prix reel. */
+    /**
+     * Tarifs publics, lus en base (modifiables depuis le back-office). Les anciennes cles (baseRate, perKmRate,
+     * weightSurcharge...) restent pour les versions d'app deja installees.
+     */
     public static function pricing(Ctx $c): array
     {
-        $d = Pricing::DEFAULTS;
+        $cfg = Pricing::config();
+        $default = $cfg['zones'][0];
+        foreach ($cfg['zones'] as $z) {
+            if ($z['name'] === $cfg['defaultZone']) {
+                $default = $z;
+            }
+        }
         return [
-            'baseRate' => (int)Env::get('PRICING_BASE_RATE', (string)$d['baseRate']),
-            'perKmRate' => (int)Env::get('PRICING_PER_KM', (string)$d['perKmRate']),
-            'minPrice' => (int)Env::get('PRICING_MIN', '1000'),
-            'weightSurcharge' => (int)Env::get('PRICING_WEIGHT_SURCHARGE', (string)$d['weightSurcharge']),
-            'commissionRate' => (int)Env::get('PRICING_COMMISSION', '3'),
+            'baseRate' => (int)$default['base'],
+            'perKmRate' => (int)$default['perKm'],
+            'minPrice' => $cfg['minPrice'],
+            'weightSurcharge' => $cfg['weightRate'],
+            'commissionRate' => (int)round($cfg['commissionRate'] * 100),
+            'zones' => $cfg['zones'],
+            'gabarits' => $cfg['gabarits'],
+            'cancelFeeXAF' => $cfg['cancelFee'],
+            'revisionTimeoutMin' => $cfg['revisionTimeoutMin'],
+            'cancelGraceMin' => $cfg['cancelGraceMin'],
         ];
+    }
+
+    /** Devis : le meme calcul que la creation (distance, zone, gabarit, type de livreur). */
+    public static function quote(Ctx $c): array
+    {
+        $from = (string)Http::query('from');
+        $to = (string)Http::query('to');
+        $size = strtoupper((string)Http::query('size'));
+        $type = (string)(Http::query('type') ?: 'TEMPORAIRE');
+        if ($from === '' || $to === '' || $size === '') {
+            throw new HttpError('from, to et size requis');
+        }
+        $km = Distance::googleKm($from, $to) ?? Distance::km($from, $to) ?? 2.0;
+        $region = Pricing::resolveRegion(Http::query('fromCity') ?: null, $from);
+        $q = Pricing::quote($region, (float)$km, $size, $type);
+        return $q + ['cancelFeeXAF' => Pricing::config()['cancelFee']];
+    }
+
+    /** CGU en vigueur dans la langue demandee (texte stocke en base, jetons deja remplaces). */
+    public static function cgu(Ctx $c): array
+    {
+        return Cgu::get((string)(Http::query('lang') ?: 'fr'));
     }
 
     public static function distance(Ctx $c): array

@@ -11,10 +11,11 @@ use Koligo\Env;
  */
 final class Notify
 {
-    public static function email(string $to, string $subject, string $bodyHtml): void
+    /** @return bool vrai si l'agent de messagerie du serveur a accepte le message (pas une preuve de livraison) */
+    public static function email(string $to, string $subject, string $bodyHtml): bool
     {
         if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL) || Env::bool('MAIL_DISABLED')) {
-            return;
+            return false;
         }
         $from = Env::get('MAIL_FROM', 'noreply@trugroup.cm');
         $html = '<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto">'
@@ -22,9 +23,13 @@ final class Notify
             . '<p style="color:#888;font-size:12px">KoliGo · La livraison collaborative au Cameroun</p></div>';
         $headers = "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\nFrom: KoliGo <$from>\r\n";
         try {
-            @mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $html, $headers);
+            $ok = @mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $html, $headers);
+            error_log('[mail] mail() ' . ($ok ? 'accepte' : 'REFUSE') . ' pour ' . preg_replace('/^(.).*(@.*)$/', '$1***$2', $to)
+                . ' from=' . $from . ' sendmail_path=' . (string)ini_get('sendmail_path') . ' smtp=' . (string)ini_get('SMTP'));
+            return (bool)$ok;
         } catch (\Throwable $e) {
             error_log('[mail] ' . $e->getMessage());
+            return false;
         }
     }
 

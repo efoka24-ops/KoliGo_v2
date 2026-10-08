@@ -30,9 +30,18 @@ final class Sungku
     private const SETTLED = ['CONFIRMED', 'COMPLETED', 'SUCCESS', 'SUCCESSFUL'];
     private const FAILED = ['FAILED', 'REJECTED', 'CANCELLED', 'CANCELED', 'EXPIRED'];
 
+    /** Derniere reponse de Sungku (statut HTTP + extrait du corps), pour le diagnostic admin. Jamais la cle API. */
+    public static ?array $last = null;
+
     public static function baseUrl(): string
     {
-        return rtrim(Env::get('SUNGKU_BASE_URL', 'https://sungku.trugroup.cm') ?? '', '/');
+        $url = rtrim(Env::get('SUNGKU_BASE_URL', 'https://sungku.trugroup.cm') ?? '', '/');
+        // La cle API ne doit jamais voyager en clair : hors machine locale (tests), on impose HTTPS.
+        // Sans cela, Sungku repond 301 vers https et la demande n'est jamais creee.
+        if (str_starts_with($url, 'http://') && !preg_match('#^http://(localhost|127\.0\.0\.1)(:|/|$)#', $url)) {
+            $url = 'https://' . substr($url, 7);
+        }
+        return $url;
     }
 
     public static function isConfigured(): bool
@@ -67,12 +76,19 @@ final class Sungku
         $err = curl_error($ch);
         curl_close($ch);
 
+        self::$last = ['httpStatus' => $status, 'curlError' => $err ?: null, 'body' => is_string($raw) ? mb_substr($raw, 0, 600) : null];
+        error_log('[sungku] deposit ref ' . ($body['reference'] ?? '?') . ' -> HTTP ' . $status . ' ' . ($err ?: '') . ' ' . (is_string($raw) ? mb_substr(preg_replace('/\s+/', ' ', $raw), 0, 400) : ''));
+
         if ($raw === false || $status === 0) {
             throw new SungkuUnavailable('Sungku injoignable : ' . ($err ?: 'pas de reponse'));
         }
         $data = json_decode((string)$raw, true);
         $data = is_array($data) ? $data : [];
 
+        // Une redirection n'est pas un succes : un POST redirige n'a rien cree chez Sungku.
+        if ($status >= 300 && $status < 400) {
+            throw new SungkuUnavailable("Sungku a redirige la demande (HTTP $status) : verifiez SUNGKU_BASE_URL (https)");
+        }
         if ($status === 429 || $status >= 500) {
             throw new SungkuUnavailable("Sungku indisponible (HTTP $status)");
         }

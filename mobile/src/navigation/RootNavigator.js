@@ -34,6 +34,7 @@ import DelivererWaitingScreen from '../screens/deliverer/DelivererWaitingScreen'
 import RatingScreen from '../screens/deliverer/RatingScreen';
 import ReportIssueScreen from '../screens/deliverer/ReportIssueScreen';
 import KycStatusScreen from '../screens/deliverer/KycStatusScreen';
+import VehicleScreen from '../screens/deliverer/VehicleScreen';
 
 // Client flow
 import InvoiceScreen from '../screens/shared/InvoiceScreen';
@@ -93,6 +94,7 @@ export default function RootNavigator() {
       <Stack.Screen name="Rating" component={RatingScreen} />
       <Stack.Screen name="ReportIssue" component={ReportIssueScreen} />
       <Stack.Screen name="KycStatus" component={KycStatusScreen} />
+      <Stack.Screen name="Vehicle" component={VehicleScreen} />
 
       {/* Client */}
       <Stack.Screen name="Invoice" component={InvoiceScreen} />

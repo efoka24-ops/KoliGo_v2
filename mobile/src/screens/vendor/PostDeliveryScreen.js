@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, ActivityIndicator, Image } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts } from '../../constants/colors';
-import { KG_QUARTIERS, kgEstimateDistance } from '../../constants/data';
+import { KG_QUARTIERS } from '../../constants/data';
 import { useApp } from '../../context/AppContext';
 import KGTopBar from '../../components/KGTopBar';
 import KGButton from '../../components/KGButton';
@@ -14,6 +15,7 @@ import RouteLine from '../../components/RouteLine';
 import Icon from '../../components/Icon';
 import { useI18n } from '../../i18n';
 import { apiFetch } from '../../services/api';
+import { errMsg } from '../../utils/apiError';
 
 // ── Generic list picker modal ──────────────────────────────────────────────
 function ListPicker({ label, value, items, onChange, disabled }) {
@@ -58,7 +60,7 @@ function ListPicker({ label, value, items, onChange, disabled }) {
 }
 
 // ── Cascading Region → City → Neighborhood picker ─────────────────────────
-function LocationPicker({ label, value, onChange, cities }) {
+function LocationPicker({ label, value, onChange, onCity, cities }) {
   const [region, setRegion] = useState('');
   const [city, setCity]     = useState('');
 
@@ -69,8 +71,8 @@ function LocationPicker({ label, value, onChange, cities }) {
     return found ? found.neighborhoods.map(n => n.name) : [];
   }, [citiesInRegion, city]);
 
-  const handleRegion = (r) => { setRegion(r); setCity(''); onChange(''); };
-  const handleCity   = (c) => { setCity(c);   onChange(''); };
+  const handleRegion = (r) => { setRegion(r); setCity(''); onCity?.(''); onChange(''); };
+  const handleCity   = (c) => { setCity(c);   onCity?.(c); onChange(''); };
 
   // Fall back to flat list when backend has no data
   if (cities.length === 0) {
@@ -109,19 +111,19 @@ export default function PostDeliveryScreen({ navigation }) {
   const isEn = lang === 'en';
 
   const PARCEL_TYPES = useMemo(() => [
-    { id: t('Vêtements'),    icon: 'package' },
-    { id: t('Documents'),    icon: 'id'      },
-    { id: t('Électronique'), icon: 'bolt'    },
-    { id: t('Alimentaire'),  icon: 'sparkle' },
-    { id: t('Autre'),        icon: 'package' },
-  ], [t]);
+    { id: 'CLOTHING',    label: t('Vêtements'),    icon: 'package' },
+    { id: 'DOCUMENTS',   label: t('Documents'),    icon: 'id'      },
+    { id: 'ELECTRONICS', label: t('Électronique'), icon: 'bolt'    },
+    { id: 'FOOD',        label: t('Alimentaire'),  icon: 'sparkle' },
+    { id: 'FRAGILE',     label: 'Fragile',         icon: 'shield'  },
+    { id: 'APPLIANCE',   label: isEn ? 'Appliance' : 'Électroménager', icon: 'package' },
+    { id: 'OTHER',       label: t('Autre'),        icon: 'package' },
+  ], [t, isEn]);
 
-  const WEIGHT_PRESETS = useMemo(() => [
-    { label: t('Documents'), w: 0.3 },
-    { label: t('Petit'),     w: 1.5 },
-    { label: t('Moyen'),     w: 3.5 },
-    { label: t('Gros'),      w: 7   },
-  ], [t]);
+  // Gabarits, zones et frais viennent du serveur (modifiables depuis le back-office).
+  const gabarits = pricing?.gabarits || {};
+  const sizeCodes = Object.keys(gabarits);
+  const cancelFee = pricing?.cancelFeeXAF ?? 500;
 
   const COURIER_TYPES = useMemo(() => [
     { id: 'TEMPORAIRE', title: t('Standard'), sub: t('Tarif de base'),    mul: 'x1.0',  icon: 'user'  },
@@ -133,9 +135,11 @@ export default function PostDeliveryScreen({ navigation }) {
   const [shopName, setShopName]     = useState(user?.shopName ?? '');
   const [from, setFrom]             = useState('Akwa');
   const [parcelDesc, setParcelDesc] = useState('');
-  const [parcelType, setParcelType] = useState('Vêtements');
+  const [parcelType, setParcelType] = useState('CLOTHING');
   const [to, setTo]                 = useState('Bonapriso');
-  const [weight, setWeight]         = useState(1.2);
+  const [size, setSize]             = useState('S');
+  const [photo, setPhoto]           = useState(null);
+  const [fromCity, setFromCity]     = useState('');
   const [type, setType]             = useState('TEMPORAIRE');
   const [productPrice, setProductPrice] = useState('');
 
@@ -147,8 +151,8 @@ export default function PostDeliveryScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [cities, setCities]   = useState([]);
-  const [fetchedDistance, setFetchedDistance] = useState(null);
-  const [distanceFetching, setDistanceFetching] = useState(false);
+  const [quote, setQuote]     = useState(null);
+  const [quoteFetching, setQuoteFetching] = useState(false);
 
   // Load cities for cascade picker.
   useEffect(() => {
@@ -161,27 +165,41 @@ export default function PostDeliveryScreen({ navigation }) {
     if (user?.shopName) setShopName(user.shopName);
   }, [user?.shopName]);
 
-  // Fetch real road distance from backend when from/to changes
+  // Le prix affiché est celui que le serveur enregistrera : un seul calcul, côté serveur (zone, distance, gabarit, urgence).
   useEffect(() => {
-    if (!from || !to) return;
-    if (kgEstimateDistance(from, to) > 0 && from !== to) {
-      setDistanceFetching(true);
-      apiFetch(`/api/public/distance?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`)
-        .then(data => { if (typeof data?.km === 'number' && data.km > 0) setFetchedDistance(data.km); })
-        .catch(() => {})
-        .finally(() => setDistanceFetching(false));
-    }
-  }, [from, to]);
+    const g = gabarits[size];
+    if (!from || !to || !size || !g || g.bookable === false) { setQuote(null); return undefined; }
+    let alive = true;
+    setQuoteFetching(true);
+    const qs = `from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&size=${size}&type=${type}${fromCity ? `&fromCity=${encodeURIComponent(fromCity)}` : ''}`;
+    apiFetch(`/api/public/quote?${qs}`)
+      .then(d => { if (alive) setQuote(d && d.finalPrice ? d : null); })
+      .catch(() => { if (alive) setQuote(null); })
+      .finally(() => { if (alive) setQuoteFetching(false); });
+    return () => { alive = false; };
+  }, [from, to, size, type, fromCity, pricing]);
 
-  const distance = fetchedDistance ?? kgEstimateDistance(from, to);
-  const price    = useMemo(() => {
-    const { baseRate = 300, perKmRate = 150, minPrice = 1000, weightSurcharge = 100 } = pricing || {};
-    const mult = { TEMPORAIRE: 1, EXPRESS: 1.25, VVIP: 1.4 }[type] || 1;
-    return Math.max(minPrice, Math.round((baseRate + distance * perKmRate + weight * weightSurcharge) * mult));
-  }, [distance, weight, type, pricing]);
+  const distance = quote?.km ?? null;
+  const price    = quote?.finalPrice ?? null;
+  const sizeOnQuote = !!gabarits[size] && gabarits[size].bookable === false;
+  const sizeWarning = (() => {
+    if (parcelType === 'APPLIANCE' && ['XS', 'S'].includes(size)) return isEn ? 'An appliance rarely fits this size. Check the size.' : 'Un appareil électroménager tient rarement dans ce gabarit. Vérifiez la taille.';
+    if (parcelType === 'DOCUMENTS' && ['L', 'XL', 'XXL'].includes(size)) return isEn ? 'Documents are usually XS or S. Check the size.' : 'Des documents sont en général en XS ou S. Vérifiez la taille.';
+    return null;
+  })();
+
+  const takePhoto = async () => {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (perm.status !== 'granted') { showToast(isEn ? 'Camera access is needed for the parcel photo' : "L'accès à la caméra est nécessaire pour la photo du colis", 'error'); return; }
+    const r = await ImagePicker.launchCameraAsync({ mediaTypes: 'images', quality: 0.6, base64: true });
+    if (!r.canceled && r.assets?.[0]?.base64) {
+      setPhoto({ uri: r.assets[0].uri, data: `data:image/jpeg;base64,${r.assets[0].base64}` });
+      setFieldErrors(e => ({ ...e, photo: null }));
+    }
+  };
 
   const productVal  = parseInt(productPrice, 10) || 0;
-  const totalClient = price + productVal;
+  const totalClient = (price ?? 0) + productVal;
   const phoneNorm   = clientPhone.replace(/\s/g, '');
 
   const validateStep1 = () => {
@@ -189,6 +207,9 @@ export default function PostDeliveryScreen({ navigation }) {
     // Only legacy accounts still type this; new ones inherit it from the profile.
     if (!shopName.trim() && !user?.shopName) errs.shopName = t('Indique le nom de ta boutique');
     if (!parcelDesc.trim()) errs.parcelDesc = t('Décris le colis');
+    if (sizeOnQuote) errs.size = isEn ? 'XXL parcels are priced on quote: contact KoliGo support.' : 'Les colis XXL se font sur devis : contactez le support KoliGo.';
+    else if (!price) errs.size = isEn ? 'Price unavailable, check your connection.' : 'Prix indisponible, vérifiez votre connexion.';
+    if (!photo) errs.photo = isEn ? 'A photo of the packed parcel is required' : 'Une photo du colis emballé est obligatoire';
     if (!recipient.trim())  errs.recipient  = t('Indique le nom du destinataire');
     if (!phoneNorm)         errs.clientPhone = t('Numéro requis');
     else if (!/^6\d{8}$/.test(phoneNorm))   errs.clientPhone = t('Format invalide');
@@ -209,9 +230,10 @@ export default function PostDeliveryScreen({ navigation }) {
             fromQuartier:   from,
             toQuartier:     to,
             parcelDesc:     parcelDesc.trim(),
-            parcelType,
-            distance,
-            weight,
+            category:       parcelType,
+            size,
+            photo:          photo?.data,
+            fromCity:       fromCity || undefined,
             courierType:    type,
             recipientName:  recipient.trim(),
             recipientPhone: phoneNorm,
@@ -223,7 +245,7 @@ export default function PostDeliveryScreen({ navigation }) {
         navigation.navigate('VendorCodes', {
           deliveryId:    result.id,
           clientToken:   result.clientToken,
-          price:         result.priceXAF ?? price,
+          price:         result.priceXAF ?? price ?? 0,
           from, to,
           collectCode:   result.collectCode,
           deliverCode:   result.deliverCode,
@@ -238,13 +260,13 @@ export default function PostDeliveryScreen({ navigation }) {
         const collectCode = String(Math.floor(1000 + Math.random() * 9000));
         const deliverCode = String(Math.floor(1000 + Math.random() * 9000));
         navigation.navigate('VendorCodes', {
-          deliveryId, collectCode, deliverCode, from, to, price,
+          deliveryId, collectCode, deliverCode, from, to, price: price ?? 0,
           shopName: shopName.trim(), parcelDesc: parcelDesc.trim(),
           recipientName: recipient.trim(), recipientPhone: phoneNorm, productPrice: productVal,
         });
       }
     } catch (err) {
-      showToast(err.message || 'Impossible de créer la livraison', 'error');
+      showToast(errMsg(err, 'Impossible de créer la livraison'), 'error');
     } finally {
       setLoading(false);
     }
@@ -287,6 +309,7 @@ export default function PostDeliveryScreen({ navigation }) {
                 label={isEn ? 'Pickup area' : 'Quartier de départ (retrait)'}
                 value={from}
                 onChange={setFrom}
+                onCity={setFromCity}
                 cities={cities}
               />
             </KGCard>
@@ -304,7 +327,7 @@ export default function PostDeliveryScreen({ navigation }) {
                       <TouchableOpacity key={pt.id} onPress={() => setParcelType(pt.id)}
                         style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1.5, borderColor: on ? colors.green : colors.ink12, backgroundColor: on ? colors.greenLight : '#fff', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <Icon name={pt.icon} size={14} color={on ? colors.greenDark : colors.ink55} />
-                        <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: on ? colors.greenDark : colors.ink70 }}>{pt.id}</Text>
+                        <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: on ? colors.greenDark : colors.ink70 }}>{pt.label}</Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -322,33 +345,59 @@ export default function PostDeliveryScreen({ navigation }) {
                 <FieldError msg={fieldErrors.parcelDesc} />
               </View>
 
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.ink70 }}>{isEn ? 'Weight' : 'Poids'}</Text>
-                <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 18, color: colors.ink }}>{weight} kg</Text>
-              </View>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                {WEIGHT_PRESETS.map(p => {
-                  const on = Math.abs(weight - p.w) < 0.05;
+              <View style={{ gap: 8 }}>
+                <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.05 }}>
+                  {isEn ? 'Parcel size' : 'Taille du colis'}
+                </Text>
+                {sizeCodes.length === 0 && <ActivityIndicator color={colors.green} />}
+                {sizeCodes.map(code => {
+                  const g = gabarits[code];
+                  const on = size === code;
                   return (
-                    <TouchableOpacity
-                      key={p.label}
-                      onPress={() => setWeight(p.w)}
-                      style={{ flex: 1, height: 36, borderRadius: 10, borderWidth: 1, borderColor: on ? colors.green : colors.ink12, backgroundColor: on ? colors.greenLight : '#fff', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: on ? colors.greenDark : colors.ink70 }}>{p.label}</Text>
+                    <TouchableOpacity key={code} onPress={() => { setSize(code); setFieldErrors(e => ({ ...e, size: null })); }} activeOpacity={0.85}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 14, borderWidth: 1.5, borderColor: on ? colors.green : colors.ink12, backgroundColor: on ? colors.greenLight : '#fff' }}>
+                      <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: on ? colors.green : colors.cream, alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 16, color: on ? '#fff' : colors.ink }}>{code}</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.ink }}>
+                          {g.bookable === false ? (isEn ? 'Beyond XL · on quote' : 'Au-delà du XL · sur devis') : `${g.dims} cm · ${isEn ? 'up to' : "jusqu'à"} ${g.maxKg} kg`}
+                        </Text>
+                        <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55, marginTop: 2 }}>{(isEn ? g.examples?.en : g.examples?.fr) || ''}</Text>
+                      </View>
                     </TouchableOpacity>
                   );
                 })}
+                {sizeWarning && !fieldErrors.size && (
+                  <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: '#C4611A' }}>{sizeWarning}</Text>
+                )}
+                <FieldError msg={fieldErrors.size} />
               </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <TouchableOpacity onPress={() => setWeight(w => Math.max(0.1, parseFloat((w - 0.5).toFixed(1))))} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon name="minus" size={18} color={colors.ink} />
-                </TouchableOpacity>
-                <View style={{ flex: 1, height: 6, backgroundColor: colors.cream, borderRadius: 3, overflow: 'hidden' }}>
-                  <View style={{ width: `${((weight - 0.1) / 9.9) * 100}%`, height: '100%', backgroundColor: colors.green, borderRadius: 3 }} />
-                </View>
-                <TouchableOpacity onPress={() => setWeight(w => Math.min(10, parseFloat((w + 0.5).toFixed(1))))} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon name="plus" size={18} color={colors.ink} />
+
+              <View style={{ gap: 8 }}>
+                <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.05 }}>
+                  {isEn ? 'Photo of the packed parcel' : 'Photo du colis emballé'}
+                </Text>
+                {photo && <Image source={{ uri: photo.uri }} style={{ width: '100%', height: 160, borderRadius: 14, backgroundColor: colors.cream }} resizeMode="cover" />}
+                <KGButton kind={photo ? 'soft' : 'primary'} size="md" icon="camera" onPress={takePhoto}>
+                  {photo ? (isEn ? 'Retake photo' : 'Reprendre la photo') : (isEn ? 'Take a photo' : 'Prendre la photo')}
+                </KGButton>
+                <FieldError msg={fieldErrors.photo} />
+              </View>
+
+              <View style={{ backgroundColor: '#FEF0E3', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#F5D0B8', gap: 4 }}>
+                <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 12.5, color: '#C4611A' }}>
+                  {isEn ? 'If the size is wrong' : 'Si le gabarit est inexact'}
+                </Text>
+                <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: '#C4611A', lineHeight: 17 }}>
+                  {isEn
+                    ? `The courier checks the parcel at pickup and may correct the size, with a photo. You then accept the new price or cancel; cancelling costs ${cancelFee.toLocaleString('fr-FR')} XAF paid to the courier.`
+                    : `Le livreur vérifie le colis à la collecte et peut corriger le gabarit, avec une photo. Vous acceptez alors le nouveau prix ou vous annulez ; l'annulation coûte ${cancelFee.toLocaleString('fr-FR')} XAF versés au livreur.`}
+                </Text>
+                <TouchableOpacity onPress={() => navigation.navigate('Terms')}>
+                  <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 12, color: '#C4611A', textDecorationLine: 'underline' }}>
+                    {isEn ? 'Read the terms (article 9)' : 'Lire les CGU (article 9)'}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </KGCard>
@@ -384,7 +433,7 @@ export default function PostDeliveryScreen({ navigation }) {
               />
               <View style={{ paddingVertical: 6, paddingHorizontal: 10, backgroundColor: colors.cream, borderRadius: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{isEn ? 'Estimated distance' : 'Distance estimée'}</Text>
-                {distanceFetching
+                {quoteFetching || distance == null
                   ? <ActivityIndicator size="small" color={colors.green} />
                   : <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 13, color: colors.ink }}>{distance} km</Text>}
               </View>
@@ -444,7 +493,7 @@ export default function PostDeliveryScreen({ navigation }) {
                 <View>
                   <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: 0.04 }}>{isEn ? 'Delivery fee' : 'Frais de livraison'}</Text>
                   <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 30, color: '#fff', marginTop: 2 }}>
-                    {price.toLocaleString('fr-FR')} <Text style={{ fontSize: 16, color: 'rgba(255,255,255,0.55)' }}>XAF</Text>
+                    {price != null ? price.toLocaleString('fr-FR') : '…'} <Text style={{ fontSize: 16, color: 'rgba(255,255,255,0.55)' }}>XAF</Text>
                   </Text>
                 </View>
                 <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.orange, alignItems: 'center', justifyContent: 'center' }}>
@@ -458,7 +507,7 @@ export default function PostDeliveryScreen({ navigation }) {
                 </View>
               )}
               <Text style={{ fontFamily: `${fonts.mono}-Regular`, fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>
-                {from} {'->'} {to} {'·'} {distanceFetching ? '…' : `${distance} km`} {'·'} {weight} kg
+                {from} {'->'} {to} {'·'} {quoteFetching || distance == null ? '…' : `${distance} km`} {'·'} {isEn ? 'size' : 'gabarit'} {size}
               </Text>
             </View>
 
@@ -472,7 +521,7 @@ export default function PostDeliveryScreen({ navigation }) {
           <>
             <KGCard kind="cream" padding={18} style={{ alignItems: 'center', gap: 6 }}>
               <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.ink55, letterSpacing: 0.04, textTransform: 'uppercase' }}>{isEn ? 'Delivery fee' : 'Frais de livraison'}</Text>
-              <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 52, color: colors.ink, lineHeight: 56 }}>{price.toLocaleString('fr-FR')}</Text>
+              <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 52, color: colors.ink, lineHeight: 56 }}>{price != null ? price.toLocaleString('fr-FR') : '…'}</Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55 }}>XAF {'·'} {isEn ? 'paid on delivery' : 'payé à la livraison'}</Text>
             </KGCard>
 
@@ -482,8 +531,8 @@ export default function PostDeliveryScreen({ navigation }) {
               <View style={{ height: 1, backgroundColor: colors.ink06, marginVertical: 12 }} />
               <Detail label={isEn ? 'Shop' : 'Boutique'}         value={shopName || '—'} />
               <Detail label={isEn ? 'Parcel' : 'Colis'}          value={parcelDesc || '—'} />
-              <Detail label="Distance"                            value={`${distance} km`} />
-              <Detail label={isEn ? 'Weight' : 'Poids'}          value={`${weight} kg`} />
+              <Detail label="Distance"                            value={distance != null ? `${distance} km` : '…'} />
+              <Detail label={isEn ? 'Size' : 'Gabarit'}          value={size} />
               <Detail label={isEn ? 'Speed' : 'Urgence'}         value={<KGCourierBadge type={type.toLowerCase()} />} />
               <Detail label={isEn ? 'Recipient' : 'Destinataire'} value={recipient || '—'} />
               <Detail label={isEn ? 'Phone / WhatsApp' : 'Téléphone / WhatsApp'} value={phoneNorm ? `+237 ${phoneNorm}` : '—'} />

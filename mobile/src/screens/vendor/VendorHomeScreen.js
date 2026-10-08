@@ -3,6 +3,8 @@ import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshCon
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts } from '../../constants/colors';
 import { useApp } from '../../context/AppContext';
+import { useComplianceGate } from '../../hooks/useComplianceGate';
+import KycBanner from '../../components/KycBanner';
 import KenteStripe from '../../components/KenteStripe';
 import KGCard from '../../components/KGCard';
 import KGStatusPill from '../../components/KGStatusPill';
@@ -12,6 +14,7 @@ import Icon from '../../components/Icon';
 
 export default function VendorHomeScreen({ navigation }) {
   const { user, api, token } = useApp();
+  const { kycStatus } = useComplianceGate(navigation);
   const [deliveries, setDeliveries] = useState([]);
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -51,6 +54,7 @@ export default function VendorHomeScreen({ navigation }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
       <KenteStripe height={4} />
+      <KycBanner status={kycStatus} role="VENDOR" />
 
       <ScrollView
         contentContainerStyle={{ paddingBottom: 32 }}

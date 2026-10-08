@@ -12,6 +12,7 @@ import KGCard from '../../components/KGCard';
 import KGStatusPill from '../../components/KGStatusPill';
 import Icon from '../../components/Icon';
 import InvoiceButtons from '../../components/InvoiceButtons';
+import RevisionPrompt from '../../components/RevisionPrompt';
 
 const POLL_INTERVAL = 5000;
 
@@ -63,6 +64,7 @@ export default function VendorCodesScreen({ navigation, route }) {
   const [trackingCode, setTrackingCode] = useState(params.trackingCode || '');
 
   const [status, setStatus]         = useState('en_attente');
+  const [revision, setRevision]     = useState(null);
   const [trustDoc, setTrustDoc]     = useState(null);
   const [loadingTrust, setLoadingTrust] = useState(false);
   const prevStatusRef = useRef(null);
@@ -118,6 +120,7 @@ export default function VendorCodesScreen({ navigation, route }) {
       }
       prevStatusRef.current = newStatus;
       setStatus(newStatus);
+      setRevision(data.revision || null);
 
       if (['accepte', 'en_route', 'livre'].includes(newStatus) && !trustDoc) {
         fetchTrustDoc();
@@ -258,6 +261,11 @@ export default function VendorCodesScreen({ navigation, route }) {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }} edges={['top']}>
       <KGTopBar title={isEn ? 'Listing codes' : "Codes de l'annonce"} onBack={() => navigation.navigate('VendorHome')} />
       <ScrollView contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+
+        {/* Correction de gabarit proposée par le livreur à la collecte */}
+        {!isDemo && isRealId && status === 'accepte' && (
+          <RevisionPrompt deliveryId={orderId} revision={revision} onDone={fetchStatus} />
+        )}
 
         {/* Order ID + status */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>

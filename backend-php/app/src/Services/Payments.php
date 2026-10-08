@@ -105,6 +105,12 @@ final class Payments
         if (Sungku::isFailed($status)) {
             Db::exec("UPDATE `$table` SET status = 'FAILED', updatedAt = ? WHERE id = ? AND status = 'PENDING'", [Db::now(), $rowId]);
         }
+        // Sans identifiant de paiement, Sungku n'a rien cree que l'on puisse suivre : ne pas promettre une demande sur le telephone.
+        if ($paymentId === '') {
+            error_log("[payment] $table $rowId ref $ref : reponse Sungku sans identifiant de paiement");
+            return ['paymentId' => '', 'status' => 'PENDING', 'unverified' => true,
+                'message' => "Réponse inattendue de la passerelle de paiement : aucune demande n'est confirmée. Réessayez ou contactez le support."];
+        }
         // Meme si Sungku repond deja "confirme", on attend le webhook signe.
         return ['paymentId' => $paymentId, 'status' => Sungku::isFailed($status) ? 'FAILED' : 'PENDING',
             'message' => 'Validez le paiement sur votre telephone.'];

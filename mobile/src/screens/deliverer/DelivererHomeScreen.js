@@ -3,6 +3,8 @@ import { View, Text, ScrollView, TouchableOpacity, Switch, ActivityIndicator } f
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts } from '../../constants/colors';
 import { useApp } from '../../context/AppContext';
+import { useComplianceGate } from '../../hooks/useComplianceGate';
+import KycBanner from '../../components/KycBanner';
 import KenteStripe from '../../components/KenteStripe';
 import KGCard from '../../components/KGCard';
 import KGStatusPill from '../../components/KGStatusPill';
@@ -12,6 +14,7 @@ import Icon from '../../components/Icon';
 
 export default function DelivererHomeScreen({ navigation }) {
   const { online, setOnline, user, api, token } = useApp();
+  const { kycStatus } = useComplianceGate(navigation);
   const [deliveries, setDeliveries] = useState([]);
   const [available, setAvailable]   = useState([]);
   const [wallet, setWallet]         = useState(null);
@@ -65,6 +68,7 @@ export default function DelivererHomeScreen({ navigation }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
       <KenteStripe height={4} />
+      <KycBanner status={kycStatus} role="DELIVERER" />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
         {/* Header */}

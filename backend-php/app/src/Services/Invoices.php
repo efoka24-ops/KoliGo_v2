@@ -201,12 +201,20 @@ final class Invoices
         }
 
         // delivery : releve de course du livreur, avec le calcul du prix.
+        // Le detail conserve a la creation (ou a la derniere revision) prime : un changement de tarif
+        // ne doit jamais modifier une facture. Les livraisons d'avant ce detail retombent sur les anciennes constantes.
+        $bd = json_decode((string)($d['priceBreakdown'] ?? ''), true);
+        $bd = is_array($bd) && ($bd['version'] ?? 0) >= 2 ? $bd : null;
         $c = Pricing::DEFAULTS;
+        if ($bd) {
+            $c = ['baseRate' => (int)$bd['baseXAF'], 'perKmRate' => (int)$bd['perKmXAF'], 'weightSurcharge' => (int)$bd['weightRateXAF'], 'commissionRate' => (float)$bd['commissionRate']];
+        }
         $km = (float)($d['distanceKm'] ?? 0);
         $kg = (float)$d['weightKg'];
-        $coef = Pricing::coefficient((string)$d['delivererType']);
+        $coef = $bd ? (float)$bd['coefficient'] : Pricing::coefficient((string)$d['delivererType']);
         $distPart = (int)round($km * $c['perKmRate']);
         $weightPart = (int)round($kg * $c['weightSurcharge']);
+        $size = $bd['size'] ?? ($d['size'] ?? null);
         $commission = (int)$d['commissionXAF'];
         $earning = (int)$d['delivererEarning'];
         return $base + [
@@ -217,7 +225,7 @@ final class Invoices
                 ['title' => 'Course effectuée', 'rows' => array_values(array_filter([
                     ['label' => 'Trajet', 'value' => $route],
                     ['label' => 'Distance', 'value' => $km > 0 ? $km . ' km' : null],
-                    ['label' => 'Poids', 'value' => $kg > 0 ? $kg . ' kg' : null],
+                    ['label' => $size ? 'Gabarit' : 'Poids', 'value' => $size ? $size . ' (réf. ' . $kg . ' kg)' : ($kg > 0 ? $kg . ' kg' : null)],
                     ['label' => 'Type de course', 'value' => self::TYPE_LABEL[$d['delivererType']] ?? $d['delivererType']],
                     ['label' => 'Publiée le', 'value' => self::when($d['createdAt']), 'date' => true],
                     ['label' => 'Livrée le', 'value' => $deliveredAt, 'date' => true],
@@ -225,8 +233,9 @@ final class Invoices
                 ['title' => 'Calcul du prix de la course', 'rows' => [
                     ['label' => 'Prise en charge', 'value' => self::xaf($c['baseRate'])],
                     ['label' => 'Distance (' . $km . ' km × ' . $c['perKmRate'] . ')', 'value' => self::xaf($distPart)],
-                    ['label' => 'Poids (' . $kg . ' kg × ' . $c['weightSurcharge'] . ')', 'value' => self::xaf($weightPart)],
+                    ['label' => ($size ? 'Gabarit ' . $size . ' (' : 'Poids (') . $kg . ' kg × ' . $c['weightSurcharge'] . ')', 'value' => self::xaf($weightPart)],
                     ['label' => 'Coefficient ' . (self::TYPE_LABEL[$d['delivererType']] ?? ''), 'value' => '× ' . number_format($coef, 2, ',', '')],
+                    ...($bd && $price > (int)$bd['basePrice'] ? [['label' => 'Ajustement au minimum de course', 'value' => '+ ' . self::xaf($price - (int)$bd['basePrice'])]] : []),
                     ['label' => 'Prix de la course', 'value' => self::xaf($price), 'bold' => true],
                 ]],
                 ['title' => 'Votre gain', 'rows' => [

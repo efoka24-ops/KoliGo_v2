@@ -47,6 +47,9 @@ final class Auth
         } catch (\Throwable) {
             throw new HttpError('Invalid or expired token', 401);
         }
+        if (($d['type'] ?? '') === 'admin-setup') {
+            throw new HttpError('Invalid or expired token', 401);
+        }
         $c->user = ['userId' => $d['userId'] ?? '', 'phone' => $d['phone'] ?? '', 'activeRole' => $d['activeRole'] ?? ''];
     }
 

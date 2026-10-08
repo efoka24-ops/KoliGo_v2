@@ -12,6 +12,7 @@ import RouteLine from '../../components/RouteLine';
 import KenteStripe from '../../components/KenteStripe';
 import Icon from '../../components/Icon';
 import { deliveryService } from '../../services/delivery';
+import { errMsg } from '../../utils/apiError';
 
 export default function OfferDetailScreen({ navigation, route }) {
   const { online, showToast, user } = useApp();
@@ -44,14 +45,21 @@ export default function OfferDetailScreen({ navigation, route }) {
       return;
     }
 
-    // KYC null / NOT_SUBMITTED → redirect to KYC flow
-    if (!user?.kycStatus) {
-      showToast('Soumettez votre CNI pour accepter des courses', 'error');
-      navigation.navigate('Kyc');
+    // Le serveur refuse aussi : le KYC Livreur doit être validé par le back-office avant toute course.
+    if (user?.kycStatus && user.kycStatus !== 'VERIFIED') {
+      if (user.kycStatus === 'PENDING') {
+        showToast('Ton dossier est en cours de vérification : tu pourras livrer dès sa validation.', 'error');
+      } else {
+        showToast('Envoie ton dossier KYC pour livrer.', 'error');
+        navigation.navigate('Kyc', { gate: true });
+      }
+      return;
+    }
+    if (o.vehicleOk === false) {
+      showToast('Ton véhicule ne peut pas transporter ce gabarit.', 'error');
       return;
     }
 
-    // KYC PENDING or VERIFIED → allow accept (backend has no KYC gate on this route)
     if (!o.id) {
       showToast('Course acceptée !');
       navigation.navigate('DelivererHome');
@@ -63,8 +71,7 @@ export default function OfferDetailScreen({ navigation, route }) {
       showToast('Course acceptée !');
       navigation.navigate('DelivererHome');
     } catch (e) {
-      const msg = e?.response?.data?.error || e?.message || 'Erreur acceptation';
-      showToast(msg, 'error');
+      showToast(errMsg(e, 'Erreur acceptation'), 'error');
     } finally {
       setAccepting(false);
     }
@@ -127,8 +134,8 @@ export default function OfferDetailScreen({ navigation, route }) {
             </View>
             <View style={{ width: 1, backgroundColor: colors.ink06 }} />
             <View style={{ gap: 3 }}>
-              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink35, textTransform: 'uppercase', letterSpacing: 0.06 }}>Poids</Text>
-              <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: colors.ink }}>{kg} kg</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink35, textTransform: 'uppercase', letterSpacing: 0.06 }}>{o.size ? 'Gabarit' : 'Poids'}</Text>
+              <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: colors.ink }}>{o.size ? o.size : `${kg} kg`}</Text>
             </View>
             {weight > 5 && (
               <>

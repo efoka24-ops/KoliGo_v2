@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, fonts } from '../../constants/colors';
@@ -9,6 +9,7 @@ import KGButton from '../../components/KGButton';
 import KGInput from '../../components/KGInput';
 import KenteStripe from '../../components/KenteStripe';
 import Icon from '../../components/Icon';
+import { errMsg } from '../../utils/apiError';
 
 const TITLES = [
   'Ton numéro de CNI',
@@ -25,14 +26,24 @@ const DESCS = [
 const STEP_LABELS = ['N° CNI', 'CNI recto', 'CNI verso', 'Selfie'];
 const STEP_ICONS  = ['shield', 'id', 'id', 'user'];
 
-export default function KycScreen({ navigation }) {
-  const { api, showToast } = useApp();
+export default function KycScreen({ navigation, route }) {
+  const { api, showToast, user, setUser } = useApp();
+  // Mode « barrière » : ouvert automatiquement après la création du compte, impossible à contourner.
+  const gate = !!route?.params?.gate;
+  const roleKey = (user?.activeRole || '').toUpperCase();
   const [step, setStep]         = useState(0);
   const [cniNumber, setCniNumber] = useState('');
   const [cniRecto, setCniRecto] = useState(null);
   const [cniVerso, setCniVerso] = useState(null);
   const [selfie, setSelfie]     = useState(null);
   const [loading, setLoading]   = useState(false);
+
+  useEffect(() => {
+    if (!gate) return undefined;
+    navigation.setOptions({ gestureEnabled: false });
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => sub.remove();
+  }, [gate, navigation]);
 
   const isSuccess  = step === 4;
   const isCNIStep  = step === 0;
@@ -54,7 +65,7 @@ export default function KycScreen({ navigation }) {
     return dataUrl;
   };
 
-  const handleBack = () => { if (step === 0) navigation.goBack(); else setStep(s => s - 1); };
+  const handleBack = () => { if (step === 0) { if (!gate) navigation.goBack(); } else setStep(s => s - 1); };
 
   const handleNext = async () => {
     if (step === 0) { setStep(1); return; }
@@ -64,9 +75,11 @@ export default function KycScreen({ navigation }) {
       const selfieData = selfie || await captureStepPhoto();
       if (!selfieData) { setLoading(false); return; }
       if (api) await api('/api/user/kyc', { method: 'POST', body: JSON.stringify({ cniNumber: cniNumber.trim(), cniRecto, cniVerso, selfie: selfieData }) });
+      // Dossier en attente : le serveur refuse de publier ou de livrer tant que le back-office n'a pas validé.
+      setUser((prev) => (prev ? { ...prev, kycStatus: 'PENDING', kycByRole: { ...(prev.kycByRole || {}), [roleKey]: 'PENDING' } } : prev));
       setStep(4);
     } catch (err) {
-      showToast(err?.message || 'Erreur lors de l\'envoi du dossier', 'error');
+      showToast(errMsg(err, 'Erreur lors de l\'envoi du dossier'), 'error');
     } finally {
       setLoading(false);
     }
@@ -85,10 +98,14 @@ export default function KycScreen({ navigation }) {
               Dossier envoyé !
             </Text>
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink55, textAlign: 'center', lineHeight: 21, maxWidth: 280 }}>
-              Notre équipe examine tes documents sous 24h. Continue pour choisir ton mode.
+              {gate
+                ? `Notre équipe examine tes documents sous 24h. Tant que ton dossier n'est pas validé, tu ne peux ni publier ni livrer un colis. Un seul dossier suffit pour les deux rôles.`
+                : 'Notre équipe examine tes documents sous 24h. Continue pour choisir ton mode.'}
             </Text>
           </View>
-          <KGButton kind="primary" size="lg" icon="arrow" onPress={() => navigation.navigate('RoleSelect')}>
+          <KGButton kind="primary" size="lg" icon="arrow" onPress={() => (gate
+            ? navigation.reset({ index: 0, routes: [{ name: roleKey === 'DELIVERER' ? 'DelivererApp' : 'VendorApp' }] })
+            : navigation.navigate('RoleSelect'))}>
             Continuer
           </KGButton>
         </View>

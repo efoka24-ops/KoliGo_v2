@@ -12,6 +12,7 @@ use Koligo\Rel;
 use Koligo\Services\Deliveries;
 use Koligo\Services\Invoices;
 use Koligo\Services\Payments;
+use Koligo\Services\Uploads;
 
 final class DeliveryController
 {
@@ -22,6 +23,10 @@ final class DeliveryController
             'pickupAddress' => trim((string)($b['pickupAddress'] ?? $b['fromQuartier'] ?? $b['from'] ?? '')),
             'dropoffAddress' => trim((string)($b['dropoffAddress'] ?? $b['toQuartier'] ?? $b['to'] ?? '')),
             'weightKg' => $b['weightKg'] ?? $b['weight'] ?? 1,
+            'size' => $b['size'] ?? null,
+            'category' => $b['category'] ?? null,
+            'photo' => $b['photo'] ?? null,
+            'fromCity' => $b['fromCity'] ?? null,
             'description' => $b['description'] ?? $b['parcelDesc'] ?? null,
             'delivererType' => $b['delivererType'] ?? $b['courierType'] ?? 'TEMPORAIRE',
             'distanceKm' => $b['distanceKm'] ?? $b['distance'] ?? 2,
@@ -51,9 +56,15 @@ final class DeliveryController
         return Rel::user($rows, 'delivererId', 'deliverer', ['name', 'phone']);
     }
 
+    /** Offres ouvertes, 20 par page ; filtres facultatifs ?city= et ?quartier= (lieu de collecte). */
     public static function listAvailable(Ctx $c): array
     {
-        $rows = Db::all("SELECT * FROM `Delivery` WHERE status = 'EN_ATTENTE' AND delivererId IS NULL ORDER BY createdAt DESC LIMIT 20");
+        $rows = Deliveries::listAvailable(
+            $c->user['userId'],
+            (int)($_GET['page'] ?? 1),
+            isset($_GET['city']) && is_string($_GET['city']) ? $_GET['city'] : null,
+            isset($_GET['quartier']) && is_string($_GET['quartier']) ? $_GET['quartier'] : null
+        );
         return Rel::user($rows, 'vendorId', 'vendor', ['name']);
     }
 
@@ -62,7 +73,68 @@ final class DeliveryController
     {
         $d = Deliveries::find($c->param('id'));
         self::assertParty($c, $d);
+        $uid = $c->user['userId'];
+        if ($d['vendorId'] !== $uid && $d['delivererId'] !== $uid && $c->user['activeRole'] !== 'ADMIN') {
+            // Offre consultee avant acceptation : ni codes, ni jeton de suivi, ni photo.
+            unset($d['collectCode'], $d['deliverCode'], $d['clientToken'], $d['photoPath']);
+        }
+        $bd = json_decode((string)($d['priceBreakdown'] ?? ''), true);
+        $d['priceBreakdown'] = is_array($bd) ? $bd : null;
+        $d['hasPhoto'] = !empty($d['photoPath']);
+        unset($d['photoPath']);
+        $d['revision'] = self::revisionView(Deliveries::latestRevision($d['id']));
         return $d;
+    }
+
+    private static function revisionView(?array $r): ?array
+    {
+        if (!$r) {
+            return null;
+        }
+        unset($r['photoPath']);
+        return $r;
+    }
+
+    /** POST /deliveries/:id/revision : le livreur propose un autre gabarit, avec photo. */
+    public static function proposeRevision(Ctx $c): array
+    {
+        return self::revisionView(Deliveries::proposeRevision($c->param('id'), $c->user['userId'], (string)$c->input('size', ''), (string)$c->input('photo', '')));
+    }
+
+    /** PATCH /deliveries/:id/revision : le vendeur accepte ou refuse le nouveau prix. */
+    public static function respondRevision(Ctx $c): array
+    {
+        return Deliveries::respondRevision($c->param('id'), $c->user['userId'], (bool)$c->input('accept', false));
+    }
+
+    public static function getRevision(Ctx $c): array
+    {
+        $d = Deliveries::find($c->param('id'));
+        self::assertParty($c, $d);
+        return ['revision' => self::revisionView(Deliveries::latestRevision($d['id'])), 'status' => Deliveries::find($d['id'])['status']];
+    }
+
+    /** GET /deliveries/:id/photo?kind=parcel|revision : image reservee aux parties et a l'admin. */
+    public static function photo(Ctx $c): void
+    {
+        $d = Deliveries::find($c->param('id'));
+        $uid = $c->user['userId'];
+        if ($d['vendorId'] !== $uid && $d['delivererId'] !== $uid && $c->user['activeRole'] !== 'ADMIN') {
+            throw new HttpError('Accès refusé', 403);
+        }
+        $path = ($_GET['kind'] ?? 'parcel') === 'revision'
+            ? Db::val('SELECT photoPath FROM `GabaritRevision` WHERE deliveryId = ? ORDER BY createdAt DESC LIMIT 1', [$d['id']])
+            : $d['photoPath'];
+        $real = $path ? realpath((string)$path) : false;
+        $root = realpath(Uploads::dir());
+        if (!$real || !$root || !str_starts_with($real, $root) || !is_file($real)) {
+            throw new HttpError('Photo introuvable', 404);
+        }
+        header('Content-Type: ' . (strtolower(pathinfo($real, PATHINFO_EXTENSION)) === 'png' ? 'image/png' : 'image/jpeg'));
+        header('Cache-Control: private, max-age=3600');
+        header('X-Content-Type-Options: nosniff');
+        readfile($real);
+        exit;
     }
 
     public static function accept(Ctx $c): array

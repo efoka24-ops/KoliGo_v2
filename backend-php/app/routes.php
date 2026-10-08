@@ -32,6 +32,8 @@ return function (Router $r): void {
         $r->reset();
         $r->get("$p/public/cities", [Pub::class, 'cities']);
         $r->get("$p/public/pricing", [Pub::class, 'pricing']);
+        $r->get("$p/public/quote", [Pub::class, 'quote']);
+        $r->get("$p/public/cgu", [Pub::class, 'cgu']);
         $r->get("$p/public/distance", [Pub::class, 'distance']);
 
         // ── auth ─────────────────────────────────────────────────────────────
@@ -43,12 +45,17 @@ return function (Router $r): void {
         }
         $r->post("$p/auth/signup", [AuthC::class, 'signup']);
         $r->post("$p/auth/signin", [AuthC::class, 'signin']);
+        $r->post("$p/auth/admin/email/start", [AuthC::class, 'adminEmailStart']);
+        $r->post("$p/auth/admin/email/verify", [AuthC::class, 'adminEmailVerify']);
+        $r->post("$p/auth/admin/change-password", [AuthC::class, 'adminChangePassword'], $jwt, $role('ADMIN'));
+        $r->post("$p/auth/admin/email/set-password", [AuthC::class, 'adminEmailSetPassword']);
         $r->post("$p/auth/refresh", [AuthC::class, 'refresh']);
         $r->post("$p/auth/forgot-pin", [AuthC::class, 'forgotPin']);
         $r->post("$p/auth/reset-pin", [AuthC::class, 'resetPin']);
         $r->post("$p/auth/device-session", [AuthC::class, 'deviceSession']);
         $r->post("$p/auth/switch-role", [AuthC::class, 'switchRole'], $jwt);
         $r->post("$p/auth/kyc", [AuthC::class, 'submitKyc'], $jwt);
+        $r->post("$p/auth/accept-cgu", [AuthC::class, 'acceptCgu'], $jwt);
         $r->get("$p/auth/profile", [AuthC::class, 'getProfile'], $jwt);
         $r->patch("$p/auth/profile", [AuthC::class, 'updateProfile'], $jwt);
 
@@ -81,6 +88,10 @@ return function (Router $r): void {
         $r->patch("$d/:id/cancel", [Del::class, 'cancel'], $jwt, $role('VENDOR'));
         $r->get("$d/:id/invoice/:type", [Del::class, 'invoice'], $jwt);
         $r->get("$d/:id/trust-invoice", [Del::class, 'trustInvoice'], $jwt, $role('VENDOR'));
+        $r->post("$d/:id/revision", [Del::class, 'proposeRevision'], $jwt, $role('DELIVERER'));
+        $r->patch("$d/:id/revision", [Del::class, 'respondRevision'], $jwt, $role('VENDOR'));
+        $r->get("$d/:id/revision", [Del::class, 'getRevision'], $jwt);
+        $r->get("$d/:id/photo", [Del::class, 'photo'], $jwt);
         $r->get("$d/:id", [Del::class, 'getById'], $jwt);
         $r->patch("$d/:id/accept", [Del::class, 'accept'], $jwt, $role('DELIVERER'));
         $r->patch("$d/:id/confirm-collect", [Del::class, 'confirmCollect'], $jwt, $role('DELIVERER'));
@@ -114,6 +125,12 @@ return function (Router $r): void {
         $r->patch("$a/withdrawals/:id/pay", [Admin::class, 'payWithdrawal'], ...$adm);
         $r->get("$a/settings", [Admin::class, 'getSettings'], ...$adm);
         $r->patch("$a/settings", [Admin::class, 'updateSetting'], ...$adm);
+        $r->post("$a/test-payment", [Admin::class, 'startTestPayment'], ...$adm);
+        $r->get("$a/test-payment/:id", [Admin::class, 'testPaymentStatus'], ...$adm);
+        $r->get("$a/pricing", [Admin::class, 'getPricing'], ...$adm);
+        $r->patch("$a/pricing", [Admin::class, 'updatePricing'], ...$adm);
+        $r->get("$a/cgu", [Admin::class, 'getCgu'], ...$adm);
+        $r->post("$a/cgu", [Admin::class, 'publishCgu'], ...$adm);
         $r->get("$a/site-content", [Admin::class, 'getSiteContent'], ...$adm);
         $r->patch("$a/site-content", [Admin::class, 'updateSiteContent'], ...$adm);
         $r->get("$a/issues", [Admin::class, 'listIssues'], ...$adm);

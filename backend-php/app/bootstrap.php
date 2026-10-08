@@ -10,7 +10,8 @@ use Koligo\Router;
 foreach ([
     'Env', 'Db', 'Jwt', 'Http', 'Router', 'Auth', 'RateLimit', 'Rel',
     'Services/Pricing', 'Services/Distance', 'Services/Sungku', 'Services/Notify',
-    'Services/Accounts', 'Services/Deliveries', 'Services/Payments', 'Services/Invoices', 'Setup',
+    'Services/Accounts', 'Services/AdminLogin', 'Services/Uploads', 'Services/Kyc', 'Services/Cgu',
+    'Services/Deliveries', 'Services/Payments', 'Services/Invoices', 'Setup',
     'Controllers/AuthController', 'Controllers/DeliveryController', 'Controllers/WalletController',
     'Controllers/PaymentController', 'Controllers/AdminController', 'Controllers/PublicController',
 ] as $f) {
@@ -47,6 +48,8 @@ function koligo_run(): void
         http_response_code(204);
         exit;
     }
+
+    \Koligo\Setup::ensureSchema();
 
     $router = new Router();
     (require __DIR__ . '/routes.php')($router);

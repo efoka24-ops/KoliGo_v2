@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts } from '../../constants/colors';
@@ -6,6 +6,7 @@ import { apiFetch } from '../../services/api';
 import { useApp } from '../../context/AppContext';
 import KGTopBar from '../../components/KGTopBar';
 import KGButton from '../../components/KGButton';
+import { saveReceiptImage } from '../../utils/saveReceipt';
 
 // Facture d'une livraison. Trois documents differents, rendus de facon generique :
 // emetteur / facture a, blocs de details propres au type (vente, recu de paiement,
@@ -62,7 +63,9 @@ function Party({ party, accent }) {
 
 export default function InvoiceScreen({ navigation, route }) {
   const { deliveryId, type, publicMode } = route?.params || {};
-  const { api } = useApp();
+  const { api, showToast } = useApp();
+  const shotRef = useRef(null);
+  const [saving, setSaving] = useState(null);
   const [inv, setInv] = useState(null);
   const [error, setError] = useState(null);
 
@@ -86,6 +89,20 @@ export default function InvoiceScreen({ navigation, route }) {
   const share = () => inv && Share.share({ message: invoiceText(inv), title: inv.number }).catch(() => {});
   const accent = inv?.accent || colors.green;
 
+  // Le reçu correspondant à l'étape en cours est enregistré comme image (PNG ou JPG) dans la galerie du téléphone.
+  const saveImage = async (format) => {
+    if (!inv || saving) return;
+    setSaving(format);
+    try {
+      const where = await saveReceiptImage(shotRef, { format, name: `recu-${inv.number}` });
+      showToast(where === 'download' ? 'Reçu téléchargé' : 'Reçu enregistré dans votre galerie');
+    } catch (e) {
+      showToast(e?.message || "Impossible d'enregistrer le reçu", 'error');
+    } finally {
+      setSaving(null);
+    }
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }} edges={['top']}>
       <KGTopBar title={inv?.title || 'Facture'} onBack={() => navigation.goBack()} />
@@ -99,6 +116,8 @@ export default function InvoiceScreen({ navigation, route }) {
       )}
       {inv && (
         <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+          {/* Zone capturée en image : tout le reçu, fond opaque pour un rendu propre en PNG comme en JPG */}
+          <View ref={shotRef} collapsable={false} style={{ gap: 12, backgroundColor: colors.cream, padding: 4 }}>
           {/* En-tete : couleur propre a chaque type de facture */}
           <View style={{ backgroundColor: accent, borderRadius: 18, padding: 18, gap: 4 }}>
             <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: '#fff' }}>Koli<Text style={{ color: '#ffcb72' }}>Go</Text></Text>
@@ -132,7 +151,12 @@ export default function InvoiceScreen({ navigation, route }) {
           </Block>
 
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: colors.ink35, lineHeight: 16 }}>{inv.disclaimer}</Text>
-          <KGButton kind="primary" size="lg" icon="send" onPress={share}>Partager la facture</KGButton>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flex: 1 }}><KGButton kind="primary" size="lg" icon="camera" disabled={!!saving} onPress={() => saveImage('png')}>{saving === 'png' ? 'Enregistrement…' : 'Image PNG'}</KGButton></View>
+            <View style={{ flex: 1 }}><KGButton kind="soft" size="lg" icon="camera" disabled={!!saving} onPress={() => saveImage('jpg')}>{saving === 'jpg' ? 'Enregistrement…' : 'Image JPG'}</KGButton></View>
+          </View>
+          <KGButton kind="ghost" size="lg" icon="send" onPress={share}>Partager en texte</KGButton>
         </ScrollView>
       )}
     </SafeAreaView>

@@ -1,10 +1,18 @@
 import axios from 'axios';
 
-const BASE = 'http://localhost:3001';
+// En production le back-office est servi par le meme hote que l'API (/admin/) : adresse relative.
+// En developpement (vite, port 5174) l'API locale tourne sur 3001.
+const BASE = import.meta.env.PROD ? '/api' : 'http://localhost:3001';
 
 const api = axios.create({ baseURL: BASE, timeout: 15_000 });
 
 api.interceptors.request.use((cfg) => {
+  // L'hebergeur rejette PUT/PATCH/DELETE avant PHP : on envoie POST + X-HTTP-Method-Override.
+  const verb = (cfg.method || 'get').toUpperCase();
+  if (['PUT', 'PATCH', 'DELETE'].includes(verb)) {
+    cfg.headers['X-HTTP-Method-Override'] = verb;
+    cfg.method = 'post';
+  }
   const tok = localStorage.getItem('kg_admin_token');
   if (tok) cfg.headers.Authorization = `Bearer ${tok}`;
   return cfg;
@@ -25,6 +33,10 @@ export default api;
 
 export const adminApi = {
   login:           (phone, pin)  => api.post('/auth/signin', { phone, pin }).then(r => r.data),
+  loginEmail:      (email, pin)  => api.post('/auth/signin', { email, pin }).then(r => r.data),
+  adminEmailStart: (email, reset) => api.post('/auth/admin/email/start', { email, reset }).then(r => r.data),
+  adminEmailVerify: (email, code) => api.post('/auth/admin/email/verify', { email, code }).then(r => r.data),
+  adminEmailSetPassword: (setupToken, password) => api.post('/auth/admin/email/set-password', { setupToken, password }).then(r => r.data),
   stats:           ()            => api.get('/admin/stats').then(r => r.data),
   users:           (params)      => api.get('/admin/users', { params }).then(r => r.data),
   getUser:         (id)          => api.get(`/admin/users/${id}`).then(r => r.data),
@@ -37,6 +49,12 @@ export const adminApi = {
   payWithdrawal:   (id)          => api.patch(`/admin/withdrawals/${id}/pay`).then(r => r.data),
   settings:        ()            => api.get('/admin/settings').then(r => r.data),
   updateSetting:   (key, value)  => api.patch('/admin/settings', { key, value }).then(r => r.data),
+  startTestPayment: (phone, amount) => api.post('/admin/test-payment', { phone, amount }).then(r => r.data),
+  testPaymentStatus: (id)        => api.get(`/admin/test-payment/${id}`).then(r => r.data),
+  pricing:         ()            => api.get('/admin/pricing').then(r => r.data),
+  updatePricing:   (payload)     => api.patch('/admin/pricing', payload).then(r => r.data),
+  cgu:             ()            => api.get('/admin/cgu').then(r => r.data),
+  publishCgu:      (fr, en)      => api.post('/admin/cgu', { fr, en }).then(r => r.data),
   siteContent:     ()            => api.get('/admin/site-content').then(r => r.data),
   updateSiteContent: (payload)   => api.patch('/admin/site-content', payload).then(r => r.data),
 

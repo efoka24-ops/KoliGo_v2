@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts } from '../../constants/colors';
 import { useApp } from '../../context/AppContext';
+import { apiFetch } from '../../services/api';
 import KGTopBar from '../../components/KGTopBar';
 import KGCard from '../../components/KGCard';
 import KGCourierBadge from '../../components/KGCourierBadge';
@@ -19,8 +20,39 @@ const FILTERS = [
   { id: 'VVIP',       label: 'VVIP' },
 ];
 
+function FilterPicker({ label, value, items, onChange, allLabel, disabled }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <TouchableOpacity
+        onPress={() => !disabled && setOpen(true)}
+        style={{ flex: 1, height: 38, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1.5, borderColor: value ? colors.green : colors.ink12, backgroundColor: value ? colors.greenLight : '#fff', justifyContent: 'center', opacity: disabled ? 0.5 : 1 }}
+      >
+        <Text numberOfLines={1} style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12.5, color: value ? colors.greenDark : colors.ink55 }}>
+          {value || label}
+        </Text>
+      </TouchableOpacity>
+      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+        <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} activeOpacity={1} onPress={() => setOpen(false)}>
+          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingVertical: 12 }}>
+            <ScrollView style={{ maxHeight: 380 }}>
+              {[{ id: '', name: allLabel }, ...items.map((n) => ({ id: n, name: n }))].map((it) => (
+                <TouchableOpacity key={it.id || 'all'} onPress={() => { onChange(it.id); setOpen(false); }}
+                  style={{ paddingHorizontal: 20, paddingVertical: 14, backgroundColor: it.id === value ? colors.greenLight : '#fff' }}>
+                  <Text style={{ fontFamily: `${fonts.ui}-${it.id === value ? 'Bold' : 'Regular'}`, fontSize: 15, color: it.id === value ? colors.greenDark : colors.ink }}>{it.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </>
+  );
+}
+
 function OfferCard({ delivery, onPress }) {
   const km  = delivery.distanceKm ?? delivery.distance ?? '?';
+  const size = delivery.size || null;
   const kg  = delivery.weightKg   ?? delivery.weight   ?? '?';
   const type = (delivery.delivererType ?? 'TEMPORAIRE').toUpperCase();
 
@@ -31,13 +63,18 @@ function OfferCard({ delivery, onPress }) {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <KGCourierBadge type={type.toLowerCase()} />
             <KGStatusPill status={delivery.status ?? 'EN_ATTENTE'} />
+            {delivery.vehicleOk === false && (
+              <View style={{ backgroundColor: '#FEF2F2', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
+                <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 10.5, color: '#D8472A' }}>Véhicule inadapté</Text>
+              </View>
+            )}
           </View>
           <RouteLine from={delivery.pickupAddress ?? '?'} to={delivery.dropoffAddress ?? '?'} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Icon name="package" size={13} color={colors.ink55} />
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>
-                {kg} kg
+                {size ? `Gabarit ${size}` : `${kg} kg`}
               </Text>
             </View>
             <Text style={{ color: colors.ink35, fontSize: 11 }}>·</Text>
@@ -74,20 +111,57 @@ export default function AvailableScreen({ navigation }) {
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter]         = useState('all');
+  // Filtres facultatifs : par défaut le livreur voit toutes les offres, sans barrière de ville ni de quartier.
+  const [city, setCity]             = useState('');
+  const [quartier, setQuartier]     = useState('');
+  const [cities, setCities]         = useState([]);
+  const [page, setPage]             = useState(1);
+  const [hasMore, setHasMore]       = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
+  useEffect(() => {
+    apiFetch('/public/cities').then((d) => { if (Array.isArray(d)) setCities(d); }).catch(() => {});
+  }, []);
+  const cityItems = cities.map((c) => c.name);
+  const quartierItems = (cities.find((c) => c.name === city)?.neighborhoods || []).map((n) => n.name);
+
+  const query = useCallback((p) => {
+    const qs = [`page=${p}`];
+    if (city) qs.push(`city=${encodeURIComponent(city)}`);
+    if (quartier) qs.push(`quartier=${encodeURIComponent(quartier)}`);
+    return `/deliveries/available?${qs.join('&')}`;
+  }, [city, quartier]);
+
+  // Première page : relue régulièrement pour voir les nouvelles offres.
   const load = useCallback(async () => {
     if (!token) return;
     try {
-      const data = await api('/deliveries/available');
-      setDeliveries(Array.isArray(data) ? data : []);
+      const data = await api(query(1));
+      const list = Array.isArray(data) ? data : [];
+      setDeliveries(list);
+      setPage(1);
+      setHasMore(list.length === 20);
     } catch {}
-  }, [api, token]);
+  }, [api, token, query]);
+
+  const loadMore = async () => {
+    setLoadingMore(true);
+    try {
+      const data = await api(query(page + 1));
+      const list = Array.isArray(data) ? data : [];
+      setDeliveries((prev) => [...prev, ...list.filter((d) => !prev.some((p) => p.id === d.id))]);
+      setPage(page + 1);
+      setHasMore(list.length === 20);
+    } catch {} finally { setLoadingMore(false); }
+  };
 
   useEffect(() => {
+    setLoading(true);
     load().finally(() => setLoading(false));
-    const interval = setInterval(load, 8000);
+    const interval = setInterval(() => { if (page === 1) load(); }, 8000);
     const unsub = navigation.addListener('focus', load);
     return () => { clearInterval(interval); unsub(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load, navigation]);
 
   const onRefresh = async () => {
@@ -141,6 +215,13 @@ export default function AvailableScreen({ navigation }) {
         })}
       </ScrollView>
 
+      <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
+        <FilterPicker label="Toutes les villes" allLabel="Toutes les villes" value={city} items={cityItems}
+          onChange={(c) => { setCity(c); setQuartier(''); }} />
+        <FilterPicker label="Tous les quartiers" allLabel="Tous les quartiers" value={quartier} items={quartierItems}
+          onChange={setQuartier} disabled={!city} />
+      </View>
+
       {loading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator color={colors.green} size="large" />
@@ -175,6 +256,11 @@ export default function AvailableScreen({ navigation }) {
                 onPress={() => navigation.navigate('OfferDetail', { offer: d })}
               />
             ))
+          )}
+          {hasMore && (
+            <TouchableOpacity onPress={loadMore} disabled={loadingMore} style={{ alignSelf: 'center', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12, borderWidth: 1.5, borderColor: colors.green }}>
+              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.green }}>{loadingMore ? 'Chargement…' : 'Voir plus de courses'}</Text>
+            </TouchableOpacity>
           )}
         </ScrollView>
       )}

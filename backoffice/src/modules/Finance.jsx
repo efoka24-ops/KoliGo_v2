@@ -4,6 +4,7 @@ import { useI18n } from '../i18n/I18nContext.jsx';
 import { Kpi, Pill, Skeleton } from '../components/ui.jsx';
 import { IconFinance } from '../components/icons.jsx';
 import { adminApi } from '../api.js';
+import TestPayment from '../components/TestPayment.jsx';
 import { transactions as mockTxs, withdrawalsData as mockWithdrawals } from '../data.js';
 
 const TX_TONE = { CREDIT:'ok', DEBIT:'orange', COMMISSION:'b', WITHDRAWAL:'mut', REFUND:'warn' };
@@ -33,6 +34,7 @@ export default function Finance() {
 
   return (
     <section className="content">
+      <TestPayment />
       <div className="grid" style={{ gridTemplateColumns:'repeat(3,1fr)' }}>
         <Kpi iconTone="g" icon={<IconFinance width={20} height={20}/>}
           label={t('platformBalance')}

@@ -9,11 +9,17 @@ use Koligo\Env;
 use Koligo\Http;
 use Koligo\HttpError;
 use Koligo\Services\Accounts;
+use Koligo\Services\AdminLogin;
+use Koligo\Services\Cgu;
+use Koligo\Services\Deliveries;
+use Koligo\Services\Kyc;
+use Koligo\Services\Pricing;
+use Koligo\Services\Uploads;
 
 final class AuthController
 {
     /** Colonnes modifiables par l'utilisateur sur son propre profil (liste blanche). */
-    private const PROFILE_FIELDS = ['name', 'email', 'gender', 'shopName', 'language', 'theme', 'biometryEnabled', 'expoPushToken', 'cniNumber', 'quartier', 'isOnline'];
+    private const PROFILE_FIELDS = ['name', 'email', 'gender', 'shopName', 'language', 'theme', 'biometryEnabled', 'expoPushToken', 'cniNumber', 'quartier', 'isOnline', 'vehicleType'];
 
     public static function sendOtp(Ctx $c): array
     {
@@ -70,8 +76,48 @@ final class AuthController
 
     public static function getProfile(Ctx $c): array
     {
-        $u = Accounts::mustUser($c->user['userId']);
-        return array_intersect_key($u, array_flip(['id', 'name', 'phone', 'activeRole', 'kycStatus', 'gender', 'shopName', 'language', 'theme']));
+        return self::profileOf(Accounts::mustUser($c->user['userId']));
+    }
+
+    /** Profil expose a l'app : le statut KYC est celui du role actif, avec le detail par role. */
+    private static function profileOf(array $u): array
+    {
+        $out = array_intersect_key($u, array_flip(['id', 'name', 'phone', 'activeRole', 'gender', 'shopName', 'language', 'theme', 'vehicleType']));
+        $byRole = Kyc::byRole($u);
+        $out['kycStatus'] = $byRole[$u['activeRole']] ?? (string)$u['kycStatus'];
+        $out['kycByRole'] = $byRole;
+        $out['cguVersion'] = $u['cguVersion'] !== null ? (int)$u['cguVersion'] : null;
+        $out['currentCguVersion'] = Cgu::latestVersion();
+        $out['needsCgu'] = Cgu::needsAcceptance($u);
+        $out['strikes'] = Deliveries::strikeInfo($u['id']);
+        return $out;
+    }
+
+    /** POST /auth/admin/email/start {email, reset?} : etape 1 de la connexion du back-office. */
+    public static function adminEmailStart(Ctx $c): array
+    {
+        return AdminLogin::start((string)$c->input('email', ''), (bool)$c->input('reset', false));
+    }
+
+    /** POST /auth/admin/change-password {password} : réservé à un administrateur connecté. */
+    public static function adminChangePassword(Ctx $c): array
+    {
+        return AdminLogin::changePassword($c->user['userId'], (string)$c->input('password', ''));
+    }
+
+    public static function adminEmailVerify(Ctx $c): array
+    {
+        return AdminLogin::verifyCode((string)$c->input('email', ''), (string)$c->input('code', ''));
+    }
+
+    public static function adminEmailSetPassword(Ctx $c): array
+    {
+        return AdminLogin::setPassword((string)$c->input('setupToken', ''), (string)$c->input('password', ''));
+    }
+
+    public static function acceptCgu(Ctx $c): array
+    {
+        return Cgu::accept($c->user['userId'], (int)$c->input('version', 0));
     }
 
     public static function updateProfile(Ctx $c): array
@@ -84,6 +130,24 @@ final class AuthController
         }
         if (isset($data['name']) && $data['name'] === '') {
             throw new HttpError('Nom invalide');
+        }
+        // L'e-mail sert d'identifiant de connexion : valide, et jamais partage entre deux comptes.
+        if (array_key_exists('email', $data)) {
+            $email = is_string($data['email']) ? trim($data['email']) : '';
+            if ($email === '') {
+                $data['email'] = null;
+            } else {
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 191) {
+                    throw new HttpError('Adresse e-mail invalide');
+                }
+                if (Db::one('SELECT id FROM `User` WHERE LOWER(email) = LOWER(?) AND id <> ?', [$email, $c->user['userId']])) {
+                    throw new HttpError('Cette adresse e-mail est déjà utilisée par un autre compte');
+                }
+                $data['email'] = $email;
+            }
+        }
+        if (isset($data['vehicleType']) && !isset(Pricing::VEHICLES[(string)$data['vehicleType']])) {
+            throw new HttpError('Véhicule invalide');
         }
         Db::update('User', $c->user['userId'], $data + ['updatedAt' => Db::now()]);
         $u = Accounts::mustUser($c->user['userId']);
@@ -134,6 +198,13 @@ final class AuthController
     {
         $uid = $c->user['userId'];
         $docs = [];
+        // Un seul dossier par personne, valable pour les deux roles : valide ou en cours, il ne se renvoie pas.
+        $me = Accounts::mustUser($uid);
+        $role = $me['activeRole'];
+        $current = Kyc::status($me);
+        if (in_array($current, ['PENDING', 'VERIFIED'], true)) {
+            throw new HttpError($current === 'VERIFIED' ? 'Votre KYC est déjà validé.' : 'Votre dossier est déjà en cours de vérification.', 409, 'KYC_ALREADY');
+        }
 
         if (!empty($_FILES)) {
             foreach (['idFront' => 'ID_FRONT', 'idBack' => 'ID_BACK', 'selfie' => 'SELFIE'] as $field => $type) {
@@ -160,34 +231,19 @@ final class AuthController
         }
 
         foreach ($docs as $d) {
-            Db::insert('KycDocument', ['id' => Db::id(), 'userId' => $uid, 'type' => $d['type'], 'filePath' => $d['filePath'], 'createdAt' => Db::now()]);
+            Db::insert('KycDocument', ['id' => Db::id(), 'userId' => $uid, 'type' => $d['type'], 'role' => $role, 'filePath' => $d['filePath'], 'createdAt' => Db::now()]);
         }
-        Db::update('User', $uid, ['kycStatus' => 'PENDING', 'updatedAt' => Db::now()]);
+        Kyc::set($uid, 'PENDING');
         return ['status' => 'PENDING'];
     }
 
     public static function uploadDir(): string
     {
-        $dir = Env::get('UPLOAD_DIR') ?: dirname(__DIR__, 2) . '/storage/uploads';
-        if (!is_dir($dir)) {
-            mkdir($dir, 0750, true);
-        }
-        return $dir;
+        return Uploads::dir();
     }
 
-    /** N'ecrit que de vraies images (JPEG/PNG), jamais un fichier arbitraire. */
     private static function storeImage(string $bytes, string $userId, string $type): string
     {
-        if (strlen($bytes) > 8 * 1024 * 1024) {
-            throw new HttpError('Image trop volumineuse');
-        }
-        $ext = match (true) {
-            str_starts_with($bytes, "\xFF\xD8\xFF") => 'jpg',
-            str_starts_with($bytes, "\x89PNG") => 'png',
-            default => throw new HttpError('Format image invalide (JPEG ou PNG)'),
-        };
-        $path = self::uploadDir() . '/' . $userId . '_' . strtolower($type) . '_' . time() . '_' . bin2hex(random_bytes(3)) . '.' . $ext;
-        file_put_contents($path, $bytes);
-        return $path;
+        return Uploads::storeImage($bytes, $userId, $type);
     }
 }

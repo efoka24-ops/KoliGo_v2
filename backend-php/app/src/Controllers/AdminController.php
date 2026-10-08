@@ -6,10 +6,15 @@ namespace Koligo\Controllers;
 use Koligo\Ctx;
 use Koligo\Db;
 use Koligo\Http;
+use Koligo\RateLimit;
 use Koligo\HttpError;
 use Koligo\Rel;
 use Koligo\Services\Accounts;
+use Koligo\Services\Cgu;
 use Koligo\Services\Invoices;
+use Koligo\Services\Kyc;
+use Koligo\Services\Payments;
+use Koligo\Services\Pricing;
 
 /** Back-office : toutes les routes exigent un JWT avec le role ADMIN (cf. routes.php). */
 final class AdminController
@@ -128,11 +133,7 @@ final class AdminController
             throw new HttpError('Statut KYC invalide');
         }
         $u = Accounts::mustUser($c->param('id'));
-        Db::update('User', $u['id'], [
-            'kycStatus' => $status,
-            'kycRejectionReason' => $status === 'REJECTED' ? ($c->input('reason') ?: null) : null,
-            'updatedAt' => Db::now(),
-        ]);
+        Kyc::set($u['id'], $status, $status === 'REJECTED' ? ((string)$c->input('reason') ?: null) : null);
         return self::publicUser($u['id']);
     }
 
@@ -244,6 +245,137 @@ final class AdminController
             && !Db::one('SELECT `key` FROM `PlatformSetting` WHERE `key` = ?', [$key])) {
             Db::exec('INSERT INTO `PlatformSetting` (`key`, `value`, updatedAt) VALUES (?, ?, ?)', [$key, $value, $now]);
         }
+    }
+
+    // ── Test de paiement Sungku : 100 F, sans toucher aux livraisons des clients ──
+
+    /** Montant d'un test : 100 F par defaut, jamais plus de 500 F (borne cote serveur, pas cote navigateur). */
+    private const TEST_PAYMENT_DEFAULT_XAF = 100;
+    private const TEST_PAYMENT_MAX_XAF = 500;
+
+    /**
+     * POST /admin/test-payment {phone} : demande de 100 F (ou le montant choisi, 500 F max) au numero indique, par le meme chemin que
+     * les recharges (Sungku, webhook signe). Si le paiement aboutit, les 100 F sont credites au
+     * portefeuille de l'administrateur qui l'a lance.
+     */
+    public static function startTestPayment(Ctx $c): array
+    {
+        $uid = $c->user['userId'];
+        RateLimit::hit('testpay:' . $uid, 10, 3600);
+        $phone = trim((string)$c->input('phone', ''));
+        if (!preg_match('/^(\+?237)?6\d{8}$/', preg_replace('/\s+/', '', $phone) ?? '')) {
+            throw new HttpError('Numéro Mobile Money invalide (ex. 6XXXXXXXX)');
+        }
+        $amount = (int)($c->input('amount') ?? self::TEST_PAYMENT_DEFAULT_XAF);
+        if ($amount < self::TEST_PAYMENT_DEFAULT_XAF || $amount > self::TEST_PAYMENT_MAX_XAF) {
+            throw new HttpError('Le montant du test doit être entre ' . self::TEST_PAYMENT_DEFAULT_XAF . ' et ' . self::TEST_PAYMENT_MAX_XAF . ' FCFA');
+        }
+        $wallet = Db::one('SELECT * FROM `Wallet` WHERE userId = ?', [$uid]);
+        if (!$wallet) {
+            $wallet = ['id' => Db::id(), 'userId' => $uid, 'balanceXAF' => 0, 'paymentProvider' => 'MTN'];
+            Db::insert('Wallet', ['id' => $wallet['id'], 'userId' => $uid, 'balanceXAF' => 0, 'updatedAt' => Db::now()]);
+        }
+        $out = Payments::startTopUp($wallet, $amount, $phone);
+        return $out + ['amountXAF' => $amount, 'mock' => Payments::mock(), 'gateway' => \Koligo\Services\Sungku::$last];
+    }
+
+    /** GET /admin/test-payment/:id : statut d'un test lance par cet administrateur. */
+    public static function testPaymentStatus(Ctx $c): array
+    {
+        $row = Db::one(
+            'SELECT t.id, t.status, t.amountXAF, t.phone, t.createdAt, t.updatedAt FROM `TopUp` t JOIN `Wallet` w ON w.id = t.walletId WHERE t.id = ? AND w.userId = ?',
+            [$c->param('id'), $c->user['userId']]
+        );
+        if (!$row) {
+            throw new HttpError('Test introuvable', 404);
+        }
+        return $row;
+    }
+
+    // ── Tarification (zones, gabarits, frais) : modifiable sans déploiement ──
+
+    public static function getPricing(Ctx $c): array
+    {
+        $cfg = Pricing::config();
+        return [
+            'zones' => $cfg['zones'], 'gabarits' => $cfg['gabarits'], 'defaultZone' => $cfg['defaultZone'],
+            'minPriceXAF' => $cfg['minPrice'], 'weightRateXAF' => $cfg['weightRate'], 'commissionRate' => $cfg['commissionRate'],
+            'cancelFeeXAF' => $cfg['cancelFee'], 'revisionTimeoutMin' => $cfg['revisionTimeoutMin'], 'cancelGraceMin' => $cfg['cancelGraceMin'],
+            'strikeWindowDays' => $cfg['strikeWindowDays'], 'strikeThreshold' => $cfg['strikeThreshold'],
+            'regions' => array_column(Db::all('SELECT DISTINCT region FROM `City` ORDER BY region ASC'), 'region'),
+            'vehicles' => array_keys(Pricing::VEHICLES),
+        ];
+    }
+
+    public static function updatePricing(Ctx $c): array
+    {
+        $b = $c->body();
+        $ints = [
+            'minPriceXAF' => ['pricing_min_xaf', 0, 100000], 'weightRateXAF' => ['weight_surcharge_xaf', 0, 10000],
+            'cancelFeeXAF' => ['cancel_fee_xaf', 0, 50000], 'revisionTimeoutMin' => ['revision_timeout_min', 1, 120],
+            'cancelGraceMin' => ['cancel_grace_min', 0, 60], 'strikeWindowDays' => ['strike_window_days', 1, 365],
+            'strikeThreshold' => ['strike_threshold', 1, 100],
+        ];
+        $writes = [];
+        foreach ($ints as $field => [$key, $min, $max]) {
+            if (array_key_exists($field, $b)) {
+                if (!is_numeric($b[$field]) || $b[$field] < $min || $b[$field] > $max) {
+                    throw new HttpError("$field doit être entre $min et $max");
+                }
+                $writes[$key] = (string)(int)$b[$field];
+            }
+        }
+        if (array_key_exists('commissionRate', $b)) {
+            if (!is_numeric($b['commissionRate']) || $b['commissionRate'] < 0 || $b['commissionRate'] > 0.5) {
+                throw new HttpError('commissionRate doit être entre 0 et 0.5');
+            }
+            $writes['commission_rate'] = (string)(float)$b['commissionRate'];
+        }
+        if (array_key_exists('zones', $b)) {
+            $zones = Pricing::validateZones($b['zones']);
+            $writes['pricing_zones'] = json_encode($zones, JSON_UNESCAPED_UNICODE);
+            $default = (string)($b['defaultZone'] ?? Pricing::config()['defaultZone']);
+            if (!in_array($default, array_column($zones, 'name'), true)) {
+                throw new HttpError("La zone de repli doit être l'une des zones");
+            }
+            $writes['pricing_default_zone'] = $default;
+        } elseif (array_key_exists('defaultZone', $b)) {
+            if (!in_array((string)$b['defaultZone'], array_column(Pricing::config()['zones'], 'name'), true)) {
+                throw new HttpError("La zone de repli doit être l'une des zones");
+            }
+            $writes['pricing_default_zone'] = (string)$b['defaultZone'];
+        }
+        if (array_key_exists('gabarits', $b)) {
+            $writes['pricing_gabarits'] = json_encode(Pricing::validateGabarits($b['gabarits']), JSON_UNESCAPED_UNICODE);
+        }
+        foreach ($writes as $k => $v) {
+            self::putSetting($k, $v);
+        }
+        Pricing::resetCache();
+        return self::getPricing($c);
+    }
+
+    // ── CGU : texte versionné en base, édité ici ─────────────────────────────
+
+    public static function getCgu(Ctx $c): array
+    {
+        Cgu::ensureSeeded();
+        $latest = Cgu::latestVersion();
+        return [
+            'version' => $latest,
+            'fr' => Cgu::raw('fr')['articles'], 'en' => Cgu::raw('en')['articles'],
+            'history' => Cgu::history(),
+            'tokens' => ['{{cancel_fee}}', '{{revision_timeout}}', '{{strike_threshold}}', '{{strike_window}}', '{{cancel_grace}}'],
+            'acceptedLatest' => (int)Db::val('SELECT COUNT(*) FROM `User` WHERE cguVersion = ?', [$latest]),
+            'totalUsers' => (int)Db::val("SELECT COUNT(*) FROM `User` WHERE activeRole <> 'ADMIN'"),
+        ];
+    }
+
+    /** Publie une nouvelle version : tous les utilisateurs devront la re-accepter. */
+    public static function publishCgu(Ctx $c): array
+    {
+        Cgu::publish((array)$c->input('fr', []), (array)$c->input('en', []), $c->user['userId'] ?? null);
+        return self::getCgu($c);
     }
 
     private static function siteContent(): array
@@ -511,7 +643,7 @@ final class AdminController
         $otps = Db::all("SELECT id, phone, attempts, expiresAt, used, createdAt FROM `OtpCode` ORDER BY createdAt DESC LIMIT 50 OFFSET $skip");
         $kyc = Db::all("SELECT id, name, phone, kycStatus, createdAt FROM `User` WHERE kycStatus IN ('PENDING','REJECTED') ORDER BY createdAt DESC");
         foreach ($kyc as &$u) {
-            $u['kycDocuments'] = Db::all('SELECT type, createdAt FROM `KycDocument` WHERE userId = ?', [$u['id']]);
+            $u['kycDocuments'] = Db::all('SELECT type, role, createdAt FROM `KycDocument` WHERE userId = ?', [$u['id']]);
         }
         return ['otps' => $otps, 'kycUsers' => $kyc];
     }
@@ -529,7 +661,7 @@ final class AdminController
     // ── Archive / export / wipe ──────────────────────────────────────────────
 
     /** Tables transactionnelles, dans l'ordre de suppression compatible avec les cles etrangeres. */
-    private const TRANSACTIONAL = ['Message', 'GpsLocation', 'EscrowEntry', 'Rating', 'Issue', 'DeliveryPayment', 'Transaction', 'TopUp', 'Withdrawal', 'Delivery', 'OtpCode'];
+    private const TRANSACTIONAL = ['GabaritRevision', 'Message', 'GpsLocation', 'EscrowEntry', 'Rating', 'Issue', 'DeliveryPayment', 'Transaction', 'TopUp', 'Withdrawal', 'Delivery', 'OtpCode'];
 
     public static function export(Ctx $c): void
     {

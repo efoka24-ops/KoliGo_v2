@@ -251,7 +251,8 @@ final class Accounts
             'user' => [
                 'id' => $u['id'], 'phone' => $u['phone'], 'name' => $u['name'] ?? '',
                 'activeRole' => $u['activeRole'], 'roles' => is_array($roles) ? $roles : [$u['activeRole']],
-                'kycStatus' => $u['kycStatus'] ?? null, 'gender' => $u['gender'] ?? null, 'shopName' => $u['shopName'] ?? null,
+                'kycStatus' => Kyc::status($u, (string)$u['activeRole']), 'kycByRole' => Kyc::byRole($u),
+                'vehicleType' => $u['vehicleType'] ?? null, 'needsCgu' => Cgu::needsAcceptance($u), 'gender' => $u['gender'] ?? null, 'shopName' => $u['shopName'] ?? null,
             ],
         ];
     }

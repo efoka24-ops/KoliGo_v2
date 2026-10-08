@@ -52,7 +52,7 @@ final class Router
                 // Meme contrat que l'ancien wrap() : le retour est la reponse JSON.
                 Http::json($handler($ctx));
             } catch (HttpError $e) {
-                Http::json(['error' => $e->getMessage()], $e->status);
+                Http::json(['error' => $e->getMessage()] + ($e->errorCode !== null ? ['code' => $e->errorCode] : []), $e->status);
             } catch (\Throwable $e) {
                 Http::json(['error' => self::publicMessage($e)], 400);
             }

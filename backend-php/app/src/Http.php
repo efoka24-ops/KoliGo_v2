@@ -6,7 +6,7 @@ namespace Koligo;
 /** Erreur metier renvoyee telle quelle au client : {"error": message}. */
 class HttpError extends \RuntimeException
 {
-    public function __construct(string $message, public int $status = 400)
+    public function __construct(string $message, public int $status = 400, public ?string $errorCode = null)
     {
         parent::__construct($message);
     }

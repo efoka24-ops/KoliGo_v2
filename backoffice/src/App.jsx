@@ -20,6 +20,8 @@ import Security   from './modules/Security.jsx';
 import Reset      from './modules/Reset.jsx';
 import SiteContent from './modules/SiteContent.jsx';
 import Invoices   from './modules/Invoices.jsx';
+import Pricing    from './modules/Pricing.jsx';
+import Cgu        from './modules/Cgu.jsx';
 
 const TITLES = {
   '/dashboard':  'dashboard',  '/deliveries': 'deliveries', '/users':     'users',
@@ -29,6 +31,8 @@ const TITLES = {
   '/security':   'Sécurité & KYC', '/reset':  'Archivage',
   '/site-content': 'Contenu du site',
   '/invoices': 'Factures',
+  '/pricing': 'Tarification',
+  '/cgu': 'CGU',
 };
 
 export default function App() {
@@ -81,6 +85,8 @@ export default function App() {
           <Route path="/zones"       element={<Zones />} />
           <Route path="/analytics"   element={<Analytics />} />
           <Route path="/settings"    element={<Settings />} />
+          <Route path="/pricing"     element={<Pricing />} />
+          <Route path="/cgu"         element={<Cgu />} />
           <Route path="/site-content" element={<SiteContent />} />
           <Route path="/reset"       element={<Reset />} />
           <Route path="*"            element={<Navigate to="/dashboard" replace />} />

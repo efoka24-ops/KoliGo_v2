@@ -237,3 +237,31 @@ CREATE TABLE IF NOT EXISTS `RateLimit` (
   `hits` INT NOT NULL,
   `resetAt` DATETIME NOT NULL
 ) {{OPTS}};
+
+-- Controle du gabarit a la collecte : le livreur propose un autre gabarit, le vendeur repond.
+CREATE TABLE IF NOT EXISTS `GabaritRevision` (
+  `id` VARCHAR(40) NOT NULL PRIMARY KEY,
+  `deliveryId` VARCHAR(40) NOT NULL,
+  `proposedSize` VARCHAR(5) NOT NULL,
+  `declaredSize` VARCHAR(5) NOT NULL,
+  `photoPath` VARCHAR(500) NOT NULL,
+  `oldPriceXAF` INT NOT NULL,
+  `newPriceXAF` INT NOT NULL,
+  `status` VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+  `feeXAF` INT NOT NULL DEFAULT 0,
+  `expiresAt` DATETIME NOT NULL,
+  `createdAt` DATETIME NOT NULL,
+  `respondedAt` DATETIME NULL,
+  FOREIGN KEY (`deliveryId`) REFERENCES `Delivery`(`id`)
+) {{OPTS}};
+
+-- Versions des CGU, une ligne par version et par langue (le texte accepte reste prouvable).
+CREATE TABLE IF NOT EXISTS `CguVersion` (
+  `version` INT NOT NULL,
+  `lang` VARCHAR(5) NOT NULL,
+  `content` MEDIUMTEXT NOT NULL,
+  `createdBy` VARCHAR(40) NULL,
+  `createdAt` DATETIME NOT NULL,
+  PRIMARY KEY (`version`, `lang`)
+) {{OPTS}};
+

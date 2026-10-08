@@ -25,7 +25,7 @@ final class WalletController
     {
         return [
             'id' => $t['id'], 'type' => $t['type'],
-            'amount' => $t['type'] === 'WITHDRAWAL' ? -$t['amountXAF'] : $t['amountXAF'],
+            'amount' => in_array($t['type'], ['WITHDRAWAL', 'CANCEL_FEE_PAID'], true) ? -$t['amountXAF'] : $t['amountXAF'],
             'label' => $t['description'] ?? $t['type'], 'reference' => $t['id'], 'createdAt' => $t['createdAt'],
         ];
     }

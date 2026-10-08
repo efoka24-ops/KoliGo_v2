@@ -115,7 +115,7 @@ check('distance Douala-Yaounde', call('GET', '/api/public/distance?from=Douala&t
 echo "== Livraison : cycle complet + paiement Sungku\n";
 $r = call('POST', '/api/deliveries', ['pickupAddress' => 'Douala', 'dropoffAddress' => 'Yaoundé', 'weightKg' => 2, 'delivererType' => 'EXPRESS', 'recipientName' => 'Paul Test', 'recipientPhone' => '690000000', 'shopName' => 'Chez Marie', 'priceXAF' => 1, 'productPrice' => 5000], $vTok);
 $del = $r['json'];
-$expected = (int)round((500 + 250 * 150 + 2 * 100) * 1.25);
+$expected = (int)round((500 + 250 * 250 + 2 * 100) * 1.25);
 check('creation : prix calcule serveur (ignore priceXAF client)', ($del['priceXAF'] ?? 0) === $expected, $r['raw']);
 check('commission 3% + gain livreur', ($del['commissionXAF'] ?? 0) === (int)round($expected * 0.03) && $del['delivererEarning'] === $expected - $del['commissionXAF']);
 check('livreur ne peut pas creer', call('POST', '/api/deliveries', ['pickupAddress' => 'A', 'dropoffAddress' => 'B'], $dTok)['code'] === 403);
@@ -254,9 +254,10 @@ check('notation vendeur->livreur', call('POST', '/api/ratings', ['deliveryId' =>
 check('note hors bornes refusee', call('POST', '/api/ratings', ['deliveryId' => $r2['id'], 'score' => 9], $vTok)['code'] === 400);
 check('incident', call('POST', '/api/issues', ['deliveryId' => $r2['id'], 'type' => 'DAMAGED', 'description' => 'colis abime'], $vTok)['code'] === 201);
 $png = base64_encode("\x89PNG\r\n\x1a\n" . str_repeat('x', 64));
+call('PATCH', "/api/admin/users/$dId/kyc", ['status' => 'NONE'], $aTok);
+check('KYC : fichier non-image refuse', call('POST', '/api/auth/kyc', ['selfie' => base64_encode('<?php echo 1;')], $dTok)['code'] === 400);
 $k = call('POST', '/api/auth/kyc', ['cniNumber' => '123456789', 'cniRecto' => "data:image/png;base64,$png", 'selfie' => $png], $dTok);
 check('KYC base64 -> PENDING', ($k['json']['status'] ?? '') === 'PENDING', $k['raw']);
-check('KYC : fichier non-image refuse', call('POST', '/api/auth/kyc', ['selfie' => base64_encode('<?php echo 1;')], $dTok)['code'] === 400);
 
 echo "== Admin\n";
 $s = call('GET', '/api/admin/stats', null, $aTok)['json'];
@@ -307,6 +308,209 @@ for ($i = 0; $i < 10; $i++) {
 }
 check('429 apres 8 essais rates', in_array(429, $codes, true) && $codes[0] === 400, $codes);
 check('  meme avec le bon PIN pendant le blocage', call('POST', '/api/auth/signin', ['phone' => '+237677333444', 'pin' => '1234'])['code'] === 429);
+
+
+echo "== CGU en base, devis par zone et par gabarit\n";
+$cgu = call('GET', '/api/public/cgu?lang=fr');
+check('CGU : texte servi depuis la base, jetons remplaces', ($cgu['json']['version'] ?? 0) >= 1 && count($cgu['json']['articles'] ?? []) >= 11 && !str_contains($cgu['raw'], '{{'), $cgu['raw']);
+check('CGU : version anglaise', count(call('GET', '/api/public/cgu?lang=en')['json']['articles'] ?? []) >= 11);
+$art9 = '';
+foreach ($cgu['json']['articles'] as $a) {
+    if ($a['num'] === '9') {
+        $art9 = $a['body'];
+    }
+}
+check("CGU : frais d'annulation inscrits a l'article 9 (500 F, montant repris des tarifs)", str_contains($art9, '500 F CFA'), $art9);
+$pp = call('GET', '/api/public/pricing')['json'];
+check('pricing public : 3 zones, 6 gabarits, frais, delai', count($pp['zones']) === 3 && count($pp['gabarits']) === 6 && $pp['cancelFeeXAF'] === 500 && $pp['revisionTimeoutMin'] === 10, $pp);
+$q = call('GET', '/api/public/quote?from=Douala&to=Yaound%C3%A9&fromCity=Douala&size=M&type=TEMPORAIRE')['json'];
+check('devis Grand Sud, gabarit M : 500 + 250 x 250 + 100 x 6 = 63 600', ($q['zone'] ?? '') === 'Grand Sud' && ($q['finalPrice'] ?? 0) === 63600, $q);
+$q = call('GET', '/api/public/quote?from=Garoua&to=Maroua&fromCity=Garoua&size=S&type=TEMPORAIRE')['json'];
+check('devis Grand Nord, gabarit S : 300 + 100 x 200 + 100 x 2 = 20 500', ($q['zone'] ?? '') === 'Grand Nord' && ($q['finalPrice'] ?? 0) === 20500, $q);
+check('devis XXL : sur devis', (call('GET', '/api/public/quote?from=Douala&to=Yaound%C3%A9&size=XXL')['json']['code'] ?? '') === 'SIZE_ON_QUOTE');
+
+echo "== CGU et KYC obligatoires avant de publier ou de livrer\n";
+[$nvTok, $nvId] = login('+237699000222', '2468');
+$body = ['pickupAddress' => 'Douala', 'dropoffAddress' => 'Yaoundé', 'fromCity' => 'Douala', 'size' => 'M', 'category' => 'ELECTRONICS',
+    'photo' => "data:image/png;base64,$png", 'recipientName' => 'Paul', 'recipientPhone' => '690000001', 'shopName' => 'Chez Nouveau'];
+$r = call('POST', '/api/deliveries', $body, $nvTok);
+check('publier sans CGU acceptees -> 403 CGU_REQUIRED', $r['code'] === 403 && ($r['json']['code'] ?? '') === 'CGU_REQUIRED', $r['raw']);
+check('accepter une version perimee refuse', call('POST', '/api/auth/accept-cgu', ['version' => 99], $nvTok)['code'] === 409);
+$ver = $cgu['json']['version'];
+$acc = call('POST', '/api/auth/accept-cgu', ['version' => $ver], $nvTok)['json'];
+check('acceptation des CGU : version et date enregistrees', ($acc['cguVersion'] ?? 0) === $ver && !empty($acc['cguAcceptedAt']), $acc);
+$prof = call('GET', '/api/user/profile', null, $nvTok)['json'];
+check('profil : needsCgu faux, KYC vendeur NONE', $prof['needsCgu'] === false && $prof['kycStatus'] === 'NONE' && $prof['kycByRole']['VENDOR'] === 'NONE', $prof);
+$r = call('POST', '/api/deliveries', $body, $nvTok);
+check('publier sans KYC -> 403 KYC_REQUIRED', $r['code'] === 403 && ($r['json']['code'] ?? '') === 'KYC_REQUIRED', $r['raw']);
+$k = call('POST', '/api/auth/kyc', ['cniNumber' => '987654321', 'cniRecto' => "data:image/png;base64,$png", 'selfie' => $png], $nvTok);
+check('KYC envoye -> PENDING', ($k['json']['status'] ?? '') === 'PENDING', $k['raw']);
+check('KYC en attente : publier toujours refuse', (call('POST', '/api/deliveries', $body, $nvTok)['json']['code'] ?? '') === 'KYC_REQUIRED');
+check('KYC : un seul dossier (renvoi refuse)', call('POST', '/api/auth/kyc', ['selfie' => $png], $nvTok)['code'] === 409);
+check('admin valide le KYC', (call('PATCH', "/api/admin/users/$nvId/kyc", ['status' => 'VERIFIED'], $aTok)['json']['kycStatus'] ?? '') === 'VERIFIED');
+
+echo "== Declaration par gabarit\n";
+$r = call('POST', '/api/deliveries', array_diff_key($body, ['photo' => 1]), $nvTok);
+check('photo obligatoire', $r['code'] === 400 && ($r['json']['code'] ?? '') === 'PHOTO_REQUIRED', $r['raw']);
+$r = call('POST', '/api/deliveries', ['size' => 'XXL'] + $body, $nvTok);
+check('XXL : sur devis, publication refusee', $r['code'] === 400 && ($r['json']['code'] ?? '') === 'SIZE_ON_QUOTE', $r['raw']);
+$r = call('POST', '/api/deliveries', ['category' => ''] + $body, $nvTok);
+check('nature du colis obligatoire', ($r['json']['code'] ?? '') === 'CATEGORY_REQUIRED', $r['raw']);
+$r = call('POST', '/api/deliveries', $body, $nvTok);
+$g = $r['json'];
+$bd = json_decode((string)($g['priceBreakdown'] ?? ''), true);
+check('publication par gabarit M : prix serveur 63 600, detail conserve', ($g['priceXAF'] ?? 0) === 63600 && $g['size'] === 'M' && ($bd['zone'] ?? '') === 'Grand Sud' && $bd['perKmXAF'] === 250, $r['raw']);
+$old = call('POST', '/api/deliveries', ['pickupAddress' => 'Douala', 'dropoffAddress' => 'Yaoundé', 'weightKg' => 2, 'recipientName' => 'Ancien', 'recipientPhone' => '690000003'], $nvTok)['json'];
+check('ancienne app (poids sans gabarit) : convertie en gabarit S', ($old['size'] ?? '') === 'S' && (float)$old['weightKg'] === 2.0, $old);
+call('PATCH', "/api/deliveries/{$old['id']}/cancel", null, $nvTok);
+
+echo "== Offres : filtres ville / quartier, vendeur-livreur, vehicule\n";
+$all = call('GET', '/api/deliveries/available', null, $dTok)['json'];
+$row = null;
+foreach ($all as $x) {
+    if ($x['id'] === $g['id']) {
+        $row = $x;
+    }
+}
+check('offre visible sans filtre, sans codes ni photo', $row !== null && !isset($row['collectCode'], $row['deliverCode'], $row['clientToken'], $row['photoPath']) && $row['vehicleOk'] === true, $row);
+check('filtre ville : Douala', in_array($g['id'], array_column(call('GET', '/api/deliveries/available?city=Douala', null, $dTok)['json'], 'id'), true));
+check('filtre ville : Garoua exclut', !in_array($g['id'], array_column(call('GET', '/api/deliveries/available?city=Garoua', null, $dTok)['json'], 'id'), true));
+check('filtre quartier (lieu de collecte)', in_array($g['id'], array_column(call('GET', '/api/deliveries/available?quartier=Doual', null, $dTok)['json'], 'id'), true) && !in_array($g['id'], array_column(call('GET', '/api/deliveries/available?quartier=zzzz', null, $dTok)['json'], 'id'), true));
+check('pagination : page 2 vide', call('GET', '/api/deliveries/available?page=2', null, $dTok)['json'] === []);
+
+$own = call('POST', '/api/deliveries', ['pickupAddress' => 'Douala', 'dropoffAddress' => 'Yaoundé', 'fromCity' => 'Douala', 'size' => 'S', 'category' => 'CLOTHING', 'photo' => $png, 'recipientName' => 'X', 'recipientPhone' => '690000002', 'shopName' => 'Chez Marie'], $vTok)['json'];
+$mDel = call('POST', '/api/auth/switch-role', ['role' => 'DELIVERER'], $vTok)['json']['accessToken'];
+check('un vendeur ne voit pas ses propres livraisons dans les offres', !in_array($own['id'], array_column(call('GET', '/api/deliveries/available', null, $mDel)['json'], 'id'), true) && in_array($g['id'], array_column(call('GET', '/api/deliveries/available', null, $mDel)['json'], 'id'), true));
+$r = call('PATCH', "/api/deliveries/{$own['id']}/accept", null, $mDel);
+check('un vendeur ne peut pas accepter sa propre livraison', $r['code'] === 403 && ($r['json']['code'] ?? '') === 'SELF_DELIVERY', $r['raw']);
+$o = call('POST', '/api/auth/otp/send', ['phone' => '+237699000333', 'name' => 'Livreur Neuf']);
+call('POST', '/api/auth/otp/verify', ['phone' => '+237699000333', 'code' => $o['json']['devCode'] ?? '']);
+$call = call('POST', '/api/auth/signup', ['name' => 'Livreur Neuf', 'phone' => '+237699000333', 'pin' => '1357', 'role' => 'DELIVERER']);
+$newTok = $call['json']['accessToken'] ?? '';
+call('POST', '/api/auth/accept-cgu', ['version' => $ver], $newTok);
+$r = call('PATCH', "/api/deliveries/{$g['id']}/accept", null, $newTok);
+check('livreur sans KYC valide : accepter refuse', $r['code'] === 403 && ($r['json']['code'] ?? '') === 'KYC_REQUIRED', $r['raw']);
+call('PATCH', "/api/deliveries/{$own['id']}/cancel", null, $vTok);
+
+$xl = call('POST', '/api/deliveries', ['size' => 'XL'] + $body, $nvTok)['json'];
+$r = call('PATCH', "/api/deliveries/{$xl['id']}/accept", null, $dTok);
+check('gabarit XL : une moto ne peut pas accepter', $r['code'] === 403 && ($r['json']['code'] ?? '') === 'VEHICLE_MISMATCH', $r['raw']);
+check('vehicule invalide refuse', call('PATCH', '/api/user/profile', ['vehicleType' => 'FUSEE'], $dTok)['code'] === 400);
+check('choix du vehicule : tricycle', call('PATCH', '/api/user/profile', ['vehicleType' => 'TRICYCLE'], $dTok)['json']['vehicleType'] === 'TRICYCLE');
+check('tricycle accepte le gabarit XL', call('PATCH', "/api/deliveries/{$xl['id']}/accept", null, $dTok)['json']['status'] === 'ACCEPTE');
+call('PATCH', '/api/user/profile', ['vehicleType' => 'MOTO'], $dTok);
+
+echo "== Controle a la collecte : correction de gabarit\n";
+check('livreur accepte (gabarit M, moto)', call('PATCH', "/api/deliveries/{$g['id']}/accept", null, $dTok)['json']['status'] === 'ACCEPTE');
+check('correction sans photo refusee', (call('POST', "/api/deliveries/{$g['id']}/revision", ['size' => 'L'], $dTok)['json']['code'] ?? '') === 'PHOTO_REQUIRED');
+check('correction vers le meme gabarit refusee', call('POST', "/api/deliveries/{$g['id']}/revision", ['size' => 'M', 'photo' => $png], $dTok)['code'] === 400);
+check('correction vers XXL : sur devis', (call('POST', "/api/deliveries/{$g['id']}/revision", ['size' => 'XXL', 'photo' => $png], $dTok)['json']['code'] ?? '') === 'SIZE_ON_QUOTE');
+$rv = call('POST', "/api/deliveries/{$g['id']}/revision", ['size' => 'L', 'photo' => $png], $dTok);
+check('correction M -> L : 63 600 -> 64 500, en attente', ($rv['json']['newPriceXAF'] ?? 0) === 64500 && $rv['json']['oldPriceXAF'] === 63600 && $rv['json']['status'] === 'PENDING', $rv['raw']);
+check('2e correction pendant l\'attente refusee', (call('POST', "/api/deliveries/{$g['id']}/revision", ['size' => 'XL', 'photo' => $png], $dTok)['json']['code'] ?? '') === 'REVISION_PENDING');
+check('collecte bloquee tant que le vendeur n\'a pas repondu', (call('PATCH', "/api/deliveries/{$g['id']}/confirm-collect", ['collectCode' => $g['collectCode']], $dTok)['json']['code'] ?? '') === 'REVISION_PENDING');
+check('le livreur ne peut pas repondre a sa propre correction', call('PATCH', "/api/deliveries/{$g['id']}/revision", ['accept' => true], $dTok)['code'] === 403);
+$view = call('GET', "/api/deliveries/{$g['id']}", null, $nvTok)['json'];
+check('le vendeur voit la correction (sans chemin de fichier)', ($view['revision']['status'] ?? '') === 'PENDING' && !isset($view['revision']['photoPath']) && !isset($view['photoPath']) && $view['hasPhoto'] === true, $view);
+$ph = call('GET', "/api/deliveries/{$g['id']}/photo?kind=revision", null, $nvTok);
+check('photo du livreur visible par le vendeur', $ph['code'] === 200 && str_starts_with($ph['raw'], "\x89PNG"));
+check('photo refusee a un tiers', call('GET', "/api/deliveries/{$g['id']}/photo", null, $d2Tok)['code'] === 403);
+$ok = call('PATCH', "/api/deliveries/{$g['id']}/revision", ['accept' => true], $nvTok)['json'];
+check('vendeur accepte : prix 64 500, gabarit L, commission recalculee', ($ok['priceXAF'] ?? 0) === 64500 && $ok['size'] === 'L' && $ok['commissionXAF'] === (int)round(64500 * 0.03) && $ok['delivererEarning'] === 64500 - $ok['commissionXAF'], $ok);
+check('escrow mis a jour', (int)sql('SELECT amountXAF AS a FROM EscrowEntry WHERE deliveryId = ?', [$g['id']])['a'] === 64500);
+check('collecte possible apres reponse', call('PATCH', "/api/deliveries/{$g['id']}/confirm-collect", ['collectCode' => $g['collectCode']], $dTok)['json']['status'] === 'EN_ROUTE');
+check('apres le depart : plus de correction possible', call('POST', "/api/deliveries/{$g['id']}/revision", ['size' => 'XL', 'photo' => $png], $dTok)['code'] === 409);
+
+// Refus : la course est annulee, le livreur est dedommage, le vendeur sans solde est mis en dette.
+$g2 = call('POST', '/api/deliveries', $body, $nvTok)['json'];
+call('PATCH', "/api/deliveries/{$g2['id']}/accept", null, $dTok);
+$dBefore = (int)sql('SELECT balanceXAF AS b FROM Wallet WHERE userId = ?', [$dId])['b'];
+call('POST', "/api/deliveries/{$g2['id']}/revision", ['size' => 'L', 'photo' => $png], $dTok);
+$ref = call('PATCH', "/api/deliveries/{$g2['id']}/revision", ['accept' => false], $nvTok)['json'];
+check('vendeur refuse : course annulee', ($ref['status'] ?? '') === 'ANNULE', $ref);
+check('livreur dedommage de 500 F', (int)sql('SELECT balanceXAF AS b FROM Wallet WHERE userId = ?', [$dId])['b'] === $dBefore + 500);
+$nvW = sql('SELECT balanceXAF AS b, debtXAF AS d FROM Wallet WHERE userId = ?', [$nvId]);
+check('vendeur sans solde : 500 F de dette, solde a zero', (int)$nvW['b'] === 0 && (int)$nvW['d'] === 500, $nvW);
+check('historique du vendeur : frais en negatif', in_array(-500, array_column(call('GET', '/api/wallet', null, $nvTok)['json']['transactions'], 'amount'), true));
+
+// Pas de reponse : annulation sans frais.
+$g3 = call('POST', '/api/deliveries', $body, $nvTok)['json'];
+call('PATCH', "/api/deliveries/{$g3['id']}/accept", null, $dTok);
+call('POST', "/api/deliveries/{$g3['id']}/revision", ['size' => 'L', 'photo' => $png], $dTok);
+sql("UPDATE GabaritRevision SET expiresAt = '2000-01-01 00:00:00' WHERE deliveryId = ?", [$g3['id']]);
+$r = call('PATCH', "/api/deliveries/{$g3['id']}/confirm-collect", ['collectCode' => $g3['collectCode']], $dTok);
+check('delai depasse : la collecte est refusee', $r['code'] >= 400, $r['raw']);
+check('delai depasse : course annulee, sans frais', call('GET', "/api/deliveries/{$g3['id']}", null, $nvTok)['json']['status'] === 'ANNULE' && (int)sql('SELECT debtXAF AS d FROM Wallet WHERE userId = ?', [$nvId])['d'] === 500);
+check('reponse tardive refusee', (call('PATCH', "/api/deliveries/{$g3['id']}/revision", ['accept' => true], $nvTok)['json']['code'] ?? '') === 'REVISION_EXPIRED');
+
+// Annulation par le vendeur : gratuite juste apres l'acceptation, payante ensuite.
+$g4 = call('POST', '/api/deliveries', $body, $nvTok)['json'];
+call('PATCH', "/api/deliveries/{$g4['id']}/accept", null, $dTok);
+call('PATCH', "/api/deliveries/{$g4['id']}/cancel", null, $nvTok);
+check('annulation juste apres acceptation : gratuite', (int)sql('SELECT debtXAF AS d FROM Wallet WHERE userId = ?', [$nvId])['d'] === 500);
+$g5 = call('POST', '/api/deliveries', $body, $nvTok)['json'];
+call('PATCH', "/api/deliveries/{$g5['id']}/accept", null, $dTok);
+sql("UPDATE Delivery SET updatedAt = '2000-01-01 00:00:00' WHERE id = ?", [$g5['id']]);
+call('PATCH', "/api/deliveries/{$g5['id']}/cancel", null, $nvTok);
+check('annulation course deja en route : 500 F de frais', (int)sql('SELECT debtXAF AS d FROM Wallet WHERE userId = ?', [$nvId])['d'] === 1000);
+
+$st = call('GET', '/api/user/profile', null, $nvTok)['json']['strikes'];
+check('ecarts du vendeur comptes (1 accepte + 1 refuse)', $st['count'] === 2 && $st['threshold'] === 3 && $st['enhancedControl'] === false, $st);
+
+echo "== Dette de frais recuperee sur les gains + tarifs modifiables sans effet retroactif\n";
+check('livraison de la course corrigee (code de reception)', call('PATCH', "/api/deliveries/{$g['id']}/confirm-deliver", ['deliverCode' => $g['deliverCode']], $dTok)['json']['status'] === 'LIVRE');
+$cfg = call('GET', '/api/admin/pricing', null, $aTok)['json'];
+$zones = $cfg['zones'];
+foreach ($zones as &$zz) {
+    if ($zz['name'] === 'Grand Sud') {
+        $zz['perKm'] = 300;
+    }
+}
+unset($zz);
+$r = call('PATCH', '/api/admin/pricing', ['zones' => $zones, 'defaultZone' => $cfg['defaultZone'], 'cancelFeeXAF' => 700], $aTok);
+check('admin : tarif de zone modifie', $r['code'] === 200, $r['raw']);
+$q = call('GET', '/api/public/quote?from=Douala&to=Yaound%C3%A9&fromCity=Douala&size=M&type=TEMPORAIRE')['json'];
+check('nouveau tarif applique aux nouveaux devis : 500 + 300 x 250 + 600', ($q['finalPrice'] ?? 0) === 75800 && ($q['cancelFeeXAF'] ?? 0) === 700, $q);
+check('CGU : le montant des frais suit le reglage (700 F)', str_contains(json_encode(call('GET', '/api/public/cgu?lang=fr')['json'], JSON_UNESCAPED_UNICODE), '700 F CFA'));
+check('livraison deja creee : prix inchange', (int)sql('SELECT priceXAF AS p FROM Delivery WHERE id = ?', [$g['id']])['p'] === 64500);
+$inv = call('GET', "/api/deliveries/{$g['id']}/invoice/delivery", null, $dTok);
+$labels = [];
+foreach (($inv['json']['details'] ?? []) as $blk) {
+    foreach ($blk['rows'] as $rw) {
+        $labels[] = $rw['label'];
+    }
+}
+check('facture deja emise : detail fige (250 F/km malgre le nouveau tarif)', in_array('Distance (250 km × 250)', $labels, true) && $inv['json']['total'] === $ok['delivererEarning'], $labels);
+check('admin : zones vides refusees', call('PATCH', '/api/admin/pricing', ['zones' => []], $aTok)['code'] === 400);
+check('admin : une region dans deux zones refusee', call('PATCH', '/api/admin/pricing', ['zones' => [['name' => 'A', 'regions' => ['Nord'], 'base' => 1, 'perKm' => 1], ['name' => 'B', 'regions' => ['Nord'], 'base' => 1, 'perKm' => 1]]], $aTok)['code'] === 400);
+check('admin : commission hors bornes refusee', call('PATCH', '/api/admin/pricing', ['commissionRate' => 0.9], $aTok)['code'] === 400);
+check('tarification : refusee a un non-admin', call('PATCH', '/api/admin/pricing', ['cancelFeeXAF' => 1], $vTok)['code'] === 403);
+$zones = $cfg['zones'];
+call('PATCH', '/api/admin/pricing', ['zones' => $zones, 'defaultZone' => $cfg['defaultZone'], 'cancelFeeXAF' => 500], $aTok);
+
+echo "== CGU modifiables depuis le back-office\n";
+$ac = call('GET', '/api/admin/cgu', null, $aTok)['json'];
+check('admin : CGU francaises et anglaises en base', count($ac['fr']) >= 11 && count($ac['en']) >= 11 && $ac['version'] >= 1 && isset($ac['history'][0]));
+check('CGU : refusees a un non-admin', call('GET', '/api/admin/cgu', null, $vTok)['code'] === 403);
+check('CGU vides refusees', call('POST', '/api/admin/cgu', ['fr' => [], 'en' => []], $aTok)['code'] === 400);
+$fr = $ac['fr'];
+$fr[0]['body'] .= ' (texte modifie)';
+$pub = call('POST', '/api/admin/cgu', ['fr' => $fr, 'en' => $ac['en']], $aTok)['json'];
+check('admin publie la version suivante', ($pub['version'] ?? 0) === $ac['version'] + 1, $pub);
+check('la version precedente reste consultable (preuve)', (int)sql('SELECT COUNT(*) AS n FROM CguVersion WHERE version = ?', [$ac['version']])['n'] === 2);
+check('nouvelle version servie a l\'app', str_contains(call('GET', '/api/public/cgu?lang=fr')['raw'], 'texte modifie'));
+check('nouvelle version : les vendeurs doivent la re-accepter', (call('POST', '/api/deliveries', $body, $nvTok)['json']['code'] ?? '') === 'CGU_REQUIRED');
+call('POST', '/api/auth/accept-cgu', ['version' => $pub['version']], $nvTok);
+check('apres acceptation, la publication repasse', (call('POST', '/api/deliveries', $body, $nvTok)['json']['id'] ?? null) !== null);
+
+echo "== Un seul KYC pour les deux roles
+";
+$sw = call('POST', '/api/auth/switch-role', ['role' => 'DELIVERER'], $nvTok)['json'];
+check('vendeur verifie qui devient livreur : aucun nouveau KYC', ($sw['user']['kycStatus'] ?? '') === 'VERIFIED' && $sw['user']['kycByRole']['DELIVERER'] === 'VERIFIED', $sw);
+check('renvoi du dossier refuse (deja valide)', call('POST', '/api/auth/kyc', ['selfie' => $png], $sw['accessToken'])['code'] === 409);
+$mOff = call('POST', '/api/deliveries', ['pickupAddress' => 'Douala', 'dropoffAddress' => 'Yaoundé', 'fromCity' => 'Douala', 'size' => 'S', 'category' => 'CLOTHING', 'photo' => $png, 'recipientName' => 'Y', 'recipientPhone' => '690000004', 'shopName' => 'Chez Marie'], $vTok)['json'];
+check('le meme dossier permet de livrer', call('PATCH', "/api/deliveries/{$mOff['id']}/accept", null, $sw['accessToken'])['json']['status'] === 'ACCEPTE');
+check('mais pas sa propre livraison', (call('PATCH', "/api/deliveries/{$xl['id']}/accept", null, $sw['accessToken'])['json']['code'] ?? '') === 'SELF_DELIVERY');
 
 echo PHP_EOL . "Resultat : $pass ok, $fail echec(s)" . PHP_EOL;
 exit($fail ? 1 : 0);

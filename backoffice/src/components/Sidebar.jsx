@@ -58,7 +58,9 @@ export default function Sidebar({ onLogout, user }) {
       <Item to="/support"    id="support"  />
       <Item to="/wallets"    id="wallets"  label="Portefeuilles" />
       <Item to="/security"   id="security" label="Sécurité & KYC" />
-      <Item to="/zones"      id="zones"    label="Zones & Tarifs" />
+      <Item to="/pricing"    id="invoices" label="Tarification" />
+      <Item to="/cgu"        id="siteContent" label="CGU" />
+      <Item to="/zones"      id="zones"    label="Villes & Quartiers" />
       <Item to="/analytics"  id="analytics" />
       <Item to="/settings"   id="settings" />
       <Item to="/site-content" id="siteContent" label="Contenu du site" />
