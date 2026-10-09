@@ -54,10 +54,10 @@ export default function KycScreen({ navigation, route }) {
   const isSelfie   = step === 3;
   const canProceed = isCNIStep ? cniNumber.trim().length >= 6 : true;
 
-  const applyPhoto = (stepNum, dataUrl, uri) => {
-    if (stepNum === 1) setCniRecto(dataUrl);
-    if (stepNum === 2) setCniVerso(dataUrl);
-    if (stepNum === 3) { setSelfie(dataUrl); setSelfieUri(uri || null); setSubmitError(null); }
+  const applyPhoto = (stepNum, b64, uri) => {
+    if (stepNum === 1) setCniRecto(b64);
+    if (stepNum === 2) setCniVerso(b64);
+    if (stepNum === 3) { setSelfie(b64); setSelfieUri(uri || null); setSubmitError(null); }
   };
 
   // Prend la photo de l'etape courante (camera, ou galerie en secours). Toute erreur est affichee.
@@ -74,8 +74,8 @@ export default function KycScreen({ navigation, route }) {
     }
     if (shot.status !== 'ok') { setCameraTrouble(true); showToast(shot.message, 'error'); return null; }
     setCameraTrouble(false);
-    applyPhoto(stepNum, shot.dataUrl, shot.uri);
-    return shot.dataUrl;
+    applyPhoto(stepNum, shot.base64, shot.uri);
+    return shot.base64;
   };
 
   // Android peut fermer l'application pendant que l'appli photo est ouverte : la photo est alors recuperee ici.
@@ -87,7 +87,7 @@ export default function KycScreen({ navigation, route }) {
       if (rec && capturingStep.current === stepNum) {
         capturingStep.current = null;
         setCameraTrouble(false);
-        applyPhoto(stepNum, rec.dataUrl, rec.uri);
+        applyPhoto(stepNum, rec.base64, rec.uri);
         if (stepNum === 1 || stepNum === 2) setStep(stepNum + 1);
       }
     });

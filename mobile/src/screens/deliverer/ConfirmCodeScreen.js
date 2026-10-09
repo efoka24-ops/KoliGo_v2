@@ -230,7 +230,7 @@ export default function ConfirmCodeScreen({ navigation, route }) {
     const shot = await capturePhoto({ quality: 0.6 });
     if (shot.status === 'cancelled') return;
     if (shot.status !== 'ok') { showToast(shot.message, 'error'); return; }
-    setPhoto({ uri: shot.uri, data: shot.dataUrl });
+    setPhoto({ uri: shot.uri, data: shot.base64 });
   };
 
   const submitCorrection = async () => {

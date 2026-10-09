@@ -5,7 +5,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
  * Photos pour le KYC et les colis.
  *
  * Résultat de chaque fonction :
- *   { status: 'ok', uri, dataUrl } | { status: 'cancelled' } | { status: 'denied', message } | { status: 'error', message }
+ *   { status: 'ok', uri, base64 } | { status: 'cancelled' } | { status: 'denied', message } | { status: 'error', message }
  * Aucune ne lève d'exception : l'écran affiche le message au lieu de rester muet.
  *
  * Points qui comptent avec Expo SDK 51 (expo-image-picker 15) :
@@ -31,7 +31,9 @@ async function shrink(uri) {
     format: ImageManipulator.SaveFormat.JPEG,
     base64: true,
   });
-  return { uri: out.uri, dataUrl: `data:image/jpeg;base64,${out.base64}` };
+  // base64 BRUT, sans préfixe « data:image… » : le pare-feu de l'hébergeur (koligo.trugroup.cm) répond 403 à toute
+  // requête dont le corps contient « data:image ». Le serveur accepte les deux formes.
+  return { uri: out.uri, base64: out.base64 };
 }
 
 async function toResult(result) {

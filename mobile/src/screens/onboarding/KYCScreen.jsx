@@ -43,7 +43,7 @@ async function pickImage(setter, showToast, { selfie = false } = {}) {
   });
 
   if (!result.canceled && result.assets?.[0]?.base64) {
-    setter(`data:image/jpeg;base64,${result.assets[0].base64}`);
+    setter(result.assets[0].base64);
     showToast('Photo capturée âœ"');
   }
 }

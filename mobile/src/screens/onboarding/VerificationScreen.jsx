@@ -51,7 +51,7 @@ export default function VerificationScreen({ navigation }) {
       aspect: isSelfie ? [1, 1] : [4, 3],
     });
     if (result.canceled || !result.assets?.[0]?.base64) return null;
-    const dataUrl = `data:image/jpeg;base64,${result.assets[0].base64}`;
+    const dataUrl = result.assets[0].base64;
     if (step === 1) setCniRecto(dataUrl);
     if (step === 2) setCniVerso(dataUrl);
     if (step === 3) setSelfie(dataUrl);
