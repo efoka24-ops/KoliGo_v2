@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, BackHandler, AppState } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, BackHandler, AppState, Image, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { capturePhoto, pickFromGallery, recoverPendingPhoto } from '../../utils/camera';
 import { colors, fonts } from '../../constants/colors';
@@ -36,6 +36,8 @@ export default function KycScreen({ navigation, route }) {
   const [cniRecto, setCniRecto] = useState(null);
   const [cniVerso, setCniVerso] = useState(null);
   const [selfie, setSelfie]     = useState(null);
+  const [selfieUri, setSelfieUri] = useState(null);
+  const [submitError, setSubmitError] = useState(null);
   const [loading, setLoading]   = useState(false);
   const capturingStep = useRef(null);            // etape dont la photo est en cours de prise
   const [cameraTrouble, setCameraTrouble] = useState(false); // la camera n'a rien rendu : on propose la galerie
@@ -52,10 +54,10 @@ export default function KycScreen({ navigation, route }) {
   const isSelfie   = step === 3;
   const canProceed = isCNIStep ? cniNumber.trim().length >= 6 : true;
 
-  const applyPhoto = (stepNum, dataUrl) => {
+  const applyPhoto = (stepNum, dataUrl, uri) => {
     if (stepNum === 1) setCniRecto(dataUrl);
     if (stepNum === 2) setCniVerso(dataUrl);
-    if (stepNum === 3) setSelfie(dataUrl);
+    if (stepNum === 3) { setSelfie(dataUrl); setSelfieUri(uri || null); setSubmitError(null); }
   };
 
   // Prend la photo de l'etape courante (camera, ou galerie en secours). Toute erreur est affichee.
@@ -72,7 +74,7 @@ export default function KycScreen({ navigation, route }) {
     }
     if (shot.status !== 'ok') { setCameraTrouble(true); showToast(shot.message, 'error'); return null; }
     setCameraTrouble(false);
-    applyPhoto(stepNum, shot.dataUrl);
+    applyPhoto(stepNum, shot.dataUrl, shot.uri);
     return shot.dataUrl;
   };
 
@@ -85,7 +87,7 @@ export default function KycScreen({ navigation, route }) {
       if (rec && capturingStep.current === stepNum) {
         capturingStep.current = null;
         setCameraTrouble(false);
-        applyPhoto(stepNum, rec.dataUrl);
+        applyPhoto(stepNum, rec.dataUrl, rec.uri);
         if (stepNum === 1 || stepNum === 2) setStep(stepNum + 1);
       }
     });
@@ -98,18 +100,30 @@ export default function KycScreen({ navigation, route }) {
   const handleNext = async (fromGallery = false) => {
     if (step === 0) { setStep(1); return; }
     if (step === 1 || step === 2) { const p = await captureStepPhoto(fromGallery); if (!p) return; setStep(s => s + 1); return; }
-    // Selfie : la photo d'abord, SANS bloquer le bouton (il ne doit jamais rester fige si l'appli photo ne rend rien) ;
-    // l'envoi du dossier ensuite.
-    const selfieData = selfie || await captureStepPhoto(fromGallery);
-    if (!selfieData) return;
+    // Selfie : 1er appui = prise de vue (puis aperçu), 2e appui = envoi du dossier. Les deux sont séparés
+    // pour qu'on voie toujours où l'on en est.
+    if (!selfie) { await captureStepPhoto(fromGallery); return; }
+    await submitDossier();
+  };
+
+  const retakeSelfie = () => { setSelfie(null); setSelfieUri(null); setSubmitError(null); };
+
+  const submitDossier = async () => {
     setLoading(true);
+    setSubmitError(null);
     try {
-      if (api) await api('/api/user/kyc', { method: 'POST', body: JSON.stringify({ cniNumber: cniNumber.trim(), cniRecto, cniVerso, selfie: selfieData }) });
+      // Les photos sont réduites (≈ 200 Ko chacune) ; délai de 90 s pour une connexion 4G lente.
+      if (api) await api('/api/user/kyc', { method: 'POST', timeout: 90000, body: JSON.stringify({ cniNumber: cniNumber.trim(), cniRecto, cniVerso, selfie }) });
       // Dossier en attente : le serveur refuse de publier ou de livrer tant que le back-office n'a pas validé.
       setUser((prev) => (prev ? { ...prev, kycStatus: 'PENDING', kycByRole: { ...(prev.kycByRole || {}), [roleKey]: 'PENDING' } } : prev));
       setStep(4);
     } catch (err) {
-      showToast(errMsg(err, 'Erreur lors de l\'envoi du dossier'), 'error');
+      const timedOut = err?.code === 'ECONNABORTED' || /timeout/i.test(err?.message || '');
+      const msg = timedOut
+        ? "L'envoi a pris trop de temps. Vérifie ta connexion internet puis touche « Réessayer »."
+        : errMsg(err, "Erreur lors de l'envoi du dossier");
+      setSubmitError(msg);
+      showToast(msg, 'error');
     } finally {
       setLoading(false);
     }
@@ -198,6 +212,7 @@ export default function KycScreen({ navigation, route }) {
             <Icon name={isSelfie ? 'user' : 'id'} size={52} color="#C4611A" strokeWidth={1.2} />
             <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: '#C4611A', marginTop: 10 }}>{STEP_LABELS[step]}</Text>
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: '#B8A48A', marginTop: 4 }}>aperçu caméra</Text>
+            {isSelfie && selfieUri && <Image source={{ uri: selfieUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />}
           </View>
         )}
 
@@ -215,12 +230,20 @@ export default function KycScreen({ navigation, route }) {
           kind={canProceed ? 'primary' : 'ghost'}
           disabled={!canProceed || loading}
           size="lg"
-          icon={isCNIStep ? 'arrow' : loading ? undefined : 'camera'}
+          icon={isCNIStep ? 'arrow' : loading ? undefined : (isSelfie && selfie ? 'send' : 'camera')}
           onPress={() => handleNext(false)}
         >
-          {loading ? <ActivityIndicator color="#fff" /> : isCNIStep ? 'Continuer' : isSelfie ? 'Prendre le selfie' : 'Prendre la photo'}
+          {loading ? <ActivityIndicator color="#fff" /> : isCNIStep ? 'Continuer' : isSelfie ? (selfie ? (submitError ? 'Réessayer l\'envoi' : 'Envoyer mon dossier') : 'Prendre le selfie') : 'Prendre la photo'}
         </KGButton>
 
+        {submitError && (
+          <View style={{ backgroundColor: '#FEF2F2', borderRadius: 12, padding: 14 }}>
+            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: '#D8472A', lineHeight: 19 }}>{submitError}</Text>
+          </View>
+        )}
+        {isSelfie && selfie && !loading && (
+          <KGButton kind="soft" size="lg" icon="camera" onPress={retakeSelfie}>Reprendre le selfie</KGButton>
+        )}
         {isSelfie && !selfie && (
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55, textAlign: 'center', lineHeight: 17 }}>
             Dans l'appli photo, tu peux basculer sur la caméra avant (icône de rotation) pour te prendre avec ta CNI.

@@ -122,6 +122,7 @@ export async function apiFetch(path: string, options: RequestInit = {}, token?: 
       method: (options.method as any) || 'GET',
       headers,
       data: options.body,
+      ...((options as any).timeout ? { timeout: (options as any).timeout } : {}),
     });
     return res.data;
   } catch (e: any) {
