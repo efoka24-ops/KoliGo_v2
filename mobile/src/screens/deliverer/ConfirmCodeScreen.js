@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, Image } from 'react-native';
 import { capturePhoto } from '../../utils/camera';
@@ -120,22 +121,22 @@ function CodeStep({ navigation, route }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF5E6' }} edges={['top']}>
       <KenteStripe height={4} />
-      <KGTopBar title="Code de collecte" onBack={() => navigation.goBack()} />
+      <KGTopBar title={tr("Code de collecte")} onBack={() => navigation.goBack()} />
 
       <View style={{ flex: 1, padding: 24, gap: 0 }}>
         <View style={{ marginBottom: 28 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <View style={{ backgroundColor: '#FEF0E3', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
               <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 12, color: '#C4611A', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                Chez le vendeur
+                {tr("Chez le vendeur")}
               </Text>
             </View>
           </View>
           <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 26, color: '#0E2116', letterSpacing: -0.5 }}>
-            Code de collecte
+            {tr("Code de collecte")}
           </Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13.5, color: colors.ink55, marginTop: 6, lineHeight: 20 }}>
-            Demande le code 4 chiffres au vendeur pour confirmer la prise en charge du colis.
+            {tr("Demande le code 4 chiffres au vendeur pour confirmer la prise en charge du colis.")}
           </Text>
         </View>
 
@@ -157,7 +158,7 @@ function CodeStep({ navigation, route }) {
           <View style={{ alignItems: 'center', paddingVertical: 24 }}>
             <ActivityIndicator color={colors.green} size="large" />
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink55, marginTop: 8 }}>
-              Vérification…
+              {tr("Vérification…")}
             </Text>
           </View>
         ) : (
@@ -259,7 +260,7 @@ export default function ConfirmCodeScreen({ navigation, route }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF5E6' }} edges={['top']}>
       <KenteStripe height={4} />
-      <KGTopBar title="Contrôle du colis" onBack={() => navigation.goBack()} />
+      <KGTopBar title={tr("Contrôle du colis")} onBack={() => navigation.goBack()} />
 
       {phase === 'loading' && (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={colors.green} size="large" /></View>
@@ -267,26 +268,26 @@ export default function ConfirmCodeScreen({ navigation, route }) {
 
       {phase === 'check' && (
         <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
-          <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 24, color: '#0E2116', letterSpacing: -0.5 }}>Le colis est-il conforme ?</Text>
+          <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 24, color: '#0E2116', letterSpacing: -0.5 }}>{tr("Le colis est-il conforme ?")}</Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13.5, color: colors.ink55, lineHeight: 20 }}>
             Compare le colis avec ce que le vendeur a déclaré. Une fois le code de collecte saisi, le gabarit déclaré devient définitif : tu ne pourras plus demander de supplément.
           </Text>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E8DCC8', gap: 8 }}>
-            <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.6 }}>Gabarit déclaré</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.6 }}>{tr("Gabarit déclaré")}</Text>
             <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 30, color: '#0E2116' }}>{declared || '—'}</Text>
             {!!declaredInfo?.dims && <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.ink }}>{declaredInfo.dims} cm · jusqu'à {declaredInfo.maxKg} kg</Text>}
             {!!declaredInfo?.examples?.fr && <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: colors.ink55 }}>{declaredInfo.examples.fr}</Text>}
             <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.green }}>Prix : {Money(delivery?.priceXAF)}</Text>
             {photoSource && <Image source={photoSource} style={{ width: '100%', height: 180, borderRadius: 12, backgroundColor: colors.cream, marginTop: 4 }} resizeMode="cover" />}
           </View>
-          <KGButton kind="primary" size="lg" icon="check" onPress={() => setPhase('code')}>Oui, conforme : saisir le code</KGButton>
-          <KGButton kind="soft" size="lg" icon="flag" onPress={() => setPhase('correct')}>Non, corriger le gabarit</KGButton>
+          <KGButton kind="primary" size="lg" icon="check" onPress={() => setPhase('code')}>{tr("Oui, conforme : saisir le code")}</KGButton>
+          <KGButton kind="soft" size="lg" icon="flag" onPress={() => setPhase('correct')}>{tr("Non, corriger le gabarit")}</KGButton>
         </ScrollView>
       )}
 
       {phase === 'correct' && (
         <ScrollView contentContainerStyle={{ padding: 20, gap: 14 }}>
-          <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: '#0E2116' }}>Quel est le bon gabarit ?</Text>
+          <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: '#0E2116' }}>{tr("Quel est le bon gabarit ?")}</Text>
           {Object.keys(gabarits).filter((c) => c !== declared && gabarits[c].bookable !== false).map((code) => {
             const g = gabarits[code];
             const on = newSize === code;
@@ -311,14 +312,14 @@ export default function ConfirmCodeScreen({ navigation, route }) {
           <KGButton kind="primary" size="lg" icon="send" disabled={!newSize || !photo || busy} onPress={submitCorrection}>
             {busy ? 'Envoi…' : 'Envoyer la correction au vendeur'}
           </KGButton>
-          <KGButton kind="ghost" size="md" onPress={() => setPhase('check')}>Retour</KGButton>
+          <KGButton kind="ghost" size="md" onPress={() => setPhase('check')}>{tr("Retour")}</KGButton>
         </ScrollView>
       )}
 
       {phase === 'wait' && revision && (
         <View style={{ flex: 1, padding: 24, gap: 16, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator color={colors.green} size="large" />
-          <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: '#0E2116', textAlign: 'center' }}>En attente du vendeur</Text>
+          <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: '#0E2116', textAlign: 'center' }}>{tr("En attente du vendeur")}</Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink55, textAlign: 'center', lineHeight: 21 }}>
             Gabarit {revision.declaredSize} → {revision.proposedSize}{'\n'}
             Prix : {Money(revision.oldPriceXAF)} → {Money(revision.newPriceXAF)}
@@ -327,7 +328,7 @@ export default function ConfirmCodeScreen({ navigation, route }) {
             {String(Math.floor(secondsLeft / 60)).padStart(2, '0')}:{String(secondsLeft % 60).padStart(2, '0')}
           </Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: colors.ink55, textAlign: 'center' }}>
-            Sans réponse du vendeur, la course est annulée sans frais pour lui.
+            {tr("Sans réponse du vendeur, la course est annulée sans frais pour lui.")}
           </Text>
         </View>
       )}
@@ -336,7 +337,7 @@ export default function ConfirmCodeScreen({ navigation, route }) {
         <View style={{ flex: 1, padding: 24, gap: 18, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="flag" size={40} color="#D8472A" />
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 15, color: colors.ink, textAlign: 'center', lineHeight: 22 }}>{endedText}</Text>
-          <KGButton kind="primary" size="lg" onPress={() => navigation.navigate('DelivererApp')}>Retour aux courses</KGButton>
+          <KGButton kind="primary" size="lg" onPress={() => navigation.navigate('DelivererApp')}>{tr("Retour aux courses")}</KGButton>
         </View>
       )}
     </SafeAreaView>

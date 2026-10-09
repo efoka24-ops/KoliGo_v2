@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -91,7 +92,7 @@ export default function DeliveryDetailScreen({ navigation, route }) {
         setDelivery(d);
         if (['livre', 'annule', 'LIVRE', 'ANNULE'].includes(d?.status)) clearInterval(timer);
       })
-      .catch(() => { if (first) showToast('Erreur chargement', 'error'); });
+      .catch(() => { if (first) showToast(tr("Erreur chargement"), 'error'); });
     const timer = setInterval(() => load(false), 8000);
     load(true);
     return () => { stopped = true; clearInterval(timer); };
@@ -124,7 +125,7 @@ export default function DeliveryDetailScreen({ navigation, route }) {
     setCancelling(true);
     try {
       await api(`/api/deliveries/${deliveryId}/cancel`, { method: 'PATCH' });
-      showToast('Livraison annulée');
+      showToast(tr("Livraison annulée"));
       navigation.goBack();
     } catch (err) {
       showToast(err.message, 'error');
@@ -211,7 +212,7 @@ export default function DeliveryDetailScreen({ navigation, route }) {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Icon name="shield" size={24} color={colors.orange} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 11, color: colors.orange, textTransform: 'uppercase', letterSpacing: 0.05 }}>Code de collecte</Text>
+                <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 11, color: colors.orange, textTransform: 'uppercase', letterSpacing: 0.05 }}>{tr("Code de collecte")}</Text>
                 <Text style={{ fontFamily: `${fonts.mono}-Medium`, fontSize: 30, color: colors.ink, marginTop: 4 }}>
                   {d.collectCode.split('').join(' ')}
                 </Text>
@@ -230,7 +231,7 @@ export default function DeliveryDetailScreen({ navigation, route }) {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Icon name="check" size={24} color={colors.green} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 11, color: colors.greenDark, textTransform: 'uppercase', letterSpacing: 0.05 }}>Code livraison (destinataire)</Text>
+                <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 11, color: colors.greenDark, textTransform: 'uppercase', letterSpacing: 0.05 }}>{tr("Code livraison (destinataire)")}</Text>
                 <Text style={{ fontFamily: `${fonts.mono}-Medium`, fontSize: 30, color: colors.ink, marginTop: 4 }}>
                   {d.code.split('').join(' ')}
                 </Text>
@@ -244,7 +245,7 @@ export default function DeliveryDetailScreen({ navigation, route }) {
 
         {d.recipient && (
           <KGCard padding={14}>
-            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.04, marginBottom: 10 }}>Destinataire</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.04, marginBottom: 10 }}>{tr("Destinataire")}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 14, color: colors.greenDark }}>
@@ -277,7 +278,7 @@ export default function DeliveryDetailScreen({ navigation, route }) {
               ? <ActivityIndicator color={colors.green} size="small" />
               : <Icon name="upload" size={18} color={colors.green} />}
             <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: colors.green }}>
-              Télécharger le reçu
+              {tr("Télécharger le reçu")}
             </Text>
           </TouchableOpacity>
         )}
@@ -290,7 +291,7 @@ export default function DeliveryDetailScreen({ navigation, route }) {
 
         {isAvailable && (
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <KGButton kind="ghost" style={{ flex: 1 }} onPress={() => navigation.goBack()}>Refuser</KGButton>
+            <KGButton kind="ghost" style={{ flex: 1 }} onPress={() => navigation.goBack()}>{tr("Refuser")}</KGButton>
             <KGButton kind="primary" style={{ flex: 2 }} icon={accepting ? undefined : 'check'} onPress={handleAccept} disabled={accepting}>
               {accepting ? <ActivityIndicator color="#fff" /> : 'Accepter la course'}
             </KGButton>
@@ -298,12 +299,12 @@ export default function DeliveryDetailScreen({ navigation, route }) {
         )}
         {isGoingVendor && role === 'deliverer' && (
           <KGButton kind="primary" size="lg" icon="pin" onPress={() => navigation.navigate('Confirm', { deliveryId: d.id, phase: 'collect' })}>
-            Je suis arrivé chez le vendeur
+            {tr("Je suis arrivé chez le vendeur")}
           </KGButton>
         )}
         {!isAvailable && !isGoingVendor && role === 'deliverer' && (
           <KGButton kind="orange" size="lg" icon="check" onPress={() => navigation.navigate('DelivererWaiting', { deliveryId: d.id })}>
-            Je suis arrivé chez le client
+            {tr("Je suis arrivé chez le client")}
           </KGButton>
         )}
         {!isAvailable && isVendor && !['en_attente', 'annule', 'livre'].includes(d.status) && (
@@ -313,8 +314,8 @@ export default function DeliveryDetailScreen({ navigation, route }) {
               Codes & Facture de confiance
             </KGButton>
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <KGButton kind="ghost" style={{ flex: 1 }} icon="chat" onPress={() => handleOpenChat('deliverer')}>Chat</KGButton>
-              <KGButton kind="soft" style={{ flex: 1 }} icon="pin" onPress={() => navigation.navigate('ClientTracking', { orderId: d.id, vendorName: user?.name })}>Suivre</KGButton>
+              <KGButton kind="ghost" style={{ flex: 1 }} icon="chat" onPress={() => handleOpenChat('deliverer')}>{tr("Chat")}</KGButton>
+              <KGButton kind="soft" style={{ flex: 1 }} icon="pin" onPress={() => navigation.navigate('ClientTracking', { orderId: d.id, vendorName: user?.name })}>{tr("Suivre")}</KGButton>
             </View>
           </View>
         )}

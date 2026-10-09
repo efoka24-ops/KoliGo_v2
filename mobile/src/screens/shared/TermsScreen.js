@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -83,7 +84,7 @@ export default function TermsScreen({ navigation, route }) {
       {cgu && (
         <ScrollView contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
           <View style={{ gap: 4, marginBottom: 4 }}>
-            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 26, color: '#0E2116', letterSpacing: -0.5 }}>CGU KoliGo</Text>
+            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 26, color: '#0E2116', letterSpacing: -0.5 }}>{tr("CGU KoliGo")}</Text>
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55 }}>
               Version {cgu.version}{date ? ` · ${fr ? 'publiée le' : 'published'} ${date}` : ''}
             </Text>

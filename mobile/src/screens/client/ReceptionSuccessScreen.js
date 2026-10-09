@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React from 'react';
 import { View, Text, TouchableOpacity, Share, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -33,13 +34,13 @@ export default function ReceptionSuccessScreen({ navigation, route }) {
           <View style={s.checkCircle}>
             <Ionicons name="checkmark" size={36} color="#fff" />
           </View>
-          <Text style={s.title}>Livraison confirmée !</Text>
-          <Text style={s.sub}>Votre colis a bien été réceptionné et payé.</Text>
+          <Text style={s.title}>{tr("Livraison confirmée !")}</Text>
+          <Text style={s.sub}>{tr("Votre colis a bien été réceptionné et payé.")}</Text>
         </View>
 
         {/* Amount card */}
         <View style={s.amountCard}>
-          <Text style={s.amountLabel}>Montant payé</Text>
+          <Text style={s.amountLabel}>{tr("Montant payé")}</Text>
           <Text style={s.amountValue}>{fmt(priceXAF)} <Text style={s.amountCur}>XAF</Text></Text>
           {from || to ? <Text style={s.amountRoute}>{from} → {to}</Text> : null}
         </View>
@@ -47,16 +48,16 @@ export default function ReceptionSuccessScreen({ navigation, route }) {
         {/* Répartition */}
         {(commXAF > 0 || deliverEarn > 0) && (
           <View style={s.card}>
-            <Text style={s.sectionLabel}>Répartition</Text>
+            <Text style={s.sectionLabel}>{tr("Répartition")}</Text>
             <View style={s.splitRow}>
               <View style={[s.pill, { backgroundColor: '#E8F5E9' }]}>
-                <Text style={[s.pillTxt, { color: '#166534' }]}>Livreur</Text>
+                <Text style={[s.pillTxt, { color: '#166534' }]}>{tr("Livreur")}</Text>
               </View>
               <Text style={s.splitAmt}>{fmt(deliverEarn)} XAF</Text>
             </View>
             <View style={s.splitRow}>
               <View style={[s.pill, { backgroundColor: '#FFF3E0' }]}>
-                <Text style={[s.pillTxt, { color: '#92400E' }]}>KoliGo · plateforme</Text>
+                <Text style={[s.pillTxt, { color: '#92400E' }]}>{tr("KoliGo · plateforme")}</Text>
               </View>
               <Text style={s.splitAmt}>{fmt(commXAF)} XAF</Text>
             </View>
@@ -76,7 +77,7 @@ export default function ReceptionSuccessScreen({ navigation, route }) {
         {/* Actions */}
         <TouchableOpacity onPress={downloadReceipt} style={s.btnOutline}>
           <Ionicons name="download-outline" size={18} color="#178A3C" />
-          <Text style={s.btnOutlineTxt}>Télécharger le reçu</Text>
+          <Text style={s.btnOutlineTxt}>{tr("Télécharger le reçu")}</Text>
         </TouchableOpacity>
 
         <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -85,19 +86,19 @@ export default function ReceptionSuccessScreen({ navigation, route }) {
             onPress={() => navigation.navigate('ClientRating', { clientToken, delivererName })}
           >
             <Ionicons name="star" size={16} color="#fff" />
-            <Text style={s.btnActionTxt}>Noter le livreur</Text>
+            <Text style={s.btnActionTxt}>{tr("Noter le livreur")}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[s.btnAction, { backgroundColor: '#DC2626' }]}
             onPress={() => navigation.navigate('ClientReportIssue', { clientToken })}
           >
             <Ionicons name="alert-circle" size={16} color="#fff" />
-            <Text style={s.btnActionTxt}>Signaler</Text>
+            <Text style={s.btnActionTxt}>{tr("Signaler")}</Text>
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity onPress={() => navigation.popToTop()} style={{ alignItems: 'center', paddingVertical: 8 }}>
-          <Text style={{ fontSize: 14, color: '#888' }}>Retour à l'accueil</Text>
+          <Text style={{ fontSize: 14, color: '#888' }}>{tr("Retour à l'accueil")}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

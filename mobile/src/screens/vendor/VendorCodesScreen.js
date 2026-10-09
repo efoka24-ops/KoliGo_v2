@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Share, Linking, ActivityIndicator, Platform } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
@@ -200,7 +201,7 @@ export default function VendorCodesScreen({ navigation, route }) {
       if (canOpen) await Linking.openURL(url);
       else await Share.share({ message: msg, title: 'KoliGo' });
     } catch {
-      showToast('Erreur lors du partage', 'error');
+      showToast(tr("Erreur lors du partage"), 'error');
     }
   };
 
@@ -225,9 +226,9 @@ export default function VendorCodesScreen({ navigation, route }) {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        showToast('Facture telechargee ✓');
+        showToast(tr("Facture telechargee ✓"));
       } catch {
-        showToast('Impossible de telecharger', 'error');
+        showToast(tr("Impossible de telecharger"), 'error');
       }
     } else {
       await Share.share({ message: text, title: 'Facture de confiance KoliGo' });
@@ -249,7 +250,7 @@ export default function VendorCodesScreen({ navigation, route }) {
 
   const copyLink = async () => {
     await Clipboard.setStringAsync(trackingUrl);
-    showToast('Lien copie ✓');
+    showToast(tr("Lien copie ✓"));
   };
 
   const isAccepte  = status === 'accepte';
@@ -287,9 +288,9 @@ export default function VendorCodesScreen({ navigation, route }) {
                 <Text style={{ fontSize: 24 }}>🛵</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: fonts.display + '-Bold', fontSize: 15, color: '#1D4ED8' }}>Livreur en route !</Text>
+                <Text style={{ fontFamily: fonts.display + '-Bold', fontSize: 15, color: '#1D4ED8' }}>{tr("Livreur en route !")}</Text>
                 <Text style={{ fontFamily: fonts.ui + '-Regular', fontSize: 12.5, color: '#3B82F6', marginTop: 3, lineHeight: 18 }}>
-                  Il arrive a ta boutique. Prepare le code collecte a lui montrer.
+                  {tr("Il arrive a ta boutique. Prepare le code collecte a lui montrer.")}
                 </Text>
               </View>
             </View>
@@ -311,10 +312,10 @@ export default function VendorCodesScreen({ navigation, route }) {
               <Icon name="check" size={26} color="#fff" />
             </View>
             <Text style={{ fontFamily: fonts.display + '-ExtraBold', fontSize: 18, color: colors.greenDark, textAlign: 'center' }}>
-              Livraison confirmee !
+              {tr("Livraison confirmee !")}
             </Text>
             <Text style={{ fontFamily: fonts.ui + '-Regular', fontSize: 13, color: colors.greenDark, textAlign: 'center', lineHeight: 20, opacity: 0.85 }}>
-              Le client a confirme la reception. Le livreur a ete paye automatiquement par KoliGo.
+              {tr("Le client a confirme la reception. Le livreur a ete paye automatiquement par KoliGo.")}
             </Text>
           </View>
         )}
@@ -326,14 +327,14 @@ export default function VendorCodesScreen({ navigation, route }) {
               <Icon name="shield" size={20} color={colors.green} />
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: fonts.ui + '-SemiBold', fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.06 }}>
-                  KoliGo · Document officiel
+                  {tr("KoliGo · Document officiel")}
                 </Text>
                 <Text style={{ fontFamily: fonts.display + '-Bold', fontSize: 16, color: '#fff' }}>
-                  Facture de confiance
+                  {tr("Facture de confiance")}
                 </Text>
               </View>
               <View style={{ backgroundColor: colors.green, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 }}>
-                <Text style={{ fontFamily: fonts.ui + '-SemiBold', fontSize: 10, color: '#fff' }}>Verifie ✓</Text>
+                <Text style={{ fontFamily: fonts.ui + '-SemiBold', fontSize: 10, color: '#fff' }}>{tr("Verifie ✓")}</Text>
               </View>
             </View>
 
@@ -342,27 +343,27 @@ export default function VendorCodesScreen({ navigation, route }) {
                 <View style={{ alignItems: 'center', paddingVertical: 20 }}>
                   <ActivityIndicator color={colors.green} />
                   <Text style={{ fontFamily: fonts.ui + '-Regular', fontSize: 12, color: colors.ink55, marginTop: 8 }}>
-                    Generation de la facture...
+                    {tr("Generation de la facture...")}
                   </Text>
                 </View>
               )}
 
               {trustDoc && (
                 <>
-                  <SectionLabel>Commande</SectionLabel>
-                  <TrustRow label="Reference" value={orderId} />
-                  <TrustRow label="Trajet" value={fromQ && toQ ? (fromQ + ' → ' + toQ) : null} />
+                  <SectionLabel>{tr("Commande")}</SectionLabel>
+                  <TrustRow label={tr("Reference")} value={orderId} />
+                  <TrustRow label={tr("Trajet")} value={fromQ && toQ ? (fromQ + ' → ' + toQ) : null} />
 
-                  <SectionLabel>Livreur identifie</SectionLabel>
-                  <TrustRow label="Nom complet" value={trustDoc.deliverer?.name} />
-                  <TrustRow label="Telephone" value={trustDoc.deliverer?.phone ? ('+237 ' + trustDoc.deliverer.phone) : null} />
-                  <TrustRow label="N° CNI" value={trustDoc.deliverer?.cniNumber || 'Non renseigne'} />
-                  <TrustRow label="Statut KYC" value={trustDoc.deliverer?.kycStatus === 'VERIFIED' ? 'Verifie ✓' : 'En attente'} highlight={trustDoc.deliverer?.kycStatus === 'VERIFIED'} />
+                  <SectionLabel>{tr("Livreur identifie")}</SectionLabel>
+                  <TrustRow label={tr("Nom complet")} value={trustDoc.deliverer?.name} />
+                  <TrustRow label={tr("Telephone")} value={trustDoc.deliverer?.phone ? ('+237 ' + trustDoc.deliverer.phone) : null} />
+                  <TrustRow label={tr("N° CNI")} value={trustDoc.deliverer?.cniNumber || 'Non renseigne'} />
+                  <TrustRow label={tr("Statut KYC")} value={trustDoc.deliverer?.kycStatus === 'VERIFIED' ? 'Verifie ✓' : 'En attente'} highlight={trustDoc.deliverer?.kycStatus === 'VERIFIED'} />
 
                   <SectionLabel>{isEn ? 'Recipient (client)' : 'Destinataire (client)'}</SectionLabel>
-                  <TrustRow label="Nom" value={trustDoc.recipientName || recipientName || '-'} />
-                  <TrustRow label="Telephone" value={trustDoc.recipientPhone ? ('+237 ' + trustDoc.recipientPhone) : null} />
-                  <TrustRow label="Adresse" value={trustDoc.recipientAddress || recipientAddress || toQ} />
+                  <TrustRow label={tr("Nom")} value={trustDoc.recipientName || recipientName || '-'} />
+                  <TrustRow label={tr("Telephone")} value={trustDoc.recipientPhone ? ('+237 ' + trustDoc.recipientPhone) : null} />
+                  <TrustRow label={tr("Adresse")} value={trustDoc.recipientAddress || recipientAddress || toQ} />
 
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
                     <KGButton kind="primary" size="sm" icon="send" full={false} style={{ flex: 1 }}
@@ -402,7 +403,7 @@ export default function VendorCodesScreen({ navigation, route }) {
             {isEn ? 'A · Pickup code — show it to the deliverer' : 'A · Code de collecte — a montrer au livreur'}
           </Text>
           <Text style={{ fontFamily: fonts.display + '-Bold', fontSize: 13.5, color: colors.ink, marginTop: 4 }}>
-            Le livreur saisit ce code en arrivant chez toi
+            {tr("Le livreur saisit ce code en arrivant chez toi")}
           </Text>
           <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 16 }}>
             {codeCollect.split('').map((d, i) => (
@@ -420,7 +421,7 @@ export default function VendorCodesScreen({ navigation, route }) {
             {isEn ? 'B · Link + delivery code — share with the client' : 'B · Lien + code de reception — a partager avec le client'}
           </Text>
           <Text style={{ fontFamily: fonts.display + '-Bold', fontSize: 13.5, color: colors.ink, marginTop: 4 }}>
-            Le client confirme la reception avec ce code
+            {tr("Le client confirme la reception avec ce code")}
           </Text>
           <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 16 }}>
             {codeReception.split('').map((d, i) => (
@@ -444,7 +445,7 @@ export default function VendorCodesScreen({ navigation, route }) {
                 ? shareViaWhatsApp(buildClientMessage(), clientWa)
                 : shareViaWhatsApp(buildClientMessage())
               }>
-              WhatsApp
+              {tr("WhatsApp")}
             </KGButton>
             <KGButton kind="soft" size="sm" icon="send" full={false} style={{ flex: 1 }}
               onPress={() => shareViaSMS(buildClientMessage())}>
@@ -452,7 +453,7 @@ export default function VendorCodesScreen({ navigation, route }) {
             </KGButton>
             <KGButton kind="ghost" size="sm" icon="upload" full={false} style={{ flex: 1 }}
               onPress={() => shareViaEmail(buildClientMessage())}>
-              Email
+              {tr("Email")}
             </KGButton>
           </View>
 

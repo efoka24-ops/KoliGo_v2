@@ -1,3 +1,4 @@
+import { tr } from '../i18n/tr';
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image } from 'react-native';
 import { colors, fonts } from '../constants/colors';
@@ -42,7 +43,7 @@ export default function RevisionPrompt({ deliveryId, revision, onDone }) {
 
   return (
     <View style={{ margin: 16, backgroundColor: '#FFF8E3', borderRadius: 18, borderWidth: 1.5, borderColor: '#D4991A', padding: 16, gap: 10 }}>
-      <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 18, color: '#0E2116' }}>Le livreur corrige le gabarit</Text>
+      <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 18, color: '#0E2116' }}>{tr("Le livreur corrige le gabarit")}</Text>
       <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 14, color: colors.ink, lineHeight: 21 }}>
         Gabarit {revision.declaredSize} → {revision.proposedSize}{'\n'}
         Prix : {Money(revision.oldPriceXAF)} → {Money(revision.newPriceXAF)}

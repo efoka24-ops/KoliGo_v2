@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -59,7 +60,7 @@ export default function HistoryScreen({ navigation }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF5E6' }} edges={['top']}>
       <KenteStripe height={4} />
-      <KGTopBar title="Historique" action={<Icon name="search" size={20} color={colors.ink} />} />
+      <KGTopBar title={tr("Historique")} action={<Icon name="search" size={20} color={colors.ink} />} />
 
       {/* Filters */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}>
@@ -80,12 +81,12 @@ export default function HistoryScreen({ navigation }) {
             <View style={{ backgroundColor: '#0E2116', borderRadius: 20, padding: 18, marginBottom: 4, flexDirection: 'row', overflow: 'hidden' }}>
               <View style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(212,153,26,0.1)' }} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.08 }}>Ce mois</Text>
+                <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.08 }}>{tr("Ce mois")}</Text>
                 <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 28, color: '#fff' }}>42 colis</Text>
               </View>
               <View style={{ width: 1, height: 36, backgroundColor: 'rgba(255,255,255,0.12)', marginHorizontal: 18, alignSelf: 'center' }} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.08 }}>Dépensé</Text>
+                <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.08 }}>{tr("Dépensé")}</Text>
                 <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 28, color: '#D4991A' }}>82 350 <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>XAF</Text></Text>
               </View>
             </View>
@@ -100,9 +101,9 @@ export default function HistoryScreen({ navigation }) {
               <View style={{ width: 72, height: 72, borderRadius: 20, backgroundColor: '#F5F0E8', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#E8DCC8', borderStyle: 'dashed' }}>
                 <Icon name="package" size={30} color={colors.ink35} />
               </View>
-              <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 17, color: colors.ink }}>Aucune livraison</Text>
+              <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 17, color: colors.ink }}>{tr("Aucune livraison")}</Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55, textAlign: 'center', maxWidth: 240, lineHeight: 19 }}>
-                Tes livraisons apparaîtront ici dès que tu en auras créé une.
+                {tr("Tes livraisons apparaîtront ici dès que tu en auras créé une.")}
               </Text>
             </View>
           )}

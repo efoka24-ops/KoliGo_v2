@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -48,58 +49,58 @@ export default function SignupScreen({ navigation, route }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF5E6' }} edges={['top']}>
       <KenteStripe height={4} />
-      <KGTopBar title="Créer un compte" onBack={() => navigation.goBack()} />
+      <KGTopBar title={tr("Créer un compte")} onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
 
         <View style={{ marginBottom: 4 }}>
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: '#B8A48A', textTransform: 'uppercase', letterSpacing: 0.08 }}>
-            Étape 1 / 3
+            {tr("Étape 1 / 3")}
           </Text>
           <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 28, color: '#0E2116', letterSpacing: -0.5, marginTop: 4 }}>
-            Ton compte
+            {tr("Ton compte")}
           </Text>
         </View>
 
         <KGInput
-          label="Nom complet"
+          label={tr("Nom complet")}
           value={name}
           onChangeText={setName}
           icon="user"
-          placeholder="Awa N."
+          placeholder={tr("Awa N.")}
           autoCapitalize="words"
         />
         <KGInput
-          label="Nom de la boutique"
+          label={tr("Nom de la boutique")}
           value={shopName}
           onChangeText={setShopName}
           icon="package"
-          placeholder="Chez Awa"
+          placeholder={tr("Chez Awa")}
           autoCapitalize="words"
           hint="Demandé une seule fois — il apparaîtra sur toutes tes livraisons"
         />
         <KGInput
-          label="Email"
+          label={tr("Email")}
           value={email}
           onChangeText={setEmail}
           icon="mail"
           keyboardType="email-address"
           autoCapitalize="none"
-          placeholder="vous@exemple.cm"
+          placeholder={tr("vous@exemple.cm")}
           hint="On t'envoie le code OTP et les confirmations ici"
         />
         <KGInput
-          label="Téléphone"
+          label={tr("Téléphone")}
           value={phone}
           onChangeText={setPhone}
           icon="phone"
           suffix="+237"
           keyboardType="phone-pad"
-          placeholder="6 XX XX XX XX"
+          placeholder={tr("6 XX XX XX XX")}
         />
 
         {/* Genre */}
         <View style={{ gap: 8 }}>
-          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.ink70 }}>Genre</Text>
+          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.ink70 }}>{tr("Genre")}</Text>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             {[{ id: 'HOMME', label: 'Homme' }, { id: 'FEMME', label: 'Femme' }].map(g => {
               const on = gender === g.id;
@@ -165,7 +166,7 @@ export default function SignupScreen({ navigation, route }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 2 }}>
           <Icon name="shield" size={12} color={colors.green} />
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.green, letterSpacing: 0.3 }}>
-            Données protégées · KoliGo
+            {tr("Données protégées · KoliGo")}
           </Text>
         </View>
 

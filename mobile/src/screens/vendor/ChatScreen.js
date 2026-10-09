@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,7 +9,8 @@ import Icon from '../../components/Icon';
 
 // Inbox tab — shows list of conversations
 export default function ChatScreen({ navigation }) {
-  const { api, token } = useApp();
+  const { api, token, user } = useApp();
+  const asDeliverer = (user?.activeRole || user?.role || '').toString().toUpperCase() === 'DELIVERER';
   const [convList, setConvList] = useState([]);
 
   // Une conversation = une livraison (chat reel via l'API, partage vendeur / livreur / destinataire).
@@ -18,19 +20,21 @@ export default function ChatScreen({ navigation }) {
       const rows = await api('/api/deliveries');
       if (!Array.isArray(rows)) return;
       setConvList(rows.filter(d => d.status !== 'ANNULE').map(d => {
-        const name = d.deliverer?.name || 'En attente d’un livreur';
+        // On affiche l'autre personne de la course : le vendeur pour un livreur, le livreur pour un vendeur.
+        const other = asDeliverer ? d.vendor : d.deliverer;
+        const name = other?.name || (asDeliverer ? 'Vendeur' : 'En attente d’un livreur');
         return {
           id: d.id,
           contactName: name,
-          contactInitials: d.deliverer?.name ? d.deliverer.name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase() : '…',
-          contactRole: 'deliverer',
+          contactInitials: other?.name ? other.name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase() : '…',
+          contactRole: asDeliverer ? 'vendor' : 'deliverer',
           lastMessage: (d.pickupAddress || '') + ' → ' + (d.dropoffAddress || ''),
           lastTime: new Date(d.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
           unread: 0,
         };
       }));
     } catch {}
-  }, [api, token]);
+  }, [api, token, asDeliverer]);
 
   useEffect(() => {
     load();
@@ -46,6 +50,7 @@ export default function ChatScreen({ navigation }) {
   const roleLabel = (contactRole) =>
     contactRole === 'deliverer' ? 'Livreur'
     : contactRole === 'client'  ? 'Client'
+    : contactRole === 'vendor'  ? 'Vendeur'
     : 'Contact';
 
   return (
@@ -54,11 +59,11 @@ export default function ChatScreen({ navigation }) {
 
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14 }}>
         <Text style={{ flex: 1, fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: '#0E2116', letterSpacing: -0.5 }}>
-          Messages
+          {tr("Messages")}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#EFF8F1', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99 }}>
           <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: colors.green }} />
-          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.greenDark }}>En ligne</Text>
+          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.greenDark }}>{tr("En ligne")}</Text>
         </View>
       </View>
 
@@ -67,7 +72,7 @@ export default function ChatScreen({ navigation }) {
           <View style={{ width: 72, height: 72, borderRadius: 20, backgroundColor: '#F5F0E8', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#E8DCC8', borderStyle: 'dashed' }}>
             <Icon name="chat" size={30} color={colors.ink35} />
           </View>
-          <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 18, color: colors.ink }}>Aucune conversation</Text>
+          <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 18, color: colors.ink }}>{tr("Aucune conversation")}</Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink55, textAlign: 'center', lineHeight: 20, maxWidth: 260 }}>
             Tes échanges avec les livreurs et les destinataires apparaîtront ici, livraison par livraison.
           </Text>

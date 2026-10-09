@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState, useEffect } from 'react';
 import { View, Text, Share, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -51,7 +52,7 @@ export default function VendorTrustInvoiceScreen({ navigation, route }) {
   if (loading) {
     return (
       <Screen>
-        <ScreenHeader title="Facture de confiance" onBack={() => navigation.goBack()} />
+        <ScreenHeader title={tr("Facture de confiance")} onBack={() => navigation.goBack()} />
         <ActivityIndicator color={colors.green} style={{ marginTop: 40 }} />
       </Screen>
     );
@@ -60,12 +61,12 @@ export default function VendorTrustInvoiceScreen({ navigation, route }) {
   if (error || !data) {
     return (
       <Screen>
-        <ScreenHeader title="Facture de confiance" onBack={() => navigation.goBack()} />
+        <ScreenHeader title={tr("Facture de confiance")} onBack={() => navigation.goBack()} />
         <View style={{ padding: 24, alignItems: 'center', gap: 12 }}>
           <Ionicons name="alert-circle" size={48} color={colors.error ?? '#DC2626'} />
           <Text style={[type.h3, { textAlign: 'center' }]}>{error ?? 'Données indisponibles'}</Text>
           <Text style={[type.lead, { textAlign: 'center', color: colors.muted }]}>
-            La facture de confiance sera disponible dès qu'un livreur a accepté votre annonce.
+            {tr("La facture de confiance sera disponible dès qu'un livreur a accepté votre annonce.")}
           </Text>
         </View>
       </Screen>
@@ -74,33 +75,33 @@ export default function VendorTrustInvoiceScreen({ navigation, route }) {
 
   return (
     <Screen>
-      <ScreenHeader title="Facture de confiance" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={tr("Facture de confiance")} onBack={() => navigation.goBack()} />
       <View style={{ paddingHorizontal: 18, paddingTop: 6, gap: 12 }}>
 
         {/* Header badge */}
         <View style={styles.badge}>
           <Ionicons name="shield-checkmark" size={22} color={colors.greenDark} />
           <View style={{ flex: 1 }}>
-            <Text style={{ fontWeight: '700', fontSize: 15, color: colors.greenDark }}>Document de confiance KoliGo</Text>
-            <Text style={{ fontSize: 12, color: colors.greenDark, opacity: 0.7 }}>Identité du livreur assigné à votre colis</Text>
+            <Text style={{ fontWeight: '700', fontSize: 15, color: colors.greenDark }}>{tr("Document de confiance KoliGo")}</Text>
+            <Text style={{ fontSize: 12, color: colors.greenDark, opacity: 0.7 }}>{tr("Identité du livreur assigné à votre colis")}</Text>
           </View>
         </View>
 
         {/* Deliverer info */}
         <Card>
-          <Text style={[type.eyebrow, { marginBottom: 12 }]}>Livreur</Text>
-          <Row label="Nom"     value={data.deliverer.name}      icon="person" />
-          <Row label="Téléphone" value={`+237 ${data.deliverer.phone}`} icon="call" />
-          <Row label="N° CNI"  value={data.deliverer.cniNumber}  icon="card" />
-          <Row label="Quartier" value={data.deliverer.quartier}  icon="location" />
+          <Text style={[type.eyebrow, { marginBottom: 12 }]}>{tr("Livreur")}</Text>
+          <Row label={tr("Nom")}     value={data.deliverer.name}      icon="person" />
+          <Row label={tr("Téléphone")} value={`+237 ${data.deliverer.phone}`} icon="call" />
+          <Row label={tr("N° CNI")}  value={data.deliverer.cniNumber}  icon="card" />
+          <Row label={tr("Quartier")} value={data.deliverer.quartier}  icon="location" />
         </Card>
 
         {/* Delivery summary */}
         <Card>
-          <Text style={[type.eyebrow, { marginBottom: 12 }]}>Livraison</Text>
-          <Row label="Départ"      value={data.pickupAddress} />
-          <Row label="Destination" value={data.dropoffAddress} />
-          <Row label="Montant"     value={`${fmt(data.priceXAF)} XAF (payé à la réception)`} />
+          <Text style={[type.eyebrow, { marginBottom: 12 }]}>{tr("Livraison")}</Text>
+          <Row label={tr("Départ")}      value={data.pickupAddress} />
+          <Row label={tr("Destination")} value={data.dropoffAddress} />
+          <Row label={tr("Montant")}     value={`${fmt(data.priceXAF)} XAF (payé à la réception)`} />
         </Card>
 
         {/* Disclaimer */}
@@ -111,7 +112,7 @@ export default function VendorTrustInvoiceScreen({ navigation, route }) {
           </Text>
         </View>
 
-        <Button title="Envoyer au destinataire" onPress={handleShare} />
+        <Button title={tr("Envoyer au destinataire")} onPress={handleShare} />
       </View>
     </Screen>
   );

@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, BackHandler, AppState, Image, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -69,7 +70,7 @@ export default function KycScreen({ navigation, route }) {
     capturingStep.current = null;
     if (shot.status === 'cancelled') {
       setCameraTrouble(true);
-      showToast('Aucune photo prise. Réessaie, ou choisis une photo depuis la galerie.', 'error');
+      showToast(tr("Aucune photo prise. Réessaie, ou choisis une photo depuis la galerie."), 'error');
       return null;
     }
     if (shot.status !== 'ok') { setCameraTrouble(true); showToast(shot.message, 'error'); return null; }
@@ -139,7 +140,7 @@ export default function KycScreen({ navigation, route }) {
           </View>
           <View style={{ alignItems: 'center', gap: 8 }}>
             <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 28, color: '#0E2116', textAlign: 'center', letterSpacing: -0.5 }}>
-              Dossier envoyé !
+              {tr("Dossier envoyé !")}
             </Text>
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink55, textAlign: 'center', lineHeight: 21, maxWidth: 280 }}>
               {gate
@@ -150,7 +151,7 @@ export default function KycScreen({ navigation, route }) {
           <KGButton kind="primary" size="lg" icon="arrow" onPress={() => (gate
             ? navigation.reset({ index: 0, routes: [{ name: roleKey === 'DELIVERER' ? 'DelivererApp' : 'VendorApp' }] })
             : navigation.navigate('RoleSelect'))}>
-            Continuer
+            {tr("Continuer")}
           </KGButton>
         </View>
       </SafeAreaView>
@@ -160,7 +161,7 @@ export default function KycScreen({ navigation, route }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF5E6' }} edges={['top']}>
       <KenteStripe height={4} />
-      <KGTopBar title="Vérification d'identité" onBack={handleBack} />
+      <KGTopBar title={tr("Vérification d'identité")} onBack={handleBack} />
       <ScrollView contentContainerStyle={{ padding: 20, gap: 18, flexGrow: 1 }} showsVerticalScrollIndicator={false}>
 
         <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -188,7 +189,7 @@ export default function KycScreen({ navigation, route }) {
         </Text>
 
         {isCNIStep ? (
-          <KGInput label="Numéro CNI" value={cniNumber} onChangeText={setCniNumber} icon="shield" placeholder="ex: CM000123456789" autoCapitalize="characters" />
+          <KGInput label={tr("Numéro CNI")} value={cniNumber} onChangeText={setCniNumber} icon="shield" placeholder={tr("ex: CM000123456789")} autoCapitalize="characters" />
         ) : (
           <View style={{ aspectRatio: isSelfie ? 1 : 1.6, backgroundColor: '#F5F0E8', borderRadius: 20, alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
             {[{ top: 0, left: 0 }, { top: 0, right: 0 }, { bottom: 0, left: 0 }, { bottom: 0, right: 0 }].map((pos, i) => {
@@ -220,7 +221,7 @@ export default function KycScreen({ navigation, route }) {
           <Icon name="shield" size={20} color="#C4611A" />
           <Text style={{ flex: 1, fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70, lineHeight: 18 }}>
             Tes documents sont chiffrés et ne servent qu'à la vérification KYC.{' '}
-            <Text style={{ fontFamily: `${fonts.ui}-Bold`, color: '#C4611A' }}>Jamais partagés.</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Bold`, color: '#C4611A' }}>{tr("Jamais partagés.")}</Text>
           </Text>
         </View>
 
@@ -242,7 +243,7 @@ export default function KycScreen({ navigation, route }) {
           </View>
         )}
         {isSelfie && selfie && !loading && (
-          <KGButton kind="soft" size="lg" icon="camera" onPress={retakeSelfie}>Reprendre le selfie</KGButton>
+          <KGButton kind="soft" size="lg" icon="camera" onPress={retakeSelfie}>{tr("Reprendre le selfie")}</KGButton>
         )}
         {isSelfie && !selfie && (
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55, textAlign: 'center', lineHeight: 17 }}>
@@ -251,7 +252,7 @@ export default function KycScreen({ navigation, route }) {
         )}
         {!isCNIStep && cameraTrouble && (
           <KGButton kind="soft" size="lg" icon="camera" disabled={loading} onPress={() => handleNext(true)}>
-            Choisir une photo depuis la galerie
+            {tr("Choisir une photo depuis la galerie")}
           </KGButton>
         )}
       </ScrollView>

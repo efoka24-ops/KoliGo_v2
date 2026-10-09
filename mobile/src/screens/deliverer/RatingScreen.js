@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,7 +33,7 @@ export default function RatingScreen({ navigation }) {
         ))}
       </View>
       <View style={{ width: '100%', marginTop: 4 }}>
-        <Field placeholder="Commentaire (option)" />
+        <Field placeholder={tr("Commentaire (option)")} />
       </View>
       <Button title={t('sendRating')} onPress={() => navigation.popToTop()} style={{ alignSelf: 'stretch', marginTop: 8 }} />
     </Screen>

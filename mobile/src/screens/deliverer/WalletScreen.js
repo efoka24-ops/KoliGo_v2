@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -50,22 +51,22 @@ export default function WalletScreen({ navigation }) {
 
   const handleTopUp = async () => {
     const amount = parseInt(topUpAmount, 10);
-    if (!amount || amount < 100) { showToast('Montant minimum 100 XAF', 'error'); return; }
+    if (!amount || amount < 100) { showToast(tr("Montant minimum 100 XAF"), 'error'); return; }
     const phone = topUpPhone.replace(/\D/g, '').replace(/^237(?=\d{9}$)/, '');
-    if (!/^6\d{8}$/.test(phone)) { showToast('Numéro invalide (format : 6XXXXXXXX)', 'error'); return; }
+    if (!/^6\d{8}$/.test(phone)) { showToast(tr("Numéro invalide (format : 6XXXXXXXX)"), 'error'); return; }
     setTopUpLoading(true);
     try {
       await api('/wallet/topup', { method: 'POST', body: JSON.stringify({ amount, phone: '237' + phone }) });
       setTopUpOpen(false);
       setTopUpWaiting(true);
-      showToast('Confirmez le paiement sur votre téléphone (saisissez votre code Mobile Money).');
+      showToast(tr("Confirmez le paiement sur votre téléphone (saisissez votre code Mobile Money)."));
       // Le solde n'est crédité qu'à la confirmation de l'opérateur : on vérifie pendant ~2 min.
       const before = walletData?.balance ?? 0;
       for (let i = 0; i < 24; i++) {
         await new Promise((r) => setTimeout(r, 5000));
         const w = await api('/wallet').catch(() => null);
         if (w) setWalletData(w);
-        if (w && w.balance > before) { showToast('Recharge reçue ✓', 'success'); break; }
+        if (w && w.balance > before) { showToast(tr("Recharge reçue ✓"), 'success'); break; }
       }
     } catch (err) {
       showToast(err.message, 'error');
@@ -86,10 +87,10 @@ export default function WalletScreen({ navigation }) {
     : (walletData?.transactions || []).map(normalizeTransaction);
 
   const handleWithdraw = async () => {
-    if (isDemo) { setWithdrawOpen(false); showToast('Retrait envoyé · arrive sous 1 min ✅'); return; }
-    if (!withdrawAmount || parseInt(withdrawAmount) < 500) { showToast('Montant minimum 500 XAF', 'error'); return; }
+    if (isDemo) { setWithdrawOpen(false); showToast(tr("Retrait envoyé · arrive sous 1 min ✅")); return; }
+    if (!withdrawAmount || parseInt(withdrawAmount) < 500) { showToast(tr("Montant minimum 500 XAF"), 'error'); return; }
     const phoneNorm = withdrawPhone.replace(/\s/g, '');
-    if (!/^6\d{8}$/.test(phoneNorm)) { showToast('Numéro invalide (format: 6XXXXXXXX)', 'error'); return; }
+    if (!/^6\d{8}$/.test(phoneNorm)) { showToast(tr("Numéro invalide (format: 6XXXXXXXX)"), 'error'); return; }
     setWithdrawLoading(true);
     try {
       await api('/wallet/withdraw', {
@@ -97,7 +98,7 @@ export default function WalletScreen({ navigation }) {
         body: JSON.stringify({ amount: parseInt(withdrawAmount), provider: withdrawProvider, phone: phoneNorm }),
       });
       setWithdrawOpen(false);
-      showToast('Demande de retrait enregistrée · traitée par KoliGo sous 24 h ✅');
+      showToast(tr("Demande de retrait enregistrée · traitée par KoliGo sous 24 h ✅"));
       api('/wallet').then(setWalletData).catch(() => {});
     } catch (err) {
       showToast(err.message, 'error');
@@ -110,7 +111,7 @@ export default function WalletScreen({ navigation }) {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF5E6' }} edges={['top']}>
       {toast && <KGToast message={toast.message} kind={toast.kind} />}
       <KenteStripe height={4} />
-      <KGTopBar title="Wallet" onBack={isStack ? () => navigation.goBack() : undefined} />
+      <KGTopBar title={tr("Wallet")} onBack={isStack ? () => navigation.goBack() : undefined} />
 
       <ScrollView contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
 
@@ -123,7 +124,7 @@ export default function WalletScreen({ navigation }) {
           <View style={{ position: 'absolute', bottom: -30, left: -30, width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(212,153,26,0.08)' }} />
 
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.08 }}>
-            Solde disponible
+            {tr("Solde disponible")}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, marginTop: 8, marginBottom: 4 }}>
             <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 46, color: '#fff', lineHeight: 50 }}>
@@ -152,7 +153,7 @@ export default function WalletScreen({ navigation }) {
           <TouchableOpacity onPress={() => setWithdrawOpen(true)}
             style={{ flex: 1, height: 50, borderRadius: 14, backgroundColor: '#C4611A', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <Icon name="upload" size={18} color="#fff" />
-            <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: '#fff' }}>Retirer</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: '#fff' }}>{tr("Retirer")}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setTopUpOpen(true)} disabled={topUpWaiting}
             style={{ flex: 1, height: 50, borderRadius: 14, borderWidth: 1.5, borderColor: colors.green, opacity: topUpWaiting ? 0.6 : 1, backgroundColor: '#EFF8F1', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
@@ -163,8 +164,8 @@ export default function WalletScreen({ navigation }) {
 
         {/* Transactions */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 2, paddingTop: 4 }}>
-          <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.08 }}>Transactions</Text>
-          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.green }}>Tout</Text>
+          <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.08 }}>{tr("Transactions")}</Text>
+          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.green }}>{tr("Tout")}</Text>
         </View>
 
         {transactions.length > 0 ? (
@@ -194,9 +195,9 @@ export default function WalletScreen({ navigation }) {
         ) : (
           <View style={{ alignItems: 'center', paddingVertical: 48, gap: 10 }}>
             <Icon name="wallet" size={32} color={colors.ink35} />
-            <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: colors.ink }}>Aucune transaction</Text>
+            <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: colors.ink }}>{tr("Aucune transaction")}</Text>
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55, textAlign: 'center', maxWidth: 240, lineHeight: 18 }}>
-              Tes gains apparaîtront ici après ta première course.
+              {tr("Tes gains apparaîtront ici après ta première course.")}
             </Text>
           </View>
         )}
@@ -207,10 +208,10 @@ export default function WalletScreen({ navigation }) {
         <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(14,33,22,0.6)' }} activeOpacity={1} onPress={() => setTopUpOpen(false)}>
           <TouchableOpacity activeOpacity={1} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, gap: 14 }}>
             <KenteStripe height={3} />
-            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: colors.ink, marginTop: 8 }}>Recharger mon wallet</Text>
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55 }}>Vous recevrez une demande de paiement sur ce numéro Mobile Money.</Text>
-            <KGInput label="Montant (XAF)" value={topUpAmount} suffix="XAF" keyboardType="numeric" onChangeText={setTopUpAmount} placeholder="Ex : 5000" />
-            <KGInput label="Numéro Mobile Money" value={topUpPhone} suffix="+237" keyboardType="phone-pad" onChangeText={setTopUpPhone} placeholder="6 XX XX XX XX" />
+            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: colors.ink, marginTop: 8 }}>{tr("Recharger mon wallet")}</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55 }}>{tr("Vous recevrez une demande de paiement sur ce numéro Mobile Money.")}</Text>
+            <KGInput label={tr("Montant (XAF)")} value={topUpAmount} suffix="XAF" keyboardType="numeric" onChangeText={setTopUpAmount} placeholder={tr("Ex : 5000")} />
+            <KGInput label={tr("Numéro Mobile Money")} value={topUpPhone} suffix="+237" keyboardType="phone-pad" onChangeText={setTopUpPhone} placeholder={tr("6 XX XX XX XX")} />
             <KGButton kind="primary" size="lg" onPress={handleTopUp} disabled={topUpLoading}>
               {topUpLoading ? <ActivityIndicator color="#fff" /> : 'Payer'}
             </KGButton>
@@ -225,8 +226,8 @@ export default function WalletScreen({ navigation }) {
             <View style={{ width: 40, height: 4, backgroundColor: colors.ink12, borderRadius: 2, alignSelf: 'center' }} />
             <KenteStripe height={3} />
             <View>
-              <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: colors.ink, marginTop: 8 }}>Retrait Mobile Money</Text>
-              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55, marginTop: 3 }}>Traité sous 24 h · 0 frais</Text>
+              <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: colors.ink, marginTop: 8 }}>{tr("Retrait Mobile Money")}</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55, marginTop: 3 }}>{tr("Traité sous 24 h · 0 frais")}</Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 10 }}>
               {[
@@ -239,10 +240,10 @@ export default function WalletScreen({ navigation }) {
                 </TouchableOpacity>
               ))}
             </View>
-            <KGInput label="Montant (XAF)" value={withdrawAmount} suffix="XAF" keyboardType="numeric" onChangeText={setWithdrawAmount} placeholder="Ex: 5000" />
-            <KGInput label="Numéro" value={withdrawPhone} suffix="🇨🇲 +237" keyboardType="phone-pad" onChangeText={setWithdrawPhone} placeholder="6 XX XX XX XX" />
+            <KGInput label={tr("Montant (XAF)")} value={withdrawAmount} suffix="XAF" keyboardType="numeric" onChangeText={setWithdrawAmount} placeholder={tr("Ex: 5000")} />
+            <KGInput label={tr("Numéro")} value={withdrawPhone} suffix="🇨🇲 +237" keyboardType="phone-pad" onChangeText={setWithdrawPhone} placeholder={tr("6 XX XX XX XX")} />
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 12, backgroundColor: colors.greenLight, borderRadius: 12 }}>
-              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.greenDark }}>Frais de retrait</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.greenDark }}>{tr("Frais de retrait")}</Text>
               <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 16, color: colors.greenDark }}>0 XAF</Text>
             </View>
             <KGButton kind="primary" size="lg" icon={withdrawLoading ? undefined : 'check'} onPress={handleWithdraw} disabled={withdrawLoading}>

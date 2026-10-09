@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, TextInput,
@@ -31,7 +32,7 @@ export default function PaymentScreen({ navigation, route }) {
 
   const handlePay = async () => {
     if (!phoneNorm || !/^6\d{8}$/.test(phoneNorm)) {
-      Alert.alert('Numéro invalide', 'Saisis ton numéro MoMo (ex: 677123456)');
+      Alert.alert(tr("Numéro invalide"), tr("Saisis ton numéro MoMo (ex: 677123456)"));
       return;
     }
     setLoading(true);
@@ -42,7 +43,7 @@ export default function PaymentScreen({ navigation, route }) {
       });
 
       if (result?.transactionId) {
-        showToast('Paiement initié — confirme sur ton téléphone', 'success');
+        showToast(tr("Paiement initié — confirme sur ton téléphone"), 'success');
         pollStatus(result.transactionId);
       } else {
         showToast(result?.error || 'Réponse inattendue du service de paiement', 'error');
@@ -57,7 +58,7 @@ export default function PaymentScreen({ navigation, route }) {
   const pollStatus = (txId, attempts = 0) => {
     if (attempts > 12) {
       setLoading(false);
-      showToast('Délai dépassé — vérifie ton téléphone et relance si besoin', 'error');
+      showToast(tr("Délai dépassé — vérifie ton téléphone et relance si besoin"), 'error');
       return;
     }
     setTimeout(async () => {
@@ -69,7 +70,7 @@ export default function PaymentScreen({ navigation, route }) {
           navigateToSuccess();
         } else if (s === 'failed' || s === 'rejected' || s === 'error') {
           setLoading(false);
-          showToast('Paiement refusé — réessaie', 'error');
+          showToast(tr("Paiement refusé — réessaie"), 'error');
         } else {
           pollStatus(txId, attempts + 1);
         }
@@ -103,7 +104,7 @@ export default function PaymentScreen({ navigation, route }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F4F5F1' }} edges={['top']}>
       <KGTopBar
-        title="Paiement"
+        title={tr("Paiement")}
         onBack={() => navigation.goBack()}
       />
 
@@ -111,7 +112,7 @@ export default function PaymentScreen({ navigation, route }) {
         {/* Amount card */}
         <View style={{ backgroundColor: '#fff', borderRadius: 18, padding: 20, alignItems: 'center', borderWidth: 1, borderColor: '#E8DCC8' }}>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55 }}>
-            Montant à régler
+            {tr("Montant à régler")}
           </Text>
           <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 34, color: colors.greenDark, marginTop: 4 }}>
             {fmt(price)} <Text style={{ fontSize: 16, color: colors.ink55 }}>XAF</Text>
@@ -124,7 +125,7 @@ export default function PaymentScreen({ navigation, route }) {
         {/* Operator selector */}
         <View style={{ gap: 8 }}>
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.08 }}>
-            Réseau Mobile Money
+            {tr("Réseau Mobile Money")}
           </Text>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             {OPERATORS.map(op => {
@@ -163,7 +164,7 @@ export default function PaymentScreen({ navigation, route }) {
           <TextInput
             value={phone}
             onChangeText={setPhone}
-            placeholder="6XX XXX XXX"
+            placeholder={tr("6XX XXX XXX")}
             placeholderTextColor={colors.ink35}
             keyboardType="phone-pad"
             style={{
@@ -174,7 +175,7 @@ export default function PaymentScreen({ navigation, route }) {
             }}
           />
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: colors.ink35 }}>
-            Une notification sera envoyée sur ce numéro pour confirmer le paiement.
+            {tr("Une notification sera envoyée sur ce numéro pour confirmer le paiement.")}
           </Text>
         </View>
 
@@ -193,7 +194,7 @@ export default function PaymentScreen({ navigation, route }) {
           <View style={{ alignItems: 'center', paddingVertical: 12, gap: 8 }}>
             <ActivityIndicator color={colors.green} size="large" />
             <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.ink55 }}>
-              En attente de confirmation…
+              {tr("En attente de confirmation…")}
             </Text>
           </View>
         ) : (
@@ -205,7 +206,7 @@ export default function PaymentScreen({ navigation, route }) {
             />
             <TouchableOpacity onPress={handleSkip} style={{ alignItems: 'center', paddingVertical: 8 }}>
               <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.ink55 }}>
-                Payer en espèces (ignorer)
+                {tr("Payer en espèces (ignorer)")}
               </Text>
             </TouchableOpacity>
           </>

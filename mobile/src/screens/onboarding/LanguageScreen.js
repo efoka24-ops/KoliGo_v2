@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,9 +30,9 @@ export default function LanguageScreen({ navigation }) {
       <Logo size={56} />
       <Text style={[type.h1, { textAlign: 'center', marginTop: 8 }]}>{t('chooseLanguage')}</Text>
       <View style={{ width: '100%', gap: 10, marginTop: 6 }}>
-        <Option code="fr" label="Français" flag="🇫🇷" />
-        <Option code="en" label="English" flag="🇬🇧" />
-        <Option code="ff" label="Fulfulde" flag="🇨🇲" />
+        <Option code="fr" label={tr("Français")} flag="🇫🇷" />
+        <Option code="en" label={tr("English")} flag="🇬🇧" />
+        <Option code="ff" label={tr("Fulfulde")} flag="🇨🇲" />
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
         <Ionicons name="lock-closed" size={11} color={colors.muted} />

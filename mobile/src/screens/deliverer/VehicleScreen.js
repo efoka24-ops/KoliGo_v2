@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -44,7 +45,7 @@ export default function VehicleScreen({ navigation }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF5E6' }} edges={['top']}>
       <KenteStripe height={4} />
-      <KGTopBar title="Ton véhicule" />
+      <KGTopBar title={tr("Ton véhicule")} />
       <View style={{ flex: 1, padding: 20, gap: 14 }}>
         <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink55, lineHeight: 21 }}>
           Choisis le véhicule avec lequel tu livres. Tu ne verras comme acceptables que les colis qu'il peut transporter.

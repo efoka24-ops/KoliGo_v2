@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal, ActivityIndicator, Image } from 'react-native';
 import { capturePhoto } from '../../utils/camera';
@@ -455,7 +456,7 @@ export default function PostDeliveryScreen({ navigation }) {
                   icon="chat"
                   suffix="+237"
                   keyboardType="phone-pad"
-                  placeholder="6 XX XX XX XX"
+                  placeholder={tr("6 XX XX XX XX")}
                   hint={isEn ? 'Delivery code will be sent here' : 'Le code de réception lui sera envoyé ici'}
                 />
                 <FieldError msg={fieldErrors.clientPhone} />
@@ -468,7 +469,7 @@ export default function PostDeliveryScreen({ navigation }) {
                 icon="bell"
                 keyboardType="email-address"
                 autoCapitalize="none"
-                placeholder="ex: client@gmail.com"
+                placeholder={tr("ex: client@gmail.com")}
                 hint={isEn ? 'Tracking link will be sent to this email' : 'Le lien de suivi sera envoyé à cet email'}
               />
             </KGCard>
@@ -529,7 +530,7 @@ export default function PostDeliveryScreen({ navigation }) {
               <View style={{ height: 1, backgroundColor: colors.ink06, marginVertical: 12 }} />
               <Detail label={isEn ? 'Shop' : 'Boutique'}         value={shopName || '—'} />
               <Detail label={isEn ? 'Parcel' : 'Colis'}          value={parcelDesc || '—'} />
-              <Detail label="Distance"                            value={distance != null ? `${distance} km` : '…'} />
+              <Detail label={tr("Distance")}                            value={distance != null ? `${distance} km` : '…'} />
               <Detail label={isEn ? 'Size' : 'Gabarit'}          value={size} />
               <Detail label={isEn ? 'Speed' : 'Urgence'}         value={<KGCourierBadge type={type.toLowerCase()} />} />
               <Detail label={isEn ? 'Recipient' : 'Destinataire'} value={recipient || '—'} />

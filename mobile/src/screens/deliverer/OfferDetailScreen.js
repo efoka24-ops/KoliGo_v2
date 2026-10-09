@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -55,27 +56,27 @@ export default function OfferDetailScreen({ navigation, route }) {
     // Le serveur refuse aussi : le KYC Livreur doit être validé par le back-office avant toute course.
     if (user?.kycStatus && user.kycStatus !== 'VERIFIED') {
       if (user.kycStatus === 'PENDING') {
-        showToast('Ton dossier est en cours de vérification : tu pourras livrer dès sa validation.', 'error');
+        showToast(tr("Ton dossier est en cours de vérification : tu pourras livrer dès sa validation."), 'error');
       } else {
-        showToast('Envoie ton dossier KYC pour livrer.', 'error');
+        showToast(tr("Envoie ton dossier KYC pour livrer."), 'error');
         navigation.navigate('Kyc', { gate: true });
       }
       return;
     }
     if (o.vehicleOk === false) {
-      showToast('Ton véhicule ne peut pas transporter ce gabarit.', 'error');
+      showToast(tr("Ton véhicule ne peut pas transporter ce gabarit."), 'error');
       return;
     }
 
     if (!o.id) {
-      showToast('Course acceptée !');
+      showToast(tr("Course acceptée !"));
       navigation.navigate('DelivererHome');
       return;
     }
     setAccepting(true);
     try {
       await deliveryService.accept(o.id);
-      showToast('Course acceptée !');
+      showToast(tr("Course acceptée !"));
       navigation.navigate('DelivererHome');
     } catch (e) {
       showToast(errMsg(e, 'Erreur acceptation'), 'error');
@@ -96,9 +97,9 @@ export default function OfferDetailScreen({ navigation, route }) {
           <View style={{ backgroundColor: '#FEF0E3', borderRadius: 14, padding: 14, flexDirection: 'row', gap: 10, borderWidth: 1, borderColor: '#F5D0B8' }}>
             <Icon name="bolt" size={18} color="#C4611A" />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 13, color: '#C4611A' }}>Tu es hors ligne</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 13, color: '#C4611A' }}>{tr("Tu es hors ligne")}</Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: '#C4611A', lineHeight: 17, marginTop: 2 }}>
-                Retourne à l'accueil et active le switch "En ligne" pour accepter.
+                {tr("Retourne à l'accueil et active le switch \"En ligne\" pour accepter.")}
               </Text>
             </View>
           </View>
@@ -109,9 +110,9 @@ export default function OfferDetailScreen({ navigation, route }) {
           <View style={{ backgroundColor: '#FEF0E3', borderRadius: 14, padding: 14, flexDirection: 'row', gap: 10, borderWidth: 1, borderColor: '#F5D0B8' }}>
             <Icon name="shield" size={18} color="#C4611A" />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 13, color: '#C4611A' }}>CNI requise</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 13, color: '#C4611A' }}>{tr("CNI requise")}</Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: '#C4611A', lineHeight: 17, marginTop: 2 }}>
-                Soumets ta pièce d'identité pour accepter des courses.
+                {tr("Soumets ta pièce d'identité pour accepter des courses.")}
               </Text>
             </View>
           </View>
@@ -120,7 +121,7 @@ export default function OfferDetailScreen({ navigation, route }) {
         {/* Price card */}
         <View style={{ backgroundColor: '#0E2116', borderRadius: 20, padding: 18, overflow: 'hidden' }}>
           <View style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(212,153,26,0.1)' }} />
-          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.08 }}>Gain de la course</Text>
+          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.08 }}>{tr("Gain de la course")}</Text>
           <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 36, color: '#fff', marginTop: 4 }}>
             {price.toLocaleString('fr-FR')} <Text style={{ fontSize: 16, color: '#D4991A' }}>XAF</Text>
           </Text>
@@ -136,7 +137,7 @@ export default function OfferDetailScreen({ navigation, route }) {
           <View style={{ height: 1, backgroundColor: colors.ink06, marginVertical: 12 }} />
           <View style={{ flexDirection: 'row', gap: 20 }}>
             <View style={{ gap: 3 }}>
-              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink35, textTransform: 'uppercase', letterSpacing: 0.06 }}>Distance</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink35, textTransform: 'uppercase', letterSpacing: 0.06 }}>{tr("Distance")}</Text>
               <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: colors.ink }}>{km} km</Text>
             </View>
             <View style={{ width: 1, backgroundColor: colors.ink06 }} />
@@ -148,7 +149,7 @@ export default function OfferDetailScreen({ navigation, route }) {
               <>
                 <View style={{ width: 1, backgroundColor: colors.ink06 }} />
                 <View style={{ gap: 3 }}>
-                  <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: '#C4611A', textTransform: 'uppercase', letterSpacing: 0.06 }}>Lourd</Text>
+                  <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: '#C4611A', textTransform: 'uppercase', letterSpacing: 0.06 }}>{tr("Lourd")}</Text>
                   <Icon name="bolt" size={16} color="#C4611A" />
                 </View>
               </>
@@ -161,7 +162,7 @@ export default function OfferDetailScreen({ navigation, route }) {
           <View style={{ flexDirection: 'row', gap: 12 }}>
             <Icon name="shield" size={20} color={colors.greenDark} />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 14, color: colors.greenDark }}>Codes sécurisés</Text>
+              <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 14, color: colors.greenDark }}>{tr("Codes sécurisés")}</Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: colors.greenDark, lineHeight: 18, marginTop: 3, opacity: 0.85 }}>
                 Code A → demande-le au vendeur à la collecte.{'\n'}Code B → remis au destinataire à la livraison.
               </Text>
@@ -174,7 +175,7 @@ export default function OfferDetailScreen({ navigation, route }) {
         {/* Actions */}
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <KGButton kind="ghost" style={{ flex: 1 }} onPress={handleDecline}>
-            Refuser
+            {tr("Refuser")}
           </KGButton>
           <KGButton
             kind={online ? 'primary' : 'ghost'}

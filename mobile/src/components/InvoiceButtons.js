@@ -1,3 +1,4 @@
+import { tr } from '../i18n/tr';
 import React from 'react';
 import { View, Text } from 'react-native';
 import { colors, fonts } from '../constants/colors';
@@ -24,7 +25,7 @@ export default function InvoiceButtons({ navigation, deliveryId, status, role })
 
   return (
     <View style={{ gap: 8 }}>
-      <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.6 }}>Factures</Text>
+      <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.6 }}>{tr("Factures")}</Text>
       {buttons.map(([type, label]) => (
         <KGButton key={type} kind="soft" size="md" icon="send" onPress={() => open(type)}>{label}</KGButton>
       ))}

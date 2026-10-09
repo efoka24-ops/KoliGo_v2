@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -67,7 +68,7 @@ export default function OtpScreen({ navigation }) {
       setPendingUser(u => ({ ...(u ?? {}), devCode: res?.devCode }));
       showToast(email ? `Code renvoyé à ${email}` : 'Code renvoyé');
     } catch {
-      showToast('Erreur réseau', 'error');
+      showToast(tr("Erreur réseau"), 'error');
     } finally {
       setResending(false);
     }
@@ -88,9 +89,9 @@ export default function OtpScreen({ navigation }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.green50, borderRadius: 12, padding: 14 }}>
           <Ionicons name="mail" size={18} color={colors.green} />
           <View style={{ flex: 1 }}>
-            <Text style={[type.h3, { color: colors.greenDark }]}>Vérifiez votre boîte mail</Text>
+            <Text style={[type.h3, { color: colors.greenDark }]}>{tr("Vérifiez votre boîte mail")}</Text>
             <Text style={[type.lead, { marginTop: 2 }]}>
-              Code envoyé à <Text style={{ fontWeight: '700', color: colors.ink }}>{dest}</Text>
+              {tr("Code envoyé à")} <Text style={{ fontWeight: '700', color: colors.ink }}>{dest}</Text>
             </Text>
           </View>
         </View>
@@ -101,7 +102,7 @@ export default function OtpScreen({ navigation }) {
             <View style={{ flex: 1 }}>
               <Text style={[type.h3, { color: colors.greenDark }]}>Code détecté : {devCode}</Text>
               <Text style={[type.lead, { marginTop: 2, color: colors.greenDark }]}>
-                Vérification automatique, rien à saisir.
+                {tr("Vérification automatique, rien à saisir.")}
               </Text>
             </View>
           </View>

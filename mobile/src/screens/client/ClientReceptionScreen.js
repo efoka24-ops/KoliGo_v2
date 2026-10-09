@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -127,12 +128,12 @@ export default function ClientReceptionScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
-      <KGTopBar title="Confirmer la réception" onBack={() => navigation.navigate('ClientTracking', params)} />
+      <KGTopBar title={tr("Confirmer la réception")} onBack={() => navigation.navigate('ClientTracking', params)} />
       <ScrollView contentContainerStyle={{ padding: 20, gap: 18, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
 
         <View style={{ gap: 6 }}>
           <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 24, letterSpacing: -0.02 * 24, color: colors.ink }}>
-            Ton colis est arrivé ?
+            {tr("Ton colis est arrivé ?")}
           </Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13.5, color: colors.ink70, lineHeight: 20 }}>
             Saisis le{' '}
@@ -143,7 +144,7 @@ export default function ClientReceptionScreen({ navigation, route }) {
 
         <KGCard padding={16}>
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, letterSpacing: 0.06, textTransform: 'uppercase', marginBottom: 16 }}>
-            Code de réception
+            {tr("Code de réception")}
           </Text>
           <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'center', marginBottom: 20 }}>
             {code.map((d, i) => <DigitBox key={i} digit={d} />)}
@@ -153,23 +154,23 @@ export default function ClientReceptionScreen({ navigation, route }) {
 
         <KGCard padding={14}>
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, letterSpacing: 0.06, textTransform: 'uppercase', marginBottom: 10 }}>
-            Référence paiement MoMo (optionnel)
+            {tr("Référence paiement MoMo (optionnel)")}
           </Text>
           <TextInput
             value={momoRef}
             onChangeText={setMomoRef}
-            placeholder="ex: 655 123 456 ou réf. transaction"
+            placeholder={tr("ex: 655 123 456 ou réf. transaction")}
             placeholderTextColor={colors.ink35}
             keyboardType="default"
             style={{ height: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.ink12, paddingHorizontal: 14, fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink, backgroundColor: colors.cream }}
           />
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, letterSpacing: 0.06, textTransform: 'uppercase', marginTop: 12, marginBottom: 10 }}>
-            Numéro de paiement
+            {tr("Numéro de paiement")}
           </Text>
           <TextInput
             value={paymentNumber}
             onChangeText={setPaymentNumber}
-            placeholder="6XX XXX XXX"
+            placeholder={tr("6XX XXX XXX")}
             placeholderTextColor={colors.ink35}
             keyboardType="phone-pad"
             style={{ height: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.ink12, paddingHorizontal: 14, fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink, backgroundColor: colors.cream }}

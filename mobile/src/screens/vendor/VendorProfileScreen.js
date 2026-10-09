@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -129,7 +130,7 @@ export default function VendorProfileScreen({ navigation }) {
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#EFF8F1', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99 }}>
               <Icon name="shield" size={13} color={colors.greenDark} />
-              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.greenDark }}>CNI vérifiée</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.greenDark }}>{tr("CNI vérifiée")}</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#FFF8E3', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99 }}>
               <Text style={{ fontSize: 12 }}>★</Text>
@@ -161,8 +162,8 @@ export default function VendorProfileScreen({ navigation }) {
               <Icon name="moto" size={22} color="#fff" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: colors.greenDark }}>Passer en mode livreur</Text>
-              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.greenDark, opacity: 0.75, marginTop: 1 }}>Tu gagnes en livrant les autres</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: colors.greenDark }}>{tr("Passer en mode livreur")}</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.greenDark, opacity: 0.75, marginTop: 1 }}>{tr("Tu gagnes en livrant les autres")}</Text>
             </View>
             {loading ? <ActivityIndicator color={colors.green} size="small" /> : <Icon name="arrow" size={18} color={colors.greenDark} />}
           </View>
@@ -189,11 +190,11 @@ export default function VendorProfileScreen({ navigation }) {
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14, borderWidth: 1.5, borderColor: '#F5D0B8', backgroundColor: '#FEF8F5' }}
         >
           <Icon name="logout" size={18} color="#C4611A" />
-          <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: '#C4611A' }}>Se déconnecter</Text>
+          <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: '#C4611A' }}>{tr("Se déconnecter")}</Text>
         </TouchableOpacity>
 
         <Text style={{ textAlign: 'center', fontFamily: `${fonts.mono}-Regular`, fontSize: 11, color: colors.ink35 }}>
-          KoliGo v1.1 · 🇨🇲
+          {tr("KoliGo v1.1 · 🇨🇲")}
         </Text>
       </ScrollView>
     </SafeAreaView>

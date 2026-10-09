@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -45,7 +46,7 @@ function SettingRow({ icon, iconBg, label, sub, right, onPress, last }) {
 export default function SettingsScreen({ navigation }) {
   const { lang, setLang } = useI18n();
   const { theme, setTheme } = useTheme();
-  const { biometricEnabled, enableBiometric, logout } = useApp();
+  const { biometricEnabled, enableBiometric, logout, user } = useApp();
   const [biometric, setBiometric] = useState(biometricEnabled);
 
   const handleBiometricToggle = async (enabled) => {
@@ -72,7 +73,7 @@ export default function SettingsScreen({ navigation }) {
   };
 
   const handleLogout = () => {
-    Alert.alert('Se déconnecter', 'Es-tu sûr(e) de vouloir te déconnecter ?', [
+    Alert.alert(tr("Se déconnecter"), tr("Es-tu sûr(e) de vouloir te déconnecter ?"), [
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Déconnecter', style: 'destructive', onPress: () => {
@@ -88,19 +89,25 @@ export default function SettingsScreen({ navigation }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF5E6' }} edges={['top']}>
       <KenteStripe height={4} />
-      <KGTopBar title="Paramètres" onBack={() => navigation.goBack()} />
+      <KGTopBar title={tr("Paramètres")} onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={{ padding: 16, gap: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
 
         {/* Langue */}
-        <Section title="Langue">
+        <Section title={tr("Langue")}>
           {[['fr', '🇫🇷  Français'], ['en', '🇬🇧  English'], ['ff', '🇨🇲  Fulfulde']].map(([k, label], i) => (
             <SettingRow
               key={k}
               icon={k === 'fr' ? 'bell' : 'bolt'}
               iconBg={lang === k ? '#EFF8F1' : '#F0F0EA'}
               label={label}
-              onPress={() => setLang(k)}
+              onPress={() => {
+                if (k === lang) return;
+                setLang(k);
+                // Les textes déjà affichés dans les autres onglets ne se mettent pas à jour seuls : on repart de l'accueil.
+                const home = (user?.activeRole || user?.role || '').toString().toUpperCase() === 'DELIVERER' ? 'DelivererApp' : 'VendorApp';
+                navigation.reset({ index: 0, routes: [{ name: home }] });
+              }}
               last={i === 2}
               right={
                 lang === k ? (
@@ -114,7 +121,7 @@ export default function SettingsScreen({ navigation }) {
         </Section>
 
         {/* Thème */}
-        <Section title="Thème d'affichage">
+        <Section title={tr("Thème d'affichage")}>
           {THEME_OPTIONS.map((opt, i) => (
             <SettingRow
               key={opt.key}
@@ -135,11 +142,11 @@ export default function SettingsScreen({ navigation }) {
         </Section>
 
         {/* Sécurité */}
-        <Section title="Sécurité">
+        <Section title={tr("Sécurité")}>
           <SettingRow
             icon="user"
             iconBg="#EFF8F1"
-            label="Face ID / Empreinte digitale"
+            label={tr("Face ID / Empreinte digitale")}
             sub={biometric ? 'Activé — connexion rapide' : 'Désactivé'}
             right={
               <Switch
@@ -153,14 +160,14 @@ export default function SettingsScreen({ navigation }) {
           <SettingRow
             icon="shield"
             iconBg="#FEF0E3"
-            label="Changer le PIN"
-            sub="Avec votre PIN actuel"
+            label={tr("Changer le PIN")}
+            sub={tr("Avec votre PIN actuel")}
             onPress={() => navigation.navigate('ChangePin')}
           />
           <SettingRow
             icon="id"
             iconBg="#F0F0EA"
-            label="Conditions d'utilisation"
+            label={tr("Conditions d'utilisation")}
             onPress={() => navigation.navigate('Terms')}
             last
           />
@@ -172,11 +179,11 @@ export default function SettingsScreen({ navigation }) {
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14, borderWidth: 1.5, borderColor: '#F5D0B8', backgroundColor: '#FEF8F5' }}
         >
           <Icon name="logout" size={18} color="#C4611A" />
-          <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: '#C4611A' }}>Se déconnecter</Text>
+          <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: '#C4611A' }}>{tr("Se déconnecter")}</Text>
         </TouchableOpacity>
 
         <Text style={{ textAlign: 'center', fontFamily: `${fonts.mono}-Regular`, fontSize: 11, color: colors.ink35 }}>
-          KoliGo v1.1 · Douala, Cameroun
+          {tr("KoliGo v1.1 · Douala, Cameroun")}
         </Text>
       </ScrollView>
     </SafeAreaView>

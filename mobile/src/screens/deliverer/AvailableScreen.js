@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -65,7 +66,7 @@ function OfferCard({ delivery, onPress }) {
             <KGStatusPill status={delivery.status ?? 'EN_ATTENTE'} />
             {delivery.vehicleOk === false && (
               <View style={{ backgroundColor: '#FEF2F2', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
-                <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 10.5, color: '#D8472A' }}>Véhicule inadapté</Text>
+                <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 10.5, color: '#D8472A' }}>{tr("Véhicule inadapté")}</Text>
               </View>
             )}
           </View>
@@ -176,7 +177,7 @@ export default function AvailableScreen({ navigation }) {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
       <KenteStripe height={4} />
       <KGTopBar
-        title="Courses disponibles"
+        title={tr("Courses disponibles")}
         onBack={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('DelivererHome')}
         action={
           <TouchableOpacity onPress={onRefresh}>
@@ -216,9 +217,9 @@ export default function AvailableScreen({ navigation }) {
       </ScrollView>
 
       <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
-        <FilterPicker label="Toutes les villes" allLabel="Toutes les villes" value={city} items={cityItems}
+        <FilterPicker label={tr("Toutes les villes")} allLabel="Toutes les villes" value={city} items={cityItems}
           onChange={(c) => { setCity(c); setQuartier(''); }} />
-        <FilterPicker label="Tous les quartiers" allLabel="Tous les quartiers" value={quartier} items={quartierItems}
+        <FilterPicker label={tr("Tous les quartiers")} allLabel="Tous les quartiers" value={quartier} items={quartierItems}
           onChange={setQuartier} disabled={!city} />
       </View>
 
@@ -242,10 +243,10 @@ export default function AvailableScreen({ navigation }) {
                 <Icon name="moto" size={28} color={colors.ink35} />
               </View>
               <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 14, color: colors.ink55 }}>
-                Aucune course disponible
+                {tr("Aucune course disponible")}
               </Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink35, textAlign: 'center' }}>
-                Reviens dans quelques minutes ou change le filtre.
+                {tr("Reviens dans quelques minutes ou change le filtre.")}
               </Text>
             </View>
           ) : (

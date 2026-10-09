@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator,
@@ -228,23 +229,23 @@ export default function TrackParcelScreen({ navigation, route }) {
   if (!d) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }} edges={['top']}>
-        <KGTopBar title="Suivre mon colis" onBack={() => navigation.goBack()} />
+        <KGTopBar title={tr("Suivre mon colis")} onBack={() => navigation.goBack()} />
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView contentContainerStyle={{ padding: 20, gap: 18 }} keyboardShouldPersistTaps="handled">
             <View style={{ alignItems: 'center', gap: 10, paddingTop: 20 }}>
               <View style={{ width: 76, height: 76, borderRadius: 22, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center' }}>
                 <Icon name="package" size={34} color={colors.green} />
               </View>
-              <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 26, color: colors.ink, letterSpacing: -0.5, textAlign: 'center' }}>Ton colis arrive</Text>
+              <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 26, color: colors.ink, letterSpacing: -0.5, textAlign: 'center' }}>{tr("Ton colis arrive")}</Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14.5, color: colors.ink55, textAlign: 'center', lineHeight: 21, maxWidth: 310 }}>
                 Entre la référence que le vendeur t’a communiquée pour suivre ton colis en direct, discuter avec le livreur et payer à la réception.
               </Text>
             </View>
             <Input
-              label="Référence du colis"
+              label={tr("Référence du colis")}
               value={refInput}
               onChangeText={(t) => { setRefInput(t.toUpperCase()); setLookupError(null); }}
-              placeholder="ex : A1B2C3D4"
+              placeholder={tr("ex : A1B2C3D4")}
               autoCapitalize="characters"
               autoCorrect={false}
               maxLength={12}
@@ -280,22 +281,22 @@ export default function TrackParcelScreen({ navigation, route }) {
         <ScrollView ref={scrollRef} contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 60 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
           {/* 1. Colis */}
-          <Section title="1 · Ton colis" accent={colors.green}>
+          <Section title={tr("1 · Ton colis")} accent={colors.green}>
             <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 20, color: colors.ink }}>
               {d.description || 'Colis'}
             </Text>
-            <Row label="Boutique" value={d.shopName} />
-            <Row label="Référence" value={d.ref} bold />
-            <Row label="De" value={d.pickupAddress} />
+            <Row label={tr("Boutique")} value={d.shopName} />
+            <Row label={tr("Référence")} value={d.ref} bold />
+            <Row label={tr("De")} value={d.pickupAddress} />
             <Row label="À" value={d.dropoffAddress} />
-            <Row label="Poids" value={d.weightKg ? `${d.weightKg} kg` : null} />
-            <Row label="Distance" value={d.distanceKm ? `${d.distanceKm} km` : null} />
+            <Row label={tr("Poids")} value={d.weightKg ? `${d.weightKg} kg` : null} />
+            <Row label={tr("Distance")} value={d.distanceKm ? `${d.distanceKm} km` : null} />
           </Section>
 
           {/* 2. Progression */}
-          <Section title="2 · Progression" accent={colors.orange}>
+          <Section title={tr("2 · Progression")} accent={colors.orange}>
             {cancelled ? (
-              <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 15, color: '#D8472A' }}>Cette livraison a été annulée.</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 15, color: '#D8472A' }}>{tr("Cette livraison a été annulée.")}</Text>
             ) : STEPS.map((s, i) => {
               const done = i < stepIdx || d.status === 'LIVRE';
               const current = i === stepIdx && d.status !== 'LIVRE';
@@ -318,7 +319,7 @@ export default function TrackParcelScreen({ navigation, route }) {
 
           {/* 3. Carte */}
           {!cancelled && (
-            <Section title="3 · Position du livreur">
+            <Section title={tr("3 · Position du livreur")}>
               <LiveMap delivererPos={delivererPos} clientPos={mapClientPos} />
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: colors.ink55 }}>
                 {delivererPos
@@ -330,7 +331,7 @@ export default function TrackParcelScreen({ navigation, route }) {
 
           {/* 4. Livreur */}
           {d.deliverer && (
-            <Section title="4 · Ton livreur">
+            <Section title={tr("4 · Ton livreur")}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 16, color: colors.greenDark }}>{initials(d.deliverer.name)}</Text>
@@ -345,10 +346,10 @@ export default function TrackParcelScreen({ navigation, route }) {
 
           {/* 5. Messages */}
           {!cancelled && d.status !== 'LIVRE' && !['EN_ATTENTE'].includes(d.status) && (
-            <Section title="5 · Messages">
+            <Section title={tr("5 · Messages")}>
               <View style={{ gap: 8, maxHeight: 240 }}>
                 {messages.length === 0 && (
-                  <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink35, textAlign: 'center', paddingVertical: 10 }}>Aucun message pour l’instant</Text>
+                  <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink35, textAlign: 'center', paddingVertical: 10 }}>{tr("Aucun message pour l’instant")}</Text>
                 )}
                 <ScrollView nestedScrollEnabled style={{ maxHeight: 240 }}>
                   {messages.map(m => {
@@ -368,7 +369,7 @@ export default function TrackParcelScreen({ navigation, route }) {
                 <TextInput
                   value={chatText}
                   onChangeText={setChatText}
-                  placeholder="Écris au livreur / vendeur…"
+                  placeholder={tr("Écris au livreur / vendeur…")}
                   placeholderTextColor={colors.ink35}
                   maxLength={500}
                   onSubmitEditing={sendMessage}
@@ -383,16 +384,16 @@ export default function TrackParcelScreen({ navigation, route }) {
 
           {/* 6. Confirmation et paiement */}
           {canPay && (
-            <Section title="6 · Confirmer la réception et payer" accent={colors.green}>
+            <Section title={tr("6 · Confirmer la réception et payer")} accent={colors.green}>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13.5, color: colors.ink70, lineHeight: 20 }}>
-                Quand le livreur est chez toi, entre ton <Text style={{ fontFamily: `${fonts.ui}-Bold` }}>code de réception</Text> (reçu du vendeur) et ton numéro mobile money. Tu valideras ensuite le paiement sur ton téléphone.
+                {tr("Quand le livreur est chez toi, entre ton")} <Text style={{ fontFamily: `${fonts.ui}-Bold` }}>code de réception</Text> (reçu du vendeur) et ton numéro mobile money. Tu valideras ensuite le paiement sur ton téléphone.
               </Text>
               <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12.5, color: '#C4611A', lineHeight: 18 }}>
                 À savoir : sur la demande de paiement de ton opérateur, le nom affiché sera « Kerry Pay », notre prestataire de paiement sécurisé. C'est normal : tu peux valider.
               </Text>
-              <Row label="Transport à payer" value={xaf(total)} bold />
-              <Input label="Code de réception (4 chiffres)" value={code} onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" maxLength={4} placeholder="0000" />
-              <Input label="Numéro mobile money (MTN / Orange)" value={momo} onChangeText={(t) => setMomo(t.replace(/\D/g, '').slice(0, 9))} keyboardType="number-pad" maxLength={9} placeholder="6XXXXXXXX" />
+              <Row label={tr("Transport à payer")} value={xaf(total)} bold />
+              <Input label={tr("Code de réception (4 chiffres)")} value={code} onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" maxLength={4} placeholder="0000" />
+              <Input label={tr("Numéro mobile money (MTN / Orange)")} value={momo} onChangeText={(t) => setMomo(t.replace(/\D/g, '').slice(0, 9))} keyboardType="number-pad" maxLength={9} placeholder="6XXXXXXXX" />
               {payInfo && (
                 <View style={{ borderRadius: 12, padding: 14, flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: payInfo.kind === 'pending' ? colors.greenLight : '#FEF2F2' }}>
                   {payInfo.kind === 'pending' && <ActivityIndicator color={colors.green} />}
@@ -407,27 +408,27 @@ export default function TrackParcelScreen({ navigation, route }) {
 
           {/* 7. Reçu */}
           {d.status === 'LIVRE' && (
-            <Section title="7 · Reçu" accent={colors.green}>
+            <Section title={tr("7 · Reçu")} accent={colors.green}>
               <View style={{ alignItems: 'center', gap: 6, paddingVertical: 6 }}>
                 <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' }}>
                   <Icon name="check" size={28} color="#fff" />
                 </View>
-                <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 20, color: colors.greenDark }}>Colis livré et payé</Text>
+                <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 20, color: colors.greenDark }}>{tr("Colis livré et payé")}</Text>
               </View>
-              <Row label="Référence" value={d.ref} bold />
-              <Row label="Date" value={new Date(d.createdAt).toLocaleDateString('fr-FR')} />
-              <Row label="De" value={d.pickupAddress} />
+              <Row label={tr("Référence")} value={d.ref} bold />
+              <Row label={tr("Date")} value={new Date(d.createdAt).toLocaleDateString('fr-FR')} />
+              <Row label={tr("De")} value={d.pickupAddress} />
               <Row label="À" value={d.dropoffAddress} />
-              <Row label="Boutique" value={d.shopName} />
-              <Row label="Livreur" value={d.deliverer?.name} />
-              <Row label="Transport payé" value={xaf(total)} bold />
+              <Row label={tr("Boutique")} value={d.shopName} />
+              <Row label={tr("Livreur")} value={d.deliverer?.name} />
+              <Row label={tr("Transport payé")} value={xaf(total)} bold />
               <KGButton kind="soft" size="md" icon="send" onPress={() => navigation.navigate('Invoice', { deliveryId: d.id, type: 'payment', publicMode: true })}>
-                Voir ma facture de paiement
+                {tr("Voir ma facture de paiement")}
               </KGButton>
             </Section>
           )}
 
-          <KGButton kind="ghost" size="md" onPress={() => navigation.goBack()}>Retour à l’accueil</KGButton>
+          <KGButton kind="ghost" size="md" onPress={() => navigation.goBack()}>{tr("Retour à l’accueil")}</KGButton>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

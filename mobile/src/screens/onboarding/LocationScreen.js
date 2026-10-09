@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState } from 'react';
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,15 +19,15 @@ export default function LocationScreen({ navigation }) {
         <Text style={[type.lead, { textAlign: 'center' }]}>{t('locationBody')}</Text>
         <Card style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View>
-            <Text style={type.body}>Pendant l'usage</Text>
-            <Text style={[type.lead, { fontSize: 11 }]}>Requis pour toutes les courses</Text>
+            <Text style={type.body}>{tr("Pendant l'usage")}</Text>
+            <Text style={[type.lead, { fontSize: 11 }]}>{tr("Requis pour toutes les courses")}</Text>
           </View>
-          <Pill label="ACTIVÉ" tone="ok" />
+          <Pill label={tr("ACTIVÉ")} tone="ok" />
         </Card>
         <Card style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View>
-            <Text style={type.body}>Arrière-plan</Text>
-            <Text style={[type.lead, { fontSize: 11 }]}>Livreur — GPS streaming 8s</Text>
+            <Text style={type.body}>{tr("Arrière-plan")}</Text>
+            <Text style={[type.lead, { fontSize: 11 }]}>{tr("Livreur — GPS streaming 8s")}</Text>
           </View>
           <Toggle value={bg} onValueChange={setBg} />
         </Card>

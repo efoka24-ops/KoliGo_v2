@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React from 'react';
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,7 +16,7 @@ export default function MaintenanceScreen({ navigation }) {
       <Text style={[type.h1, { textAlign: 'center', marginTop: 12 }]}>{t('maintenance')}</Text>
       <Text style={[type.lead, { textAlign: 'center', maxWidth: 300 }]}>{t('maintenanceBody')}</Text>
       <Button title={t('retry')} onPress={() => navigation.goBack()} style={{ marginTop: 8, alignSelf: 'stretch' }} />
-      <Text style={[type.eyebrow, { marginTop: 8 }]}>FLAG PLATFORM_SETTINGS</Text>
+      <Text style={[type.eyebrow, { marginTop: 8 }]}>{tr("FLAG PLATFORM_SETTINGS")}</Text>
     </Screen>
   );
 }

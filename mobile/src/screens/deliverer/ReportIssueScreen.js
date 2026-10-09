@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,7 +17,7 @@ export default function ReportIssueScreen({ navigation }) {
     <Screen footer={<Button title={t('submitReport')} variant="accent" onPress={() => navigation.goBack()} />}>
       <ScreenHeader title={t('reportIssue')} onBack={() => navigation.goBack()} />
       <View style={{ paddingHorizontal: 18, paddingTop: 6, gap: 12 }}>
-        <Text style={type.eyebrow}>Type de problème</Text>
+        <Text style={type.eyebrow}>{tr("Type de problème")}</Text>
         {types.map(([k, label]) => (
           <Pressable key={k} onPress={() => setSelected(k)}>
             <Card tone={selected === k ? 'orange' : 'soft'} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -30,11 +31,11 @@ export default function ReportIssueScreen({ navigation }) {
             </Card>
           </Pressable>
         ))}
-        <Text style={type.eyebrow}>Photos (max 3)</Text>
+        <Text style={type.eyebrow}>{tr("Photos (max 3)")}</Text>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <Placeholder height={70} upload style={{ flex: 1 }} />
           <Placeholder height={70} upload style={{ flex: 1 }} />
-          <Placeholder height={70} label="+ Ajouter" style={{ flex: 1 }} />
+          <Placeholder height={70} label={tr("+ Ajouter")} style={{ flex: 1 }} />
         </View>
       </View>
     </Screen>

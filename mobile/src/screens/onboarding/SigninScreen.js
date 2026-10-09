@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
@@ -48,12 +49,12 @@ export default function SigninScreen({ navigation }) {
       // Le jeton d'accès est de courte durée : on le renouvelle avec le jeton de session conservé sur le téléphone.
       const refreshToken = await storage.getItem('refresh_token');
       if (!refreshToken) {
-        showToast('Session expirée — connecte-toi avec ton PIN une fois pour réactiver la biométrie.', 'error');
+        showToast(tr("Session expirée — connecte-toi avec ton PIN une fois pour réactiver la biométrie."), 'error');
         return;
       }
       const tokens = await apiFetch('/auth/refresh', { method: 'POST', body: JSON.stringify({ token: refreshToken }) });
       if (!tokens?.accessToken) {
-        showToast('Session expirée — connecte-toi avec ton PIN.', 'error');
+        showToast(tr("Session expirée — connecte-toi avec ton PIN."), 'error');
         return;
       }
       await storage.setItem('access_token', tokens.accessToken);
@@ -145,13 +146,13 @@ export default function SigninScreen({ navigation }) {
 
           {step === 'phone' ? (
             <>
-              <Text style={[type.h1, { marginTop: 16 }]}>Connexion</Text>
-              <Text style={type.lead}>Numéro de téléphone ou adresse email</Text>
+              <Text style={[type.h1, { marginTop: 16 }]}>{tr("Connexion")}</Text>
+              <Text style={type.lead}>{tr("Numéro de téléphone ou adresse email")}</Text>
               <View style={{ marginTop: 20, marginBottom: 12 }}>
                 <TextInput
                   value={identifier}
                   onChangeText={v => { setIdentifier(v); setError(''); }}
-                  placeholder="6XX XX XX XX ou email"
+                  placeholder={tr("6XX XX XX XX ou email")}
                   placeholderTextColor={colors.muted}
                   keyboardType="default"
                   autoCapitalize="none"
@@ -169,13 +170,13 @@ export default function SigninScreen({ navigation }) {
               >
                 {loading
                   ? <ActivityIndicator color="#fff" />
-                  : <Text style={styles.nextBtnText}>Continuer →</Text>}
+                  : <Text style={styles.nextBtnText}>{tr("Continuer →")}</Text>}
               </TouchableOpacity>
 
               <View style={{ flex: 1 }} />
               <TouchableOpacity onPress={() => navigation.navigate('Signup')} style={{ alignSelf: 'center', paddingVertical: 12 }}>
                 <Text style={{ color: colors.green, fontSize: 13, fontWeight: '600', textAlign: 'center' }}>
-                  Pas encore de compte ? Créer un compte
+                  {tr("Pas encore de compte ? Créer un compte")}
                 </Text>
               </TouchableOpacity>
             </>
@@ -200,7 +201,7 @@ export default function SigninScreen({ navigation }) {
                 <TouchableOpacity onPress={handleBiometric} style={styles.biometricBtn}>
                   <View style={styles.faceIcon}><Text style={{ fontSize: 18 }}>👤</Text></View>
                   <Text style={[type.lead, { flex: 1 }]}>{t('faceId')}</Text>
-                  <Text style={{ color: colors.green, fontWeight: '700', fontSize: 13 }}>Utiliser</Text>
+                  <Text style={{ color: colors.green, fontWeight: '700', fontSize: 13 }}>{tr("Utiliser")}</Text>
                 </TouchableOpacity>
               )}
 
@@ -214,10 +215,10 @@ export default function SigninScreen({ navigation }) {
               )}
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10 }}>
                 <TouchableOpacity onPress={handleChangeAccount}>
-                  <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '600' }}>Changer de compte</Text>
+                  <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '600' }}>{tr("Changer de compte")}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => navigation.navigate('ForgotPin')}>
-                  <Text style={{ color: colors.green, fontSize: 13, fontWeight: '600' }}>PIN oublié ?</Text>
+                  <Text style={{ color: colors.green, fontSize: 13, fontWeight: '600' }}>{tr("PIN oublié ?")}</Text>
                 </TouchableOpacity>
               </View>
             </>

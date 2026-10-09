@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,7 +36,7 @@ export default function PaymentSetupScreen({ navigation }) {
           ))}
         </View>
         <Field label={t('number')} placeholder="+237 6•• ••• •12" keyboardType="phone-pad" />
-        <Field label={t('holder')} placeholder="Awa N." />
+        <Field label={t('holder')} placeholder={tr("Awa N.")} />
       </View>
     </Screen>
   );

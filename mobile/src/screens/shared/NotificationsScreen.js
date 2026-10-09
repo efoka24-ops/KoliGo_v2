@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -36,11 +37,11 @@ export default function NotificationsScreen({ navigation }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }} edges={['top']}>
       <KGTopBar
-        title="Notifications"
+        title={tr("Notifications")}
         onBack={() => navigation.goBack()}
         action={unreadCount > 0 ? (
           <TouchableOpacity onPress={() => markNotificationsRead()}>
-            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.green }}>Tout lire</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.green }}>{tr("Tout lire")}</Text>
           </TouchableOpacity>
         ) : null}
       />
@@ -52,9 +53,9 @@ export default function NotificationsScreen({ navigation }) {
         {notifications.length === 0 ? (
           <View style={{ alignItems: 'center', paddingVertical: 64, gap: 10 }}>
             <Icon name="bell" size={32} color={colors.ink35} />
-            <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: colors.ink }}>Aucune notification</Text>
+            <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: colors.ink }}>{tr("Aucune notification")}</Text>
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55, textAlign: 'center', maxWidth: 260 }}>
-              Les nouvelles courses, acceptations, livraisons et messages de KoliGo apparaîtront ici.
+              {tr("Les nouvelles courses, acceptations, livraisons et messages de KoliGo apparaîtront ici.")}
             </Text>
           </View>
         ) : notifications.map((n) => (

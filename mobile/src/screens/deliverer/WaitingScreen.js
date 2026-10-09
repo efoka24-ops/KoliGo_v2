@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
 // ActivityIndicator used for loading state
@@ -34,11 +35,11 @@ export default function WaitingScreen({ navigation, route }) {
       const data = await apiFetch(`/deliveries/${deliveryId}`, {}, token);
       setDelivery(normalizeDelivery(data));
       if (data.status === 'livre' && !silent) {
-        showToast('Livraison confirmee par le client !');
+        showToast(tr("Livraison confirmee par le client !"));
         navigation.navigate('DelivererApp');
       }
     } catch {
-      if (!silent) showToast('Erreur chargement', 'error');
+      if (!silent) showToast(tr("Erreur chargement"), 'error');
     } finally {
       if (!silent) setLoading(false);
     }
@@ -53,7 +54,7 @@ export default function WaitingScreen({ navigation, route }) {
 
   const handleCall = () => {
     const phone = delivery?.recipientPhone || delivery?.recipientPhone;
-    if (!phone) { showToast('Numero du destinataire indisponible', 'error'); return; }
+    if (!phone) { showToast(tr("Numero du destinataire indisponible"), 'error'); return; }
     Linking.openURL(`tel:+237${phone.replace(/\s/g, '')}`).catch(() =>
       showToast('Impossible d\'ouvrir le telephone', 'error')
     );
@@ -61,7 +62,7 @@ export default function WaitingScreen({ navigation, route }) {
 
   const handleChat = () => {
     if (!deliveryId) {
-      showToast('Chat indisponible', 'error');
+      showToast(tr("Chat indisponible"), 'error');
       return;
     }
     // Chat reel (API) : le destinataire n'a pas de compte, il ecrit depuis sa page de suivi.
@@ -105,7 +106,7 @@ export default function WaitingScreen({ navigation, route }) {
         <View style={{ position: 'absolute', bottom: 12, left: 16, right: 16 }}>
           <View style={{ backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#4ADE80' }} />
-            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: '#fff' }}>EN ROUTE vers le destinataire</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: '#fff' }}>{tr("EN ROUTE vers le destinataire")}</Text>
             {d.status && <KGStatusPill status={d.status} style={{ marginLeft: 'auto' }} />}
           </View>
         </View>
@@ -131,7 +132,7 @@ export default function WaitingScreen({ navigation, route }) {
         {/* Recipient card */}
         <KGCard padding={14}>
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.04, marginBottom: 12 }}>
-            Destinataire
+            {tr("Destinataire")}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center' }}>
@@ -175,7 +176,7 @@ export default function WaitingScreen({ navigation, route }) {
               <Icon name="shield" size={22} color={colors.greenDark} />
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 12, color: colors.greenDark, textTransform: 'uppercase', letterSpacing: 0.05 }}>
-                  Code de livraison (Code B)
+                  {tr("Code de livraison (Code B)")}
                 </Text>
                 <Text style={{ fontFamily: `${fonts.mono}-Medium`, fontSize: 28, color: colors.ink, letterSpacing: 8, marginTop: 4 }}>
                   {d.code.split('').join(' ')}
@@ -183,7 +184,7 @@ export default function WaitingScreen({ navigation, route }) {
               </View>
             </View>
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.greenDark, marginTop: 8, lineHeight: 17, opacity: 0.85 }}>
-              Le destinataire te donnera ce code pour confirmer la remise du colis.
+              {tr("Le destinataire te donnera ce code pour confirmer la remise du colis.")}
             </Text>
           </KGCard>
         )}
@@ -192,7 +193,7 @@ export default function WaitingScreen({ navigation, route }) {
         <View style={{ backgroundColor: '#FFF8EC', borderRadius: 14, padding: 14, flexDirection: 'row', gap: 10, borderWidth: 1, borderColor: '#F5D0B8' }}>
           <Icon name="bolt" size={16} color="#C4611A" />
           <Text style={{ flex: 1, fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: '#C4611A', lineHeight: 18 }}>
-            Une fois chez le destinataire, appuie sur le bouton ci-dessous pour valider l'arrive.
+            {tr("Une fois chez le destinataire, appuie sur le bouton ci-dessous pour valider l'arrive.")}
           </Text>
         </View>
 
@@ -203,11 +204,11 @@ export default function WaitingScreen({ navigation, route }) {
           icon="check"
           onPress={handleConfirmDelivery}
         >
-          Je suis arrive chez le client
+          {tr("Je suis arrive chez le client")}
         </KGButton>
 
         <KGButton kind="ghost" size="md" onPress={() => navigation.goBack()}>
-          Retour
+          {tr("Retour")}
         </KGButton>
       </ScrollView>
     </SafeAreaView>

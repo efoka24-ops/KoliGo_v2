@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -120,7 +121,7 @@ export default function InvoiceScreen({ navigation, route }) {
           <View ref={shotRef} collapsable={false} style={{ gap: 12, backgroundColor: colors.cream, padding: 4 }}>
           {/* En-tete : couleur propre a chaque type de facture */}
           <View style={{ backgroundColor: accent, borderRadius: 18, padding: 18, gap: 4 }}>
-            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: '#fff' }}>Koli<Text style={{ color: '#ffcb72' }}>Go</Text></Text>
+            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: '#fff' }}>{tr("Koli")}<Text style={{ color: '#ffcb72' }}>{tr("Go")}</Text></Text>
             <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 17, color: '#fff', marginTop: 4 }}>{inv.title}</Text>
             <Text style={{ fontFamily: `${fonts.mono}-Regular`, fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>N° {inv.number}</Text>
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>{dateFr(inv.issuedAt)} · Colis {inv.delivery.ref}</Text>
@@ -137,7 +138,7 @@ export default function InvoiceScreen({ navigation, route }) {
             </Block>
           ))}
 
-          <Block title="Montants" accent={accent}>
+          <Block title={tr("Montants")} accent={accent}>
             {inv.lines.map((l, i) => (
               <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12, paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: '#F5F0E8' }}>
                 <Text style={{ flex: 1, fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink, lineHeight: 18 }}>{l.label}</Text>
@@ -156,7 +157,7 @@ export default function InvoiceScreen({ navigation, route }) {
             <View style={{ flex: 1 }}><KGButton kind="primary" size="lg" icon="camera" disabled={!!saving} onPress={() => saveImage('png')}>{saving === 'png' ? 'Enregistrement…' : 'Image PNG'}</KGButton></View>
             <View style={{ flex: 1 }}><KGButton kind="soft" size="lg" icon="camera" disabled={!!saving} onPress={() => saveImage('jpg')}>{saving === 'jpg' ? 'Enregistrement…' : 'Image JPG'}</KGButton></View>
           </View>
-          <KGButton kind="ghost" size="lg" icon="send" onPress={share}>Partager en texte</KGButton>
+          <KGButton kind="ghost" size="lg" icon="send" onPress={share}>{tr("Partager en texte")}</KGButton>
         </ScrollView>
       )}
     </SafeAreaView>

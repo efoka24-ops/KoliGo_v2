@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -67,7 +68,7 @@ export default function VendorHomeScreen({ navigation }) {
             <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 16, color: '#fff' }}>{avatar}</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>Bonjour,</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{tr("Bonjour,")}</Text>
             <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 20, color: colors.ink, letterSpacing: -0.5, marginTop: 1 }}>{displayName}</Text>
           </View>
           <TouchableOpacity onPress={() => navigation.navigate('Notifications')}
@@ -110,8 +111,8 @@ export default function VendorHomeScreen({ navigation }) {
             <Icon name="plus" size={24} color="#fff" strokeWidth={2.4} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 17, color: '#fff', letterSpacing: -0.01 }}>Créer une livraison</Text>
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 }}>Prix calculé en 3 secondes</Text>
+            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 17, color: '#fff', letterSpacing: -0.01 }}>{tr("Créer une livraison")}</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 }}>{tr("Prix calculé en 3 secondes")}</Text>
           </View>
           <Icon name="arrow" size={22} color="#fff" />
         </TouchableOpacity>
@@ -119,10 +120,10 @@ export default function VendorHomeScreen({ navigation }) {
         {/* Active deliveries list */}
         <View style={{ paddingHorizontal: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 15, color: colors.ink }}>Mes livraisons</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 15, color: colors.ink }}>{tr("Mes livraisons")}</Text>
             <TouchableOpacity onPress={() => navigation.navigate('History')}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.green }}>Tout voir</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.green }}>{tr("Tout voir")}</Text>
               <Icon name="arrow" size={12} color={colors.green} />
             </TouchableOpacity>
           </View>
@@ -137,10 +138,10 @@ export default function VendorHomeScreen({ navigation }) {
                 <Icon name="package" size={24} color={colors.ink35} />
               </View>
               <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 14, color: colors.ink55 }}>
-                Aucune livraison en cours
+                {tr("Aucune livraison en cours")}
               </Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink35, textAlign: 'center' }}>
-                Crée ta première livraison ci-dessus.
+                {tr("Crée ta première livraison ci-dessus.")}
               </Text>
             </View>
           ) : (

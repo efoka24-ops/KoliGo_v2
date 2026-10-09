@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,7 +22,7 @@ export default function ClientReportIssueScreen({ navigation, route }) {
 
   const handleSubmit = async () => {
     if (!issueType) { Alert.alert('Sélectionnez un type d\'incident'); return; }
-    if (!clientToken) { Alert.alert('Erreur', 'Lien de livraison manquant.'); return; }
+    if (!clientToken) { Alert.alert(tr("Erreur"), tr("Lien de livraison manquant.")); return; }
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/deliveries/client-report`, {
@@ -31,7 +32,7 @@ export default function ClientReportIssueScreen({ navigation, route }) {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? 'Erreur');
-      Alert.alert('Signalement envoyé', 'Notre équipe va examiner votre signalement sous 24h.', [
+      Alert.alert(tr("Signalement envoyé"), tr("Notre équipe va examiner votre signalement sous 24h."), [
         { text: 'OK', onPress: () => navigation.popToTop() },
       ]);
     } catch (e) {
@@ -49,14 +50,14 @@ export default function ClientReportIssueScreen({ navigation, route }) {
             <Ionicons name="arrow-back" size={20} color="#333" />
           </TouchableOpacity>
           <View>
-            <Text style={{ fontSize: 17, fontWeight: '700' }}>Signaler un incident</Text>
-            <Text style={{ fontSize: 12, color: '#888' }}>Décrivez le problème rencontré</Text>
+            <Text style={{ fontSize: 17, fontWeight: '700' }}>{tr("Signaler un incident")}</Text>
+            <Text style={{ fontSize: 12, color: '#888' }}>{tr("Décrivez le problème rencontré")}</Text>
           </View>
         </View>
 
         {/* Issue types */}
         <View style={{ gap: 8 }}>
-          <Text style={s.label}>Type d'incident</Text>
+          <Text style={s.label}>{tr("Type d'incident")}</Text>
           {ISSUE_TYPES.map(it => {
             const active = issueType === it.id;
             return (
@@ -78,11 +79,11 @@ export default function ClientReportIssueScreen({ navigation, route }) {
 
         {/* Description */}
         <View style={{ gap: 6 }}>
-          <Text style={s.label}>Description (optionnel)</Text>
+          <Text style={s.label}>{tr("Description (optionnel)")}</Text>
           <TextInput
             value={description}
             onChangeText={setDescription}
-            placeholder="Décrivez le problème en détail…"
+            placeholder={tr("Décrivez le problème en détail…")}
             placeholderTextColor="#aaa"
             multiline
             numberOfLines={4}
@@ -101,7 +102,7 @@ export default function ClientReportIssueScreen({ navigation, route }) {
             style={[s.submitBtn, !issueType && { opacity: 0.4 }]}
           >
             <Ionicons name="alert-circle" size={16} color="#fff" />
-            <Text style={s.submitTxt}>Envoyer le signalement</Text>
+            <Text style={s.submitTxt}>{tr("Envoyer le signalement")}</Text>
           </TouchableOpacity>
         )}
       </View>

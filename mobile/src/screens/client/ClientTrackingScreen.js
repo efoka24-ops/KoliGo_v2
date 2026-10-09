@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import * as Location from 'expo-location';
@@ -92,7 +93,7 @@ export default function ClientTrackingScreen({ navigation, route }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }} edges={['top']}>
       <KGTopBar
-        title="Suivi de mon colis"
+        title={tr("Suivi de mon colis")}
         onBack={goHome}
         action={<Icon name="bell" size={20} color={colors.ink} />}
       />
@@ -101,7 +102,7 @@ export default function ClientTrackingScreen({ navigation, route }) {
         <LiveMap delivererPos={delivererPos} clientPos={clientPos} />
 
         <View style={{ backgroundColor: colors.green, borderRadius: 20, padding: 16, gap: 8 }}>
-          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 0.05 }}>Parcours client</Text>
+          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 0.05 }}>{tr("Parcours client")}</Text>
           <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 20, color: '#fff', letterSpacing: -0.03 * 20 }}>
             {delivererPos ? 'Le livreur bouge en temps réel' : 'En attente de position GPS'}
           </Text>
@@ -114,7 +115,7 @@ export default function ClientTrackingScreen({ navigation, route }) {
         <View style={{ backgroundColor: colors.ink, borderRadius: 20, padding: 16 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: 0.05 }}>Statut</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: 0.05 }}>{tr("Statut")}</Text>
               <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 18, color: '#fff', marginTop: 4 }}>
                 {delivererPos ? 'Livreur en route' : 'En attente de position GPS'}
               </Text>
@@ -135,7 +136,7 @@ export default function ClientTrackingScreen({ navigation, route }) {
 
         {/* Deliverer card */}
         <KGCard padding={14}>
-          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.04, marginBottom: 10 }}>Ton livreur</Text>
+          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.04, marginBottom: 10 }}>{tr("Ton livreur")}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               {delivererAvatarUrl ? (
@@ -188,7 +189,7 @@ export default function ClientTrackingScreen({ navigation, route }) {
 
         {/* Package details */}
         <KGCard padding={14}>
-          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.04, marginBottom: 10 }}>Détails commande</Text>
+          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.04, marginBottom: 10 }}>{tr("Détails commande")}</Text>
           {[
             { label: 'Vendeur', value: params.vendorName || 'Vendeur KoliGo' },
             { label: 'Colis', value: params.parcelDesc || 'Colis en cours de livraison' },
@@ -205,10 +206,10 @@ export default function ClientTrackingScreen({ navigation, route }) {
         {role !== 'vendor' && (
           <>
             <KGButton kind="primary" size="lg" icon="check" onPress={() => navigation.navigate('ClientReception', params)}>
-              Confirmer la réception
+              {tr("Confirmer la réception")}
             </KGButton>
             <KGButton kind="ghost" size="md" icon="flag" onPress={() => navigation.navigate('ClientReportIssue', { deliveryId: params.orderId })}>
-              Signaler un problème
+              {tr("Signaler un problème")}
             </KGButton>
           </>
         )}
@@ -217,7 +218,7 @@ export default function ClientTrackingScreen({ navigation, route }) {
       {/* Floating home button — always visible */}
       <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 16, paddingVertical: 14, paddingBottom: 28, backgroundColor: colors.cream, borderTopWidth: 1, borderTopColor: colors.ink06 }}>
         <KGButton kind="soft" size="md" icon="home" onPress={goHome}>
-          Retour à l'accueil
+          {tr("Retour à l'accueil")}
         </KGButton>
       </View>
     </SafeAreaView>

@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState } from 'react';
 import { View, Text, Pressable, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -41,7 +42,7 @@ export default function ClientRatingScreen({ navigation, route }) {
           <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
             <Ionicons name="arrow-back" size={20} color="#333" />
           </TouchableOpacity>
-          <Text style={{ fontSize: 17, fontWeight: '700', marginLeft: 12 }}>Évaluer le livreur</Text>
+          <Text style={{ fontSize: 17, fontWeight: '700', marginLeft: 12 }}>{tr("Évaluer le livreur")}</Text>
         </View>
 
         {/* Avatar */}
@@ -49,7 +50,7 @@ export default function ClientRatingScreen({ navigation, route }) {
           <Text style={{ fontSize: 28, fontWeight: '800', color: '#fff' }}>{(delivererName[0] ?? '?').toUpperCase()}</Text>
         </View>
         <Text style={{ fontSize: 20, fontWeight: '800', color: '#1A1A1A', textAlign: 'center' }}>
-          Comment s'est passée la livraison ?
+          {tr("Comment s'est passée la livraison ?")}
         </Text>
         <Text style={{ fontSize: 14, color: '#666', textAlign: 'center', marginTop: -12 }}>{delivererName}</Text>
 
@@ -85,12 +86,12 @@ export default function ClientRatingScreen({ navigation, route }) {
         ) : (
           <TouchableOpacity onPress={handleSubmit} style={s.submitBtn}>
             <Ionicons name="send" size={16} color="#fff" />
-            <Text style={s.submitTxt}>Envoyer l'évaluation</Text>
+            <Text style={s.submitTxt}>{tr("Envoyer l'évaluation")}</Text>
           </TouchableOpacity>
         )}
 
         <TouchableOpacity onPress={() => navigation.popToTop()} style={{ paddingVertical: 8 }}>
-          <Text style={{ fontSize: 13, color: '#aaa' }}>Passer</Text>
+          <Text style={{ fontSize: 13, color: '#aaa' }}>{tr("Passer")}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

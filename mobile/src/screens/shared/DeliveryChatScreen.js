@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList,
@@ -127,9 +128,9 @@ export default function DeliveryChatScreen({ navigation, route }) {
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={(
               <View style={{ alignItems: 'center', paddingVertical: 60, gap: 10 }}>
-                <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: colors.ink }}>Pas encore de messages</Text>
+                <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: colors.ink }}>{tr("Pas encore de messages")}</Text>
                 <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55, textAlign: 'center', maxWidth: 240 }}>
-                  Échangez ici avec le vendeur et le livreur pour cette livraison.
+                  {tr("Échangez ici avec le vendeur et le livreur pour cette livraison.")}
                 </Text>
               </View>
             )}
@@ -149,7 +150,7 @@ export default function DeliveryChatScreen({ navigation, route }) {
               }}
               value={text}
               onChangeText={setText}
-              placeholder="Votre message…"
+              placeholder={tr("Votre message…")}
               placeholderTextColor={colors.ink35}
               multiline
               onSubmitEditing={handleSend}

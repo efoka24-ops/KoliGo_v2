@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { strings } from './strings';
 import { stringsFf } from './strings_ff';
+import { setTrLang } from './tr';
 
 export const LANGUAGES = [
   { code: 'fr', label: 'Français', flag: '🇫🇷' },
@@ -14,6 +15,7 @@ const I18nContext = createContext({ lang: 'fr', t: (k) => k, setLang: () => {} }
 
 export function I18nProvider({ children }) {
   const [lang, setLangState] = useState('fr');
+  setTrLang(lang); // les textes écrits en dur (tr) suivent la langue choisie
 
   useEffect(() => {
     Promise.all([

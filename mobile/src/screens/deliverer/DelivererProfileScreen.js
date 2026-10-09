@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -70,7 +71,7 @@ export default function DelivererProfileScreen({ navigation }) {
     try {
       await api('/user/profile', { method: 'PATCH', body: JSON.stringify({ vehicleType: vehicle, vehiclePlate: plate.trim() }) });
       setUser?.((prev) => (prev ? { ...prev, vehicleType: vehicle, vehiclePlate: plate.trim().toUpperCase() } : prev));
-      showToast('Véhicule mis à jour ✓');
+      showToast(tr("Véhicule mis à jour ✓"));
     } catch (e) {
       showToast(e.message || 'Erreur', 'error');
     } finally {
@@ -116,7 +117,7 @@ export default function DelivererProfileScreen({ navigation }) {
       {/* Top bar */}
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 20, color: colors.ink }}>Profil</Text>
+          <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 20, color: colors.ink }}>{tr("Profil")}</Text>
         </View>
         <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="settings" size={18} color={colors.ink} />
@@ -156,7 +157,7 @@ export default function DelivererProfileScreen({ navigation }) {
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#F0F0EA', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99 }}>
               <Icon name="bolt" size={12} color={colors.ink55} />
-              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.ink55 }}>Lvl Argent</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.ink55 }}>{tr("Lvl Argent")}</Text>
             </View>
           </View>
         </View>
@@ -173,7 +174,7 @@ export default function DelivererProfileScreen({ navigation }) {
 
         {/* Véhicule */}
         <View style={{ backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#E8DCC8', padding: 14, gap: 12 }}>
-          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.06 }}>Mon véhicule</Text>
+          <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.06 }}>{tr("Mon véhicule")}</Text>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {VEHICLE_TYPES.map(v => {
               const on = vehicle === v.id;
@@ -189,7 +190,7 @@ export default function DelivererProfileScreen({ navigation }) {
           <TextInput
             value={plate}
             onChangeText={setPlate}
-            placeholder="Numéro de plaque (ex: LT-892-DA)"
+            placeholder={tr("Numéro de plaque (ex: LT-892-DA)")}
             placeholderTextColor={colors.ink35}
             autoCapitalize="characters"
             underlineColorAndroid="transparent"
@@ -199,7 +200,7 @@ export default function DelivererProfileScreen({ navigation }) {
             style={{ height: 40, borderRadius: 10, backgroundColor: vehicle ? colors.green : colors.ink12, alignItems: 'center', justifyContent: 'center' }}>
             {saving ? <ActivityIndicator color="#fff" size="small" /> : (
               <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 13, color: vehicle ? '#fff' : colors.ink35 }}>
-                Enregistrer le véhicule
+                {tr("Enregistrer le véhicule")}
               </Text>
             )}
           </TouchableOpacity>
@@ -213,8 +214,8 @@ export default function DelivererProfileScreen({ navigation }) {
               <Icon name="package" size={22} color="#D4991A" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: colors.ink }}>Passer en mode vendeur</Text>
-              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55, marginTop: 1 }}>Tu vends et tu fais livrer</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: colors.ink }}>{tr("Passer en mode vendeur")}</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55, marginTop: 1 }}>{tr("Tu vends et tu fais livrer")}</Text>
             </View>
             {switching ? <ActivityIndicator color={colors.ink} size="small" /> : <Icon name="arrow" size={18} color={colors.ink55} />}
           </View>
@@ -234,11 +235,11 @@ export default function DelivererProfileScreen({ navigation }) {
         <TouchableOpacity onPress={handleLogout}
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14, borderWidth: 1.5, borderColor: '#F5D0B8', backgroundColor: '#FEF8F5' }}>
           <Icon name="logout" size={18} color="#C4611A" />
-          <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: '#C4611A' }}>Se déconnecter</Text>
+          <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: '#C4611A' }}>{tr("Se déconnecter")}</Text>
         </TouchableOpacity>
 
         <Text style={{ textAlign: 'center', fontFamily: `${fonts.mono}-Regular`, fontSize: 11, color: colors.ink35 }}>
-          KoliGo v1.1 · 🇨🇲
+          {tr("KoliGo v1.1 · 🇨🇲")}
         </Text>
       </ScrollView>
     </SafeAreaView>

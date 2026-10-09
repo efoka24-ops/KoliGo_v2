@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -99,15 +100,15 @@ export default function PinScreen({ navigation }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF5E6' }} edges={['top']}>
       <KenteStripe height={4} />
-      <KGTopBar title="Crée ton code PIN" onBack={() => navigation.goBack()} />
+      <KGTopBar title={tr("Crée ton code PIN")} onBack={() => navigation.goBack()} />
       <View style={{ flex: 1, padding: 24, gap: 0 }}>
 
         <View style={{ marginBottom: 28 }}>
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: '#B8A48A', textTransform: 'uppercase', letterSpacing: 0.08 }}>
-            Étape 3 / 3
+            {tr("Étape 3 / 3")}
           </Text>
           <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 26, color: '#0E2116', letterSpacing: -0.5, marginTop: 4 }}>
-            Ton code PIN
+            {tr("Ton code PIN")}
           </Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13.5, color: colors.ink55, marginTop: 6 }}>
             4 chiffres pour sécuriser ton compte. Ne le partage jamais.
@@ -128,7 +129,7 @@ export default function PinScreen({ navigation }) {
           <View style={{ alignItems: 'center', paddingTop: 40 }}>
             <ActivityIndicator color={colors.green} size="large" />
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink55, marginTop: 12 }}>
-              Création du compte…
+              {tr("Création du compte…")}
             </Text>
           </View>
         ) : (

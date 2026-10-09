@@ -1,3 +1,4 @@
+import { tr } from '../../i18n/tr';
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -74,7 +75,7 @@ export default function DelivererHomeScreen({ navigation }) {
         {/* Header */}
         <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55 }}>Bonjour,</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55 }}>{tr("Bonjour,")}</Text>
             <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: colors.ink, letterSpacing: -0.5, marginTop: 2 }}>
               {displayName} 👋
             </Text>
@@ -136,7 +137,7 @@ export default function DelivererHomeScreen({ navigation }) {
                 <View style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(212,153,26,0.12)' }} />
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                   <KGStatusPill status={activeMission.status} />
-                  <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>Course en cours</Text>
+                  <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{tr("Course en cours")}</Text>
                 </View>
                 <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 20, color: '#fff', letterSpacing: -0.5 }}>
                   {activeMission.pickupAddress ?? '?'} → {activeMission.dropoffAddress ?? '?'}
@@ -177,10 +178,10 @@ export default function DelivererHomeScreen({ navigation }) {
         {/* Available offers */}
         <View style={{ paddingHorizontal: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 15, color: colors.ink }}>Courses disponibles</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 15, color: colors.ink }}>{tr("Courses disponibles")}</Text>
             <TouchableOpacity onPress={() => navigation.navigate('Available')}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.green }}>Voir tout</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.green }}>{tr("Voir tout")}</Text>
               <Icon name="arrow" size={12} color={colors.green} />
             </TouchableOpacity>
           </View>
