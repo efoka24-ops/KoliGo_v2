@@ -472,6 +472,18 @@ final class DeliveryController
         return Db::all('SELECT id, senderName, senderRole, content, createdAt FROM `Message` WHERE deliveryId = ? ORDER BY createdAt ASC', [$c->param('id')]);
     }
 
+    /** POST /deliveries/:id/decline : le livreur refuse une offre (alimente son taux d'acceptation). */
+    public static function declineOffer(Ctx $c): array
+    {
+        $d = Deliveries::find($c->param('id'));
+        $uid = $c->user['userId'];
+        if ($d['status'] === 'EN_ATTENTE' && $d['vendorId'] !== $uid
+            && !Db::one('SELECT id FROM `OfferDecline` WHERE deliveryId = ? AND userId = ?', [$d['id'], $uid])) {
+            Db::insert('OfferDecline', ['id' => Db::id(), 'deliveryId' => $d['id'], 'userId' => $uid, 'createdAt' => Db::now()]);
+        }
+        return ['ok' => true];
+    }
+
     public static function listMessages(Ctx $c): array
     {
         $d = Deliveries::find($c->param('id'));
@@ -519,6 +531,14 @@ final class DeliveryController
             'id' => $id, 'deliveryId' => $deliveryId, 'senderId' => $senderId, 'senderName' => $name,
             'senderRole' => $role, 'content' => mb_substr($content, 0, 1000), 'createdAt' => Db::now(),
         ]);
+        try {
+            $hits = \Koligo\Services\Moderation::scan($content);
+            if ($hits) {
+                Db::exec('UPDATE `Message` SET flagged = 1, flagReason = ? WHERE id = ?', [mb_substr(implode(', ', $hits), 0, 160), $id]);
+            }
+        } catch (\Throwable $e) {
+            error_log('[moderation] ' . $e->getMessage());
+        }
         return Db::one('SELECT id, senderId, senderName, senderRole, content, createdAt FROM `Message` WHERE id = ?', [$id]);
     }
 

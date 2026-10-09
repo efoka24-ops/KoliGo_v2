@@ -81,10 +81,20 @@ export default function DeliveryDetailScreen({ navigation, route }) {
       setDelivery(found);
       return;
     }
-    if (!token || !deliveryId) return;
-    api(`/api/deliveries/${deliveryId}`)
-      .then(data => setDelivery(normalizeDelivery(data)))
-      .catch(() => showToast('Erreur chargement', 'error'));
+    if (!token || !deliveryId) return undefined;
+    let stopped = false;
+    // Le statut change côté serveur (acceptation, collecte, livraison) : on le relit tant que la course n'est pas terminée.
+    const load = (first) => api(`/api/deliveries/${deliveryId}`)
+      .then(data => {
+        if (stopped || !data) return;
+        const d = normalizeDelivery(data);
+        setDelivery(d);
+        if (['livre', 'annule', 'LIVRE', 'ANNULE'].includes(d?.status)) clearInterval(timer);
+      })
+      .catch(() => { if (first) showToast('Erreur chargement', 'error'); });
+    const timer = setInterval(() => load(false), 8000);
+    load(true);
+    return () => { stopped = true; clearInterval(timer); };
   }, [deliveryId, token, isDemo]);
 
   const handleAccept = async () => {

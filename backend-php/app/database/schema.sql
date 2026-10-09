@@ -290,3 +290,11 @@ CREATE TABLE IF NOT EXISTS `Broadcast` (
   `createdBy` VARCHAR(40) NULL,
   `createdAt` DATETIME NOT NULL
 ) {{OPTS}};
+
+-- Offres refusees par un livreur : sert au taux d'acceptation (calcule automatiquement).
+CREATE TABLE IF NOT EXISTS `OfferDecline` (
+  `id` VARCHAR(40) NOT NULL PRIMARY KEY,
+  `deliveryId` VARCHAR(40) NOT NULL,
+  `userId` VARCHAR(40) NOT NULL,
+  `createdAt` DATETIME NOT NULL
+) {{OPTS}};

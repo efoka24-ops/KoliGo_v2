@@ -15,7 +15,8 @@ import { deliveryService } from '../../services/delivery';
 import { errMsg } from '../../utils/apiError';
 
 export default function OfferDetailScreen({ navigation, route }) {
-  const { online, showToast, user } = useApp();
+  const { online, showToast, user, api, token } = useApp();
+  const isDemo = user?.isTest === true;
   const [accepting, setAccepting] = useState(false);
 
   const o = route?.params?.offer ?? {
@@ -37,6 +38,12 @@ export default function OfferDetailScreen({ navigation, route }) {
   const km       = o.distanceKm ?? o.km ?? '?';
   const kg       = o.weightKg ?? o.weight ?? '?';
   const weight   = parseFloat(kg) || 0;
+
+  // Refuser une offre est enregistré : le taux d'acceptation du livreur se calcule tout seul.
+  const handleDecline = () => {
+    if (o.id && token && !isDemo) api(`/api/deliveries/${o.id}/decline`, { method: 'POST' }).catch(() => {});
+    navigation.goBack();
+  };
 
   const handleAccept = async () => {
     if (!online) {
@@ -166,7 +173,7 @@ export default function OfferDetailScreen({ navigation, route }) {
 
         {/* Actions */}
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <KGButton kind="ghost" style={{ flex: 1 }} onPress={() => navigation.goBack()}>
+          <KGButton kind="ghost" style={{ flex: 1 }} onPress={handleDecline}>
             Refuser
           </KGButton>
           <KGButton

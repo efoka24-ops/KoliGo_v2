@@ -180,6 +180,10 @@ final class AuthController
         $totalMonth = (int)Db::val('SELECT COUNT(*) FROM `Delivery` WHERE (vendorId = ? OR delivererId = ?) AND createdAt >= ?', [$uid, $uid, $month]);
         $r = Db::one('SELECT AVG(score) AS a, COUNT(*) AS n FROM `Rating` WHERE toUserId = ?', [$uid]);
         $avg = $r && $r['a'] !== null ? round((float)$r['a'], 1) : null;
+        // Taux d'acceptation : courses prises / (courses prises + offres refusees), sans saisie manuelle.
+        $taken = (int)Db::val('SELECT COUNT(*) FROM `Delivery` WHERE delivererId = ?', [$uid]);
+        $declined = (int)Db::val('SELECT COUNT(*) FROM `OfferDecline` WHERE userId = ?', [$uid]);
+        $acceptation = $taken + $declined > 0 ? (int)round(100 * $taken / ($taken + $declined)) : null;
         return [
             'balance' => (int)($wallet['balanceXAF'] ?? 0),
             'gainsToday' => $gains,
@@ -187,6 +191,7 @@ final class AuthController
             'totalMonth' => $totalMonth,
             'note' => $avg,
             'ratingsCount' => (int)($r['n'] ?? 0),
+            'acceptation' => $acceptation,
         ];
     }
 

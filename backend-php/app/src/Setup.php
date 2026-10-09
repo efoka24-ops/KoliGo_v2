@@ -13,6 +13,7 @@ final class Setup
     private const INDEXES = [
         'idx_otp_phone' => ['OtpCode', 'phone'],
         'idx_notif_user' => ['Notification', 'userId'],
+        'idx_decline_user' => ['OfferDecline', 'userId'],
         'idx_delivery_status' => ['Delivery', 'status'],
         'idx_delivery_vendor' => ['Delivery', 'vendorId'],
         'idx_delivery_deliverer' => ['Delivery', 'delivererId'],
@@ -34,13 +35,15 @@ final class Setup
         ['KycDocument', 'role', 'VARCHAR(20) NULL'],
         ['User', 'vehicleType', 'VARCHAR(20) NULL'],
         ['User', 'vehiclePlate', 'VARCHAR(20) NULL'],
+        ['Message', 'flagged', 'INT NOT NULL DEFAULT 0'],
+        ['Message', 'flagReason', 'VARCHAR(160) NULL'],
         ['User', 'adminPinSetAt', 'DATETIME NULL'],
         ['User', 'cguVersion', 'INT NULL'],
         ['User', 'cguAcceptedAt', 'DATETIME NULL'],
     ];
 
     /** A incrementer quand le schema ou les reglages de reference changent : declenche une migration au prochain appel. */
-    public const SCHEMA_VERSION = 6;
+    public const SCHEMA_VERSION = 8;
 
     /**
      * Migration automatique et rejouable : evite d'avoir a relancer _setup.php (dont le jeton est supprime apres
@@ -120,6 +123,7 @@ final class Setup
             'pricing_zones' => json_encode(Pricing::DEFAULT_ZONES, JSON_UNESCAPED_UNICODE),
             'pricing_gabarits' => json_encode(Pricing::DEFAULT_GABARITS, JSON_UNESCAPED_UNICODE),
             'pricing_default_zone' => 'Grand Sud', 'pricing_min_xaf' => '1000', 'cancel_fee_xaf' => '500',
+            'moderation_keywords' => implode("\n", \Koligo\Services\Moderation::DEFAULT_KEYWORDS),
             'revision_timeout_min' => '10', 'cancel_grace_min' => '2', 'strike_window_days' => '30', 'strike_threshold' => '3',
         ];
         foreach ($settings as $k => $v) {

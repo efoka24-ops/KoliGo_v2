@@ -125,6 +125,43 @@ final class AdminController
         return self::publicUser($u['id']);
     }
 
+    /** GET /admin/messages?flagged=1&q=&page= : tous les messages des livraisons, les signales en premier si flagged=1. */
+    public static function listMessages(Ctx $c): array
+    {
+        [$take, $skip] = self::page(30);
+        $where = '1=1';
+        $args = [];
+        if (!empty($_GET['flagged'])) {
+            $where .= ' AND m.flagged = 1';
+        }
+        if ($q = self::q()) {
+            $where .= " AND (m.content LIKE ? ESCAPE '!' OR m.senderName LIKE ? ESCAPE '!')";
+            $args[] = $args[] = Db::like($q);
+        }
+        $items = Db::all(
+            "SELECT m.id, m.deliveryId, m.senderId, m.senderName, m.senderRole, m.content, m.flagged, m.flagReason, m.createdAt,
+                    d.pickupAddress, d.dropoffAddress, d.status, v.name AS vendorName, p.name AS delivererName
+             FROM `Message` m JOIN `Delivery` d ON d.id = m.deliveryId
+             LEFT JOIN `User` v ON v.id = d.vendorId LEFT JOIN `User` p ON p.id = d.delivererId
+             WHERE $where ORDER BY m.createdAt DESC LIMIT $take OFFSET $skip",
+            $args
+        );
+        return [
+            'items' => $items,
+            'total' => (int)Db::val("SELECT COUNT(*) FROM `Message` m WHERE $where", $args),
+            'flaggedOpen' => (int)Db::val('SELECT COUNT(*) FROM `Message` WHERE flagged = 1'),
+        ];
+    }
+
+    /** PATCH /admin/messages/:id/clear : le message signale est examine et classe sans suite. */
+    public static function clearMessage(Ctx $c): array
+    {
+        if (Db::exec('UPDATE `Message` SET flagged = 0 WHERE id = ?', [$c->param('id')]) !== 1) {
+            throw new HttpError('Message introuvable', 404);
+        }
+        return ['ok' => true];
+    }
+
     public static function reviewKyc(Ctx $c): array
     {
         $status = (string)$c->input('status', '');
