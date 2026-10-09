@@ -1,45 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api, { adminApi } from '../api.js';
 import { Pill, Avatar } from '../components/ui.jsx';
+import KycDocImage from '../components/KycDocImage.jsx';
 
 const KYC_TONE   = { NONE:'mut', PENDING:'warn', VERIFIED:'ok', REJECTED:'danger' };
 const KYC_LABELS = { NONE:'Non soumise', PENDING:'En attente', VERIFIED:'Vérifiée', REJECTED:'Rejetée' };
 const DOC_LABELS = { ID_FRONT:'CNI Recto', ID_BACK:'CNI Verso', SELFIE:'Selfie' };
-
-// Fetches a protected image (requires auth header) and renders it via blob URL
-function KycDocImage({ docId, label }) {
-  const [src, setSrc] = useState(null);
-  const [err, setErr] = useState(false);
-
-  useEffect(() => {
-    let url = null;
-    api.get(`/admin/kyc-doc/${docId}`, { responseType: 'blob' })
-      .then(r => { url = URL.createObjectURL(r.data); setSrc(url); })
-      .catch(() => setErr(true));
-    return () => { if (url) URL.revokeObjectURL(url); };
-  }, [docId]);
-
-  return (
-    <div style={{ flex: 1, minWidth: 140 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', marginBottom: 6 }}>{label}</div>
-      {err ? (
-        <div style={{ height: 140, background: 'var(--cream)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontSize: 12 }}>
-          Indisponible
-        </div>
-      ) : !src ? (
-        <div style={{ height: 140, background: 'var(--cream)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontSize: 12 }}>
-          Chargement…
-        </div>
-      ) : (
-        <img
-          src={src}
-          alt={label}
-          style={{ width: '100%', height: 140, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)', display: 'block' }}
-        />
-      )}
-    </div>
-  );
-}
 
 // Modal showing all KYC documents for a user + approve/reject with reason
 function KycDocsModal({ user, onClose, onApprove, onReject }) {

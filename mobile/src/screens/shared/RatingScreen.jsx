@@ -109,7 +109,7 @@ export default function RatingScreen({ navigation, route }) {
           </View>
         </View>
 
-        <KGTextarea label="Commentaire (facultatif)" placeholder="Ã‰cris quelques motsâ€¦" value={comment} onChangeText={setComment} rows={3} />
+        <KGTextarea label="Commentaire (facultatif)" placeholder="Écris quelques mots…" value={comment} onChangeText={setComment} rows={3} />
 
         <KGButton kind="primary" size="lg" onPress={handleSend} disabled={loading}>
           {loading ? <ActivityIndicator color="#fff" /> : 'Envoyer la note'}

@@ -228,7 +228,7 @@ export default function AuthScreen({ navigation, route }) {
               <KGInput
                 label={t('Numéro de téléphone')} placeholder="6 XX XX XX XX"
                 value={phone} onChangeText={v => { setPhone(v); setError(null); }}
-                icon="bell" suffix="ðŸ‡¨ðŸ‡² +237" keyboardType="phone-pad"
+                icon="bell" suffix="🇨🇲 +237" keyboardType="phone-pad"
                 hint={mode === 'signup' ? t('Un code de vérification sera généré pour ce numéro.') : t('Saisis ensuite ton code PIN à 4 chiffres.')}
               />
             </View>
@@ -257,7 +257,7 @@ export default function AuthScreen({ navigation, route }) {
                     <Icon name="link" size={12} color={colors.green} />
                     <Text style={styles.termsLinkButtonText}>{t('Lire les CGU')}</Text>
                   </TouchableOpacity>
-                  <Text style={styles.termsLinkSeparator}>Â·</Text>
+                  <Text style={styles.termsLinkSeparator}>·</Text>
                   <TouchableOpacity onPress={() => navigation.navigate('Privacy')} style={styles.termsLinkButton}>
                     <Icon name="shield" size={12} color={colors.green} />
                     <Text style={styles.termsLinkButtonText}>{t('Confidentialité')}</Text>
@@ -327,7 +327,7 @@ export default function AuthScreen({ navigation, route }) {
               />
 
               <Text style={styles.otpHintText}>
-                {t('Tu peux le modifier si besoin Â· valide 10 minutes')}
+                {t('Tu peux le modifier si besoin · valide 10 minutes')}
               </Text>
             </View>
 
@@ -360,7 +360,7 @@ export default function AuthScreen({ navigation, route }) {
             <View style={styles.pinDisplayContainer}>
               {otp.map((d, i) => (
                 <View key={i} style={{ width: 64, height: 76, borderRadius: 14, borderWidth: 2, borderColor: d ? colors.green : colors.ink12, backgroundColor: d ? colors.greenLight : colors.cream, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 32, color: colors.ink }}>{d ? 'â—' : ''}</Text>
+                  <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 32, color: colors.ink }}>{d ? '●' : ''}</Text>
                 </View>
               ))}
             </View>
@@ -420,14 +420,14 @@ export default function AuthScreen({ navigation, route }) {
             <View style={{ backgroundColor: colors.greenLight, borderRadius: 12, padding: 14, flexDirection: 'row', gap: 10, alignItems: 'center' }}>
               <Icon name="shield" size={16} color={colors.greenDark} />
               <Text style={{ flex: 1, fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12.5, color: colors.greenDark }}>
-                Numéro vérifié âœ" +237 {phoneNorm} Â· {name}
+                Numéro vérifié âœ" +237 {phoneNorm} · {name}
               </Text>
             </View>
 
             <View style={{ flexDirection: 'row', gap: 12, justifyContent: 'center', marginTop: 8 }}>
               {pin.map((d, i) => (
                 <View key={i} style={{ width: 64, height: 76, borderRadius: 14, borderWidth: 2, borderColor: d ? colors.green : colors.ink12, backgroundColor: d ? colors.greenLight : colors.cream, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 32, color: colors.ink }}>{d ? 'â—' : ''}</Text>
+                  <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 32, color: colors.ink }}>{d ? '●' : ''}</Text>
                 </View>
               ))}
             </View>

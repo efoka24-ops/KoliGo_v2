@@ -52,7 +52,7 @@ export default function WelcomeScreen({ navigation }) {
                   <Icon name="moto" size={18} color="#fff" />
                 </View>
                 <View>
-                  <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 13, color: '#fff' }}>Hervé Â· Permanent</Text>
+                  <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 13, color: '#fff' }}>Hervé · Permanent</Text>
                   <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>Bonamoussadi â†' Akwa</Text>
                 </View>
               </View>
@@ -61,7 +61,7 @@ export default function WelcomeScreen({ navigation }) {
 
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
               <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 34, color: '#fff', letterSpacing: -0.02 * 34 }}>1 955</Text>
-              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>XAF Â· arrivée 12 min</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>XAF · arrivée 12 min</Text>
             </View>
 
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

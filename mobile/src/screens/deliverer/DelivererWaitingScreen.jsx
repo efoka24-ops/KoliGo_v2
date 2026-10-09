@@ -132,7 +132,7 @@ export default function DelivererWaitingScreen({ navigation, route }) {
             'Le paiement t\'est versé automatiquement à la confirmation',
           ].map((line, i) => (
             <View key={i} style={{ flexDirection: 'row', gap: 8, marginBottom: 6 }}>
-              <Text style={{ fontFamily: `${fonts.mono}-Regular`, fontSize: 13, color: colors.green }}>â€¢</Text>
+              <Text style={{ fontFamily: `${fonts.mono}-Regular`, fontSize: 13, color: colors.green }}>•</Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70, flex: 1, lineHeight: 19 }}>{line}</Text>
             </View>
           ))}

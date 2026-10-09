@@ -32,10 +32,10 @@ function AvailableCard({ d, onPress }) {
           <RouteLine from={d.from} to={d.to} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
             <Icon name="package" size={14} color={colors.ink55} />
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{d.weight} kg Â· {d.distance} km</Text>
-            <Text style={{ color: colors.ink55 }}>Â·</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{d.weight} kg · {d.distance} km</Text>
+            <Text style={{ color: colors.ink55 }}>·</Text>
             <Icon name="star" size={14} color={colors.ink55} />
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{d.vendorRating} Â· {d.vendor}</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{d.vendorRating} · {d.vendor}</Text>
           </View>
         </View>
         <View style={styles.availableCardRight}>

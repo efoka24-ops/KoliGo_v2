@@ -53,14 +53,14 @@ export default function ConfirmScreen({ navigation, route }) {
           method: 'POST',
           body: JSON.stringify({ code }),
         });
-        showToast('Collecte confirmée ! En route ðŸš€');
+        showToast('Collecte confirmée ! En route 🚀');
         navigation.navigate('DeliveryDetail', { deliveryId, mode: 'mine' });
       } else {
         await api(`/api/deliveries/${deliveryId}/confirm-deliver`, {
           method: 'POST',
           body: JSON.stringify({ code }),
         });
-        showToast('Livraison validée ! Paiement crédité âœ…');
+        showToast('Livraison validée ! Paiement crédité ✅');
         navigation.navigate('DelivererHome');
       }
     } catch (err) {

@@ -206,7 +206,7 @@ export default function DeliveryDetailScreen({ navigation, route }) {
           <View style={{ flexDirection: 'row', gap: 14, marginTop: 12, flexWrap: 'wrap' }}>
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70 }}>ðŸ" {d.distance} km</Text>
             <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70 }}>ðŸ"¦ {d.weight} kg</Text>
-            {d.vendor && <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70 }}>ðŸª {d.vendor}</Text>}
+            {d.vendor && <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink70 }}>🏪 {d.vendor}</Text>}
           </View>
           {(d.shopName || d.parcelDesc) && (
             <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.ink06, gap: 6 }}>

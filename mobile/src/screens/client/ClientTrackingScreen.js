@@ -151,7 +151,7 @@ export default function ClientTrackingScreen({ navigation, route }) {
                 </Text>
                 {delivererRating && (
                   <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.orange }}>
-                    {delivererRating} â˜…
+                    {delivererRating} ★
                   </Text>
                 )}
               </View>

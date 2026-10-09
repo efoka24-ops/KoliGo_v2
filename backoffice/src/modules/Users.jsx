@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useI18n } from '../i18n/I18nContext.jsx';
 import { Pill, Avatar, Skeleton } from '../components/ui.jsx';
 import { adminApi } from '../api.js';
+import KycReview from '../components/KycReview.jsx';
 
 const ROLE_FILTERS = [
   { key:'all',      label:'all',      role: undefined      },
@@ -137,21 +138,7 @@ export default function Users() {
               </div>
 
               {drawer.kycStatus === 'PENDING' && (
-                <div style={{ marginTop:16 }}>
-                  <div style={{ fontSize:13, fontWeight:700, color:'var(--muted)', marginBottom:10, textTransform:'uppercase', letterSpacing:'.05em' }}>
-                    KYC Review
-                  </div>
-                  <div style={{ display:'flex', gap:10 }}>
-                    <button className="btn pri" style={{ flex:1 }}
-                      onClick={() => kycMut.mutate({ id: drawer.id, decision:'VERIFIED' })}>
-                      ✓ Approuver
-                    </button>
-                    <button className="btn" style={{ flex:1, color:'var(--danger)', borderColor:'#F0C9B6' }}
-                      onClick={() => kycMut.mutate({ id: drawer.id, decision:'REJECTED' })}>
-                      ✗ Rejeter
-                    </button>
-                  </div>
-                </div>
+                <KycReview userId={drawer.id} onDecided={() => { qc.invalidateQueries({ queryKey: ['admin-users'] }); qc.invalidateQueries({ queryKey: ['admin-user'] }); qc.invalidateQueries({ queryKey: ['admin-analytics'] }); setDrawer(null); }} />
               )}
             </div>
           </aside>

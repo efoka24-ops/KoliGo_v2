@@ -113,7 +113,7 @@ export default function VendorCodesScreen({ navigation, route }) {
       // Notify vendor when deliverer accepts
       const prev = prevStatusRef.current;
       if (prev && prev !== newStatus && newStatus === 'accepte') {
-        showToast(isEn ? 'ðŸš´ A deliverer accepted your order!' : 'ðŸš´ Un livreur a accepté ta commande !');
+        showToast(isEn ? '🚴 A deliverer accepted your order!' : '🚴 Un livreur a accepté ta commande !');
       }
       if (prev && prev !== newStatus && newStatus === 'en_route') {
         showToast(isEn ? 'ðŸ"¦ Pickup code validated â€" trust invoice generated!' : 'ðŸ"¦ Le livreur a validé le code collecte â€" facture générée !');
@@ -148,7 +148,7 @@ export default function VendorCodesScreen({ navigation, route }) {
       `ðŸ'¤ *LIVREUR*\n` +
       `Nom : ${d?.name || 'â€"'}\n` +
       `Téléphone : +237 ${d?.phone || 'â€"'}\n` +
-      `NÂ° CNI : ${d?.cniNumber || 'Non renseigné'}\n` +
+      `N° CNI : ${d?.cniNumber || 'Non renseigné'}\n` +
       `Statut KYC : ${d?.kycStatus === 'VERIFIED' ? 'Vérifié âœ"' : d?.kycStatus === 'REJECTED' ? 'Rejeté' : 'En attente'}\n\n` +
       `ðŸ"¦ *CLIENT / DESTINATAIRE*\n` +
       `Nom : ${trustDoc?.recipientName || recipientName || 'â€"'}\n` +
@@ -243,7 +243,7 @@ export default function VendorCodesScreen({ navigation, route }) {
         {isAccepte && !showTrust && (
           <View style={{ backgroundColor: '#EFF6FF', borderRadius: 18, padding: 16, borderLeftWidth: 4, borderLeftColor: '#3B82F6', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 24 }}>ðŸš´</Text>
+              <Text style={{ fontSize: 24 }}>🚴</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 15, color: '#1D4ED8' }}>Livreur en route !</Text>
@@ -277,7 +277,7 @@ export default function VendorCodesScreen({ navigation, route }) {
               <Icon name="shield" size={20} color={colors.green} />
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.06 }}>
-                  KoliGo Â· Document officiel
+                  KoliGo · Document officiel
                 </Text>
                 <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: '#fff' }}>
                   Facture de confiance
@@ -293,7 +293,7 @@ export default function VendorCodesScreen({ navigation, route }) {
                 <View style={{ alignItems: 'center', paddingVertical: 20 }}>
                   <ActivityIndicator color={colors.green} />
                   <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55, marginTop: 8 }}>
-                    Génération de la factureâ€¦
+                    Génération de la facture…
                   </Text>
                 </View>
               )}
@@ -307,7 +307,7 @@ export default function VendorCodesScreen({ navigation, route }) {
                   <SectionLabel>Livreur identifié</SectionLabel>
                   <TrustRow label="Nom complet" value={trustDoc.deliverer?.name} />
                   <TrustRow label="Téléphone" value={trustDoc.deliverer?.phone ? `+237 ${trustDoc.deliverer.phone}` : null} />
-                  <TrustRow label="NÂ° CNI" value={trustDoc.deliverer?.cniNumber || 'Non renseigné'} />
+                  <TrustRow label="N° CNI" value={trustDoc.deliverer?.cniNumber || 'Non renseigné'} />
                   <TrustRow label="Statut KYC" value={trustDoc.deliverer?.kycStatus === 'VERIFIED' ? 'Vérifié âœ"' : 'En attente'} highlight={trustDoc.deliverer?.kycStatus === 'VERIFIED'} />
 
                   <SectionLabel>{isEn ? 'Recipient (client)' : 'Destinataire (client)'}</SectionLabel>
@@ -449,7 +449,7 @@ export default function VendorCodesScreen({ navigation, route }) {
               orderId,
               clientName: trustDoc?.recipientName || recipientName || 'Client',
               vendorName: shopName || 'Ma boutique',
-              parcelDesc: params.parcelDesc || 'Colis Â· ' + orderId,
+              parcelDesc: params.parcelDesc || 'Colis · ' + orderId,
             })}
           >
             {isEn ? 'Open client view' : 'Voir la vue client (app)'}

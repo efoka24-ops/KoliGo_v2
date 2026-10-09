@@ -39,7 +39,7 @@ final class WalletController
     {
         $w = self::wallet($c->user['userId']);
         return [
-            'balance' => (int)$w['balanceXAF'], 'paymentProvider' => $w['paymentProvider'], 'paymentPhone' => $w['paymentPhone'],
+            'balance' => (int)$w['balanceXAF'], 'paymentProvider' => $w['paymentProvider'], 'paymentPhone' => $w['paymentPhone'], 'paymentName' => $w['paymentName'] ?? null,
             'transactions' => self::recent($w['id']),
         ];
     }

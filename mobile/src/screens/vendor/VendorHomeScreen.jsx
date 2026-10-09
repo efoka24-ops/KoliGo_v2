@@ -132,7 +132,7 @@ export default function VendorHomeScreen({ navigation, route }) {
                 <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.greenDark, opacity: 0.7 }}>{t('Ce mois')}</Text>
                 <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: colors.greenDark, letterSpacing: -0.02, marginTop: 4 }}>{isDemo ? '42 colis' : `${stats?.totalMonth ?? 0} colis`}</Text>
               </View>
-              {isDemo && <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.greenDark }}>+18% â†—</Text>}
+              {isDemo && <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.greenDark }}>+18% ↗</Text>}
             </KGCard>
           </View>
         </View>
@@ -180,9 +180,9 @@ export default function VendorHomeScreen({ navigation, route }) {
                     <RouteLine from={d.from} to={d.to} />
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
                       <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{d.distance} km</Text>
-                      <Text style={{ color: colors.ink55 }}>Â·</Text>
+                      <Text style={{ color: colors.ink55 }}>·</Text>
                       <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{d.weight} kg</Text>
-                      <Text style={{ color: colors.ink55 }}>Â·</Text>
+                      <Text style={{ color: colors.ink55 }}>·</Text>
                       <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 12, color: colors.ink }}>{d.price.toLocaleString('fr-FR')} XAF</Text>
                     </View>
                   </View>

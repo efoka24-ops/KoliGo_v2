@@ -62,7 +62,7 @@ export default function ClientLandingScreen({ navigation, route }) {
           <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 11, color: colors.ink55, textTransform: 'uppercase', letterSpacing: 0.04 }}>Aperçu du colis</Text>
           <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, letterSpacing: -0.03 * 22, color: colors.ink }}>{parcelDesc}</Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13.5, color: colors.ink70, lineHeight: 19 }}>
-            Boutique: <Text style={{ fontFamily: `${fonts.ui}-SemiBold` }}>{vendorName}</Text> Â· Référence <Text style={{ fontFamily: `${fonts.ui}-SemiBold` }}>{orderLabel}</Text>
+            Boutique: <Text style={{ fontFamily: `${fonts.ui}-SemiBold` }}>{vendorName}</Text> · Référence <Text style={{ fontFamily: `${fonts.ui}-SemiBold` }}>{orderLabel}</Text>
           </Text>
           <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
             <View style={{ backgroundColor: colors.greenLight, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 }}>

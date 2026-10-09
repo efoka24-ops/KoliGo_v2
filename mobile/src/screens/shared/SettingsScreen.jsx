@@ -11,8 +11,8 @@ import KGButton from '../../components/KGButton';
 import Icon from '../../components/Icon';
 
 const LANGUAGES = [
-  { code: 'fr', label: 'Français', flag: 'ðŸ‡«ðŸ‡·' },
-  { code: 'en', label: 'English',  flag: 'ðŸ‡¬ðŸ‡§' },
+  { code: 'fr', label: 'Français', flag: '🇫🇷' },
+  { code: 'en', label: 'English',  flag: '🇬🇧' },
 ];
 
 function Section({ title, children }) {
@@ -177,7 +177,7 @@ export default function SettingsScreen({ navigation }) {
                 label={lang === 'en' ? 'Change my PIN' : 'Changer mon code PIN'}
                 sub={lang === 'en' ? 'Change your account access code' : 'Modifier le code d\'accès à ton compte'}
                 onPress={() => setShowPinChange(p => !p)}
-                rightLabel={showPinChange ? 'â–²' : undefined}
+                rightLabel={showPinChange ? '▲' : undefined}
               />
               {showPinChange && (
                 <View style={{ padding: 14, gap: 10, backgroundColor: colors.cream }}>
@@ -199,13 +199,13 @@ export default function SettingsScreen({ navigation }) {
                           paddingHorizontal: 14, paddingVertical: 12, fontFamily: `${fonts.mono}-Regular`,
                           fontSize: 18, letterSpacing: 6, color: colors.ink,
                         }}
-                        placeholder="â€¢â€¢â€¢â€¢"
+                        placeholder="••••"
                         placeholderTextColor={colors.ink35}
                       />
                     </View>
                   ))}
                   <KGButton kind="primary" size="md" icon="check" onPress={handlePinChange} disabled={pinLoading}>
-                    {pinLoading ? (lang === 'en' ? 'Updatingâ€¦' : 'Modificationâ€¦') : (lang === 'en' ? 'Confirm change' : 'Confirmer le changement')}
+                    {pinLoading ? (lang === 'en' ? 'Updating…' : 'Modification…') : (lang === 'en' ? 'Confirm change' : 'Confirmer le changement')}
                   </KGButton>
                 </View>
               )}

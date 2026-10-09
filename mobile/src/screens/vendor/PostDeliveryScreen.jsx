@@ -376,7 +376,7 @@ export default function PostDeliveryScreen({ navigation }) {
                 </View>
               )}
               <Text style={{ fontFamily: `${fonts.mono}-Regular`, fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>
-                {from} â†' {to} Â· {distance} km Â· {weight} kg
+                {from} â†' {to} · {distance} km · {weight} kg
               </Text>
             </View>
 
@@ -391,7 +391,7 @@ export default function PostDeliveryScreen({ navigation }) {
             <KGCard kind="cream" padding={18} style={{ alignItems: 'center', gap: 6 }}>
               <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.ink55, letterSpacing: 0.04, textTransform: 'uppercase' }}>{isEn ? 'Delivery fee' : 'Frais de livraison'}</Text>
               <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 52, color: colors.ink, letterSpacing: -0.04 * 52, lineHeight: 56 }}>{price.toLocaleString('fr-FR')}</Text>
-              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55 }}>XAF Â· {isEn ? 'paid on delivery' : 'payé à la livraison'}</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55 }}>XAF · {isEn ? 'paid on delivery' : 'payé à la livraison'}</Text>
             </KGCard>
 
             <KGCard padding={14}>

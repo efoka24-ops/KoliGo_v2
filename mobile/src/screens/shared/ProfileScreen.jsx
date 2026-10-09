@@ -56,7 +56,7 @@ export default function ProfileScreen({ navigation }) {
   const kycLabel = { PENDING: t('En attente'), VERIFIED: t('Vérifiée âœ"'), REJECTED: t('Refusée â€" réessaie') }[(apiStats?.kycStatus ?? user?.kycStatus)] || t('Non soumise');
   const MENU_ITEMS = [
     { icon: 'history',  label: t('Historique'),         sub: isDemo ? t('127 livraisons') : t('Consulter mes livraisons'), screen: 'History' },
-    { icon: 'wallet',   label: t('Moyens de paiement'), sub: 'MTN MoMo Â· Orange Money',  screen: 'PaymentAccount' },
+    { icon: 'wallet',   label: t('Moyens de paiement'), sub: 'MTN MoMo · Orange Money',  screen: 'PaymentAccount' },
     { icon: 'shield',   label: t('Vérification KYC'),   sub: kycLabel, screen: 'KYC' },
     { icon: 'bell',     label: t('Notifications'),       sub: t('Gérer les alertes'),        screen: 'Notifications' },
     { icon: 'settings', label: t('Paramètres'),          sub: t('Langue, sécurité, compte'), screen: 'Settings' },
@@ -125,12 +125,12 @@ export default function ProfileScreen({ navigation }) {
           <View style={styles.profileInfo}>
             <Text style={styles.displayName}>{displayName}</Text>
             <Text style={styles.roleText}>
-              {isVendor ? t('Vendeur Â· KoliGo') : t('Livreur Â· KoliGo')}
+              {isVendor ? t('Vendeur · KoliGo') : t('Livreur · KoliGo')}
             </Text>
           </View>
           <View style={styles.chipsContainer}>
             <KGChip color="green" icon="shield">{t('CNI vérifiée')}</KGChip>
-            <KGChip color="orange" icon="star">{apiStats?.note ? `${apiStats.note} â˜…` : (isDemo ? (isVendor ? '4.8 â˜…' : '4.9 â˜…') : 'â€" â˜…')}</KGChip>
+            <KGChip color="orange" icon="star">{apiStats?.note ? `${apiStats.note} ★` : (isDemo ? (isVendor ? '4.8 ★' : '4.9 ★') : 'â€" ★')}</KGChip>
             {!isVendor && <KGChip color="ink" icon="bolt">{t('Lvl Argent')}</KGChip>}
           </View>
         </KGCard>
@@ -178,7 +178,7 @@ export default function ProfileScreen({ navigation }) {
               style={[styles.saveVehicleButton, vehicle && styles.saveVehicleButtonActive]}
             >
               <Text style={[styles.saveVehicleButtonText, vehicle && styles.saveVehicleButtonTextActive]}>
-                {savingVehicle ? t('Enregistrementâ€¦') : t('Enregistrer le véhicule')}
+                {savingVehicle ? t('Enregistrement…') : t('Enregistrer le véhicule')}
               </Text>
             </TouchableOpacity>
           </KGCard>

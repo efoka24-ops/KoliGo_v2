@@ -8,6 +8,7 @@ import KGCard from '../../components/KGCard';
 import KGInput from '../../components/KGInput';
 import Icon from '../../components/Icon';
 import { useApp } from '../../context/AppContext';
+import { errMsg } from '../../utils/apiError';
 
 const PROVIDERS = [
   { id: 'mtn',    label: 'MTN MoMo',      sub: 'Numéros 65x-67x, 68x', bg: '#FFCC00', textColor: '#1A1A1A' },
@@ -15,7 +16,8 @@ const PROVIDERS = [
 ];
 
 export default function PaymentAccountScreen({ navigation }) {
-  const { api, showToast, setUser } = useApp();
+  const { api, showToast, user } = useApp();
+  const role = (user?.activeRole || '').toUpperCase() === 'DELIVERER' ? 'deliverer' : 'vendor';
   const [provider, setProvider] = useState('mtn');
   const [number, setNumber] = useState('');
   const [name, setName] = useState('');
@@ -23,32 +25,38 @@ export default function PaymentAccountScreen({ navigation }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api('/api/user/profile')
-      .then(u => {
-        if (u.paymentProvider) setProvider(u.paymentProvider);
-        if (u.paymentNumber)   setNumber(u.paymentNumber);
-        if (u.paymentName)     setName(u.paymentName);
+    api('/api/wallet')
+      .then((w) => {
+        if (w?.paymentProvider) setProvider(String(w.paymentProvider).toLowerCase());
+        if (w?.paymentPhone)    setNumber(w.paymentPhone);
+        if (w?.paymentName)     setName(w.paymentName);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
   const handleSave = async () => {
-    if (!number.trim() || !name.trim()) {
-      showToast('Remplis le numéro et le nom du titulaire.', 'error');
+    const digits = number.replace(/\D/g, '').replace(/^237(?=\d{9}$)/, '');
+    if (!/^6\d{8}$/.test(digits)) {
+      showToast('Numéro invalide : 9 chiffres commençant par 6 (ex. 690173805).', 'error');
+      return;
+    }
+    if (name.trim().length < 3) {
+      showToast('Indique le nom du titulaire du compte.', 'error');
       return;
     }
     setSaving(true);
     try {
-      const updated = await api('/api/user/profile', {
+      // Route dédiée : le profil ignore ces champs (le compte de paiement est rattaché au portefeuille).
+      await api('/api/user/payment-account', {
         method: 'PATCH',
-        body: JSON.stringify({ paymentProvider: provider, paymentNumber: number.trim(), paymentName: name.trim() }),
+        body: JSON.stringify({ provider: provider.toUpperCase(), phone: digits, name: name.trim() }),
       });
-      setUser(prev => ({ ...prev, ...updated }));
-      showToast('Compte de paiement enregistré âœ"', 'success');
-      navigation.navigate('ProfileChoice');
+      showToast('Compte de paiement enregistré ✓', 'success');
+      if (navigation.canGoBack()) navigation.goBack();
+      else navigation.navigate(role === 'deliverer' ? 'DelivererApp' : 'VendorApp');
     } catch (err) {
-      showToast(err.message || 'Erreur lors de la sauvegarde.', 'error');
+      showToast(errMsg(err, 'Erreur lors de la sauvegarde.'), 'error');
     } finally {
       setSaving(false);
     }
@@ -107,9 +115,10 @@ export default function PaymentAccountScreen({ navigation }) {
           <KGInput
             label="Numéro du compte"
             value={number}
-            onChangeText={setNumber}
-            icon="bell"
-            suffix="ðŸ‡¨ðŸ‡² +237"
+            onChangeText={(v) => setNumber(v.replace(/[^\d+ ]/g, ''))}
+            placeholder="6XX XXX XXX"
+            icon="phone"
+            suffix="+237"
             keyboardType="phone-pad"
           />
           <KGInput

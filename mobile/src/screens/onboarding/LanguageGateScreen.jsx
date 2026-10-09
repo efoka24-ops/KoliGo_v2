@@ -5,8 +5,8 @@ import { colors, fonts } from '../../constants/colors';
 import Icon from '../../components/Icon';
 
 const OPTIONS = [
-  { id: 'fr', label: 'ðŸ‡«ðŸ‡· Français', subtitle: 'Continuer en français' },
-  { id: 'en', label: 'ðŸ‡¬ðŸ‡§ English', subtitle: 'Continue in English' },
+  { id: 'fr', label: '🇫🇷 Français', subtitle: 'Continuer en français' },
+  { id: 'en', label: '🇬🇧 English', subtitle: 'Continue in English' },
 ];
 
 export default function LanguageGateScreen({ onSelected }) {
@@ -33,7 +33,7 @@ export default function LanguageGateScreen({ onSelected }) {
             style={{ backgroundColor: '#fff', borderRadius: 18, padding: 16, borderWidth: 1, borderColor: colors.ink12, flexDirection: 'row', alignItems: 'center', gap: 14 }}
           >
             <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: option.id === 'fr' ? colors.orangeLight : colors.greenLight, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 20 }}>{option.id === 'fr' ? 'ðŸ‡«ðŸ‡·' : 'ðŸ‡¬ðŸ‡§'}</Text>
+              <Text style={{ fontSize: 20 }}>{option.id === 'fr' ? '🇫🇷' : '🇬🇧'}</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: colors.ink }}>{option.label}</Text>

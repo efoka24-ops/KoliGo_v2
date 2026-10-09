@@ -29,6 +29,7 @@ final class Setup
         ['Delivery', 'priceBreakdown', 'TEXT NULL'],
         ['Delivery', 'fromCity', 'VARCHAR(100) NULL'],
         ['Wallet', 'debtXAF', 'INT NOT NULL DEFAULT 0'],
+        ['Wallet', 'paymentName', 'VARCHAR(191) NULL'],
         ['KycDocument', 'role', 'VARCHAR(20) NULL'],
         ['User', 'vehicleType', 'VARCHAR(20) NULL'],
         ['User', 'adminPinSetAt', 'DATETIME NULL'],
@@ -37,7 +38,7 @@ final class Setup
     ];
 
     /** A incrementer quand le schema ou les reglages de reference changent : declenche une migration au prochain appel. */
-    public const SCHEMA_VERSION = 3;
+    public const SCHEMA_VERSION = 4;
 
     /**
      * Migration automatique et rejouable : evite d'avoir a relancer _setup.php (dont le jeton est supprime apres

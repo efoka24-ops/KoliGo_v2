@@ -151,13 +151,13 @@ export default function ClientTrackingScreen({ navigation, route }) {
                 </Text>
                 {delivererRating && (
                   <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.orange }}>
-                    {delivererRating} â˜…
+                    {delivererRating} ★
                   </Text>
                 )}
               </View>
               {(delivererVehicle || delivererPlate) && (
                 <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: colors.ink55, marginTop: 1 }}>
-                  {[delivererVehicle, delivererPlate].filter(Boolean).join(' Â· ')}
+                  {[delivererVehicle, delivererPlate].filter(Boolean).join(' · ')}
                 </Text>
               )}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>

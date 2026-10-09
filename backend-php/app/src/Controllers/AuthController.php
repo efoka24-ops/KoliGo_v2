@@ -178,18 +178,30 @@ final class AuthController
         ];
     }
 
+    /** PATCH /user/payment-account {provider: MTN|ORANGE, phone: 6XXXXXXXX, name} : compte Mobile Money qui recoit les gains. */
     public static function updatePaymentAccount(Ctx $c): array
     {
-        $provider = (string)$c->input('provider', '');
+        $provider = strtoupper((string)$c->input('provider', ''));
         if (!in_array($provider, ['MTN', 'ORANGE'], true)) {
             throw new HttpError('Operateur invalide');
+        }
+        $phone = preg_replace('/\D/', '', (string)$c->input('phone', '')) ?? '';
+        if (str_starts_with($phone, '237') && strlen($phone) === 12) {
+            $phone = substr($phone, 3);
+        }
+        if (!preg_match('/^6\d{8}$/', $phone)) {
+            throw new HttpError('Numéro Mobile Money invalide (format : 6XXXXXXXX)');
+        }
+        $name = trim((string)$c->input('name', ''));
+        if (mb_strlen($name) < 3 || mb_strlen($name) > 120) {
+            throw new HttpError('Indiquez le nom du titulaire du compte');
         }
         $w = Db::one('SELECT id FROM `Wallet` WHERE userId = ?', [$c->user['userId']]);
         if (!$w) {
             throw new HttpError('Portefeuille introuvable', 404);
         }
-        Db::update('Wallet', $w['id'], ['paymentProvider' => $provider, 'paymentPhone' => $c->input('phone'), 'updatedAt' => Db::now()]);
-        return Db::one('SELECT * FROM `Wallet` WHERE id = ?', [$w['id']]);
+        Db::update('Wallet', $w['id'], ['paymentProvider' => $provider, 'paymentPhone' => $phone, 'paymentName' => $name, 'updatedAt' => Db::now()]);
+        return Db::one('SELECT paymentProvider, paymentPhone, paymentName FROM `Wallet` WHERE id = ?', [$w['id']]);
     }
 
     // ── KYC ──────────────────────────────────────────────────────────────────

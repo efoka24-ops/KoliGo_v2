@@ -90,7 +90,7 @@ export default function ReportIssueScreen({ navigation, route }) {
           photos: photoBase64s.length > 0 ? photoBase64s : undefined,
         }),
       });
-      showToast('Signalement envoyé Â· réponse sous 1h');
+      showToast('Signalement envoyé · réponse sous 1h');
       navigation.goBack();
     } catch (err) {
       showToast(err?.message || 'Erreur lors de l\'envoi', 'error');
@@ -143,7 +143,7 @@ export default function ReportIssueScreen({ navigation, route }) {
 
         <View style={{ gap: 10 }}>
           <KGSectionTitle>Détails</KGSectionTitle>
-          <KGTextarea placeholder="Décris la situation en quelques motsâ€¦" value={details} onChangeText={setDetails} rows={3} />
+          <KGTextarea placeholder="Décris la situation en quelques mots…" value={details} onChangeText={setDetails} rows={3} />
         </View>
 
         {showPhotos && (
@@ -159,7 +159,7 @@ export default function ReportIssueScreen({ navigation, route }) {
                         onPress={() => removePhoto(i)}
                         style={{ position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' }}
                       >
-                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Ã—</Text>
+                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>×</Text>
                       </TouchableOpacity>
                     </TouchableOpacity>
                   ) : (

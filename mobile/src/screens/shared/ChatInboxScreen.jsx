@@ -105,7 +105,7 @@ export default function ChatInboxScreen({ navigation }) {
             Nouvelle conversation
           </Text>
           {loadingContacts && (
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55, textAlign: 'center', paddingVertical: 8 }}>Chargementâ€¦</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55, textAlign: 'center', paddingVertical: 8 }}>Chargement…</Text>
           )}
           {!loadingContacts && contacts.length === 0 && (
             <View style={{ paddingVertical: 14, alignItems: 'center', gap: 4 }}>
@@ -188,7 +188,7 @@ export default function ChatInboxScreen({ navigation }) {
                       <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 10, color: rc.text }}>{ROLE_LABELS[conv.contactRole]}</Text>
                     </View>
                     <Text numberOfLines={1} style={{ flex: 1, fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: conv.unread > 0 ? colors.ink70 : colors.ink35 }}>
-                      {conv.lastMessage || 'Démarrer la conversationâ€¦'}
+                      {conv.lastMessage || 'Démarrer la conversation…'}
                     </Text>
                   </View>
                 </View>
