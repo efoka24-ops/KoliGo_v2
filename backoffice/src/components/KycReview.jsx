@@ -10,7 +10,7 @@ const DOC_LABELS = { ID_FRONT: 'CNI recto', ID_BACK: 'CNI verso', SELFIE: 'Selfi
  * Revue d'un dossier KYC : numéro de CNI, les trois photos, puis approbation ou refus (motif obligatoire).
  * On ne propose plus d'approuver sans voir les documents.
  */
-export default function KycReview({ userId, onDecided }) {
+export default function KycReview({ userId, onDecided, readOnly = false }) {
   const { data: u, isLoading } = useQuery({ queryKey: ['admin-user', userId], queryFn: () => adminApi.getUser(userId) });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -45,19 +45,19 @@ export default function KycReview({ userId, onDecided }) {
       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--muted)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '.05em' }}>Dossier KYC</div>
       <div className="kv" style={{ marginBottom: 12 }}>
         <div><div className="k">N° de CNI déclaré</div><div className="v mono-sm">{u.cniNumber || '—'}</div></div>
-        <div><div className="k">Envoyé le</div><div className="v">{(u.kycDocuments || [])[0] ? new Date(`${String(u.kycDocuments[0].createdAt).replace(' ', 'T')}Z`).toLocaleString('fr-FR') : '—'}</div></div>
+        <div><div className="k">Envoyé le</div><div className="v">{(u.kycDocuments || [])[0] ? new Date(String(u.kycDocuments[0].createdAt).replace(' ', 'T').replace(/Z?$/, 'Z')).toLocaleString('fr-FR') : '—'}</div></div>
       </div>
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         {DOC_ORDER.map((t) => (docs[t]
           ? <KycDocImage key={t} docId={docs[t].id} label={DOC_LABELS[t]} />
           : <div key={t} style={{ flex: 1, minWidth: 120, fontSize: 12, color: '#C00' }}>{DOC_LABELS[t]} : manquante</div>))}
       </div>
-      {!complete && <div style={{ color: '#C00', fontSize: 12, marginTop: 8 }}>Dossier incomplet : une photo manque, refusez-le avec un motif.</div>}
+      {!readOnly && !complete && <div style={{ color: '#C00', fontSize: 12, marginTop: 8 }}>Dossier incomplet : une photo manque, refusez-le avec un motif.</div>}
       {error && <div style={{ color: '#C00', fontSize: 13, marginTop: 8 }}>{error}</div>}
-      <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+      {readOnly ? <div style={{ color: 'var(--muted)', fontSize: 12, marginTop: 10 }}>Dossier déjà traité : statut {u.kycStatus}.</div> : <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
         <button className="btn pri" style={{ flex: 1 }} disabled={busy || !complete} onClick={() => decide('VERIFIED')}>✓ Approuver</button>
         <button className="btn" style={{ flex: 1, color: 'var(--danger)', borderColor: '#F0C9B6' }} disabled={busy} onClick={() => decide('REJECTED')}>✗ Rejeter…</button>
-      </div>
+      </div>}
     </div>
   );
 }

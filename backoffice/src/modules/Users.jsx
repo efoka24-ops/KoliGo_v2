@@ -137,8 +137,8 @@ export default function Users() {
                 <div><div className="k">{t('deliveries')}</div><div className="v">{drawer.deliveryCount ?? drawer.deliveries ?? '—'}</div></div>
               </div>
 
-              {drawer.kycStatus === 'PENDING' && (
-                <KycReview userId={drawer.id} onDecided={() => { qc.invalidateQueries({ queryKey: ['admin-users'] }); qc.invalidateQueries({ queryKey: ['admin-user'] }); qc.invalidateQueries({ queryKey: ['admin-analytics'] }); setDrawer(null); }} />
+              {['PENDING', 'VERIFIED', 'REJECTED'].includes(drawer.kycStatus) && (
+                <KycReview userId={drawer.id} readOnly={drawer.kycStatus !== 'PENDING'} onDecided={() => { qc.invalidateQueries({ queryKey: ['admin-users'] }); qc.invalidateQueries({ queryKey: ['admin-user'] }); qc.invalidateQueries({ queryKey: ['admin-analytics'] }); setDrawer(null); }} />
               )}
             </div>
           </aside>
