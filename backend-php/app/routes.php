@@ -66,6 +66,7 @@ return function (Router $r): void {
         $r->patch("$p/user/profile", [AuthC::class, 'updateProfile'], $jwt);
         $r->patch("$p/user/payment-account", [AuthC::class, 'updatePaymentAccount'], $jwt);
         $r->post("$p/user/kyc", [AuthC::class, 'submitKyc'], $jwt);
+        $r->post("$p/user/change-pin", [AuthC::class, 'changePin'], $jwt);
 
         // ── deliveries : routes publiques d'abord (destinataire sans compte) ──
         $d = "$p/deliveries";

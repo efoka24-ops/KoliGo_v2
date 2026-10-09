@@ -68,6 +68,7 @@ export function AppProvider({ children, initialLang = 'fr' }) {
   const [lang, setLangState] = useState(initialLang);
   const [maintenance, setMaintenance] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const biometricRef = useRef(false);
   const [sessionRestored, setSessionRestored] = useState(false);
   const [online, setOnline] = useState(true);
   const toastTimer = useRef(null);
@@ -101,7 +102,7 @@ export function AppProvider({ children, initialLang = 'fr' }) {
         setCurrentLang(storedLang);
         setLangState(storedLang);
       }
-      if (storedBio === '1') setBiometricEnabled(true);
+      if (storedBio === '1') { setBiometricEnabled(true); biometricRef.current = true; }
       if (storedToken) {
         // Verify token is still valid
         apiFetch('/user/profile', {}, storedToken).then(u => {
@@ -125,6 +126,7 @@ export function AppProvider({ children, initialLang = 'fr' }) {
 
   const enableBiometric = (enabled) => {
     setBiometricEnabled(enabled);
+    biometricRef.current = enabled;
     SecureStore.setItem('kg_biometric', enabled ? '1' : '0').catch(() => {});
   };
 
@@ -199,20 +201,25 @@ export function AppProvider({ children, initialLang = 'fr' }) {
     }
   };
 
-  const logout = useCallback(() => {
+  // keepBiometric : déconnexion volontaire avec empreinte/Face ID activé → on garde le jeton de renouvellement
+  // et le numéro, pour que la biométrie puisse rouvrir la session. Un échec d'authentification efface tout.
+  const logout = useCallback((opts) => {
     setUser(null);
     setToken(null);
     setPendingUser(null);
     setRole('vendor');
     setConversations({});
     SecureStore.deleteItem('access_token').catch(() => {});
-    SecureStore.deleteItem('refresh_token').catch(() => {});
-    SecureStore.deleteItem('user_phone').catch(() => {});
+    const keep = !(opts && opts.authFailure === true) && (biometricRef.current || (opts && opts.keepBiometric === true));
+    if (!keep) {
+      SecureStore.deleteItem('refresh_token').catch(() => {});
+      SecureStore.deleteItem('user_phone').catch(() => {});
+    }
   }, []);
 
   // Register logout as the handler for token-refresh failures in the axios interceptor
   useEffect(() => {
-    setAuthFailureHandler(logout);
+    setAuthFailureHandler(() => logout({ authFailure: true }));
   }, [logout]);
 
   // Authenticated API shortcut

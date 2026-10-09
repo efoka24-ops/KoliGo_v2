@@ -19,7 +19,7 @@ use Koligo\Services\Uploads;
 final class AuthController
 {
     /** Colonnes modifiables par l'utilisateur sur son propre profil (liste blanche). */
-    private const PROFILE_FIELDS = ['name', 'email', 'gender', 'shopName', 'language', 'theme', 'biometryEnabled', 'expoPushToken', 'cniNumber', 'quartier', 'isOnline', 'vehicleType'];
+    private const PROFILE_FIELDS = ['name', 'email', 'gender', 'shopName', 'language', 'theme', 'biometryEnabled', 'expoPushToken', 'cniNumber', 'quartier', 'isOnline', 'vehicleType', 'vehiclePlate'];
 
     public static function sendOtp(Ctx $c): array
     {
@@ -69,6 +69,11 @@ final class AuthController
         return Accounts::resetPin((string)($c->input('email') ?? $c->input('phone', '')), (string)$c->input('otp', ''), (string)$c->input('newPin', ''));
     }
 
+    public static function changePin(Ctx $c): array
+    {
+        return Accounts::changePin($c->user['userId'], (string)$c->input('currentPin', ''), (string)$c->input('newPin', ''));
+    }
+
     public static function deviceSession(Ctx $c): array
     {
         return ['ok' => true];
@@ -82,7 +87,7 @@ final class AuthController
     /** Profil expose a l'app : le statut KYC est celui du role actif, avec le detail par role. */
     private static function profileOf(array $u): array
     {
-        $out = array_intersect_key($u, array_flip(['id', 'name', 'phone', 'activeRole', 'gender', 'shopName', 'language', 'theme', 'vehicleType']));
+        $out = array_intersect_key($u, array_flip(['id', 'name', 'phone', 'activeRole', 'gender', 'shopName', 'language', 'theme', 'vehicleType', 'vehiclePlate']));
         $byRole = Kyc::byRole($u);
         $out['kycStatus'] = $byRole[$u['activeRole']] ?? (string)$u['kycStatus'];
         $out['kycByRole'] = $byRole;
@@ -148,6 +153,13 @@ final class AuthController
         }
         if (isset($data['vehicleType']) && !isset(Pricing::VEHICLES[(string)$data['vehicleType']])) {
             throw new HttpError('Véhicule invalide');
+        }
+        if (array_key_exists('vehiclePlate', $data)) {
+            $plate = strtoupper(trim((string)$data['vehiclePlate']));
+            if ($plate !== '' && !preg_match('/^[A-Z0-9][A-Z0-9 \-]{2,18}[A-Z0-9]$/', $plate)) {
+                throw new HttpError('Matricule invalide (lettres, chiffres et tirets, ex. LT-892-DA)');
+            }
+            $data['vehiclePlate'] = $plate !== '' ? $plate : null;
         }
         Db::update('User', $c->user['userId'], $data + ['updatedAt' => Db::now()]);
         $u = Accounts::mustUser($c->user['userId']);

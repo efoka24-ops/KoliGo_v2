@@ -32,13 +32,14 @@ final class Setup
         ['Wallet', 'paymentName', 'VARCHAR(191) NULL'],
         ['KycDocument', 'role', 'VARCHAR(20) NULL'],
         ['User', 'vehicleType', 'VARCHAR(20) NULL'],
+        ['User', 'vehiclePlate', 'VARCHAR(20) NULL'],
         ['User', 'adminPinSetAt', 'DATETIME NULL'],
         ['User', 'cguVersion', 'INT NULL'],
         ['User', 'cguAcceptedAt', 'DATETIME NULL'],
     ];
 
     /** A incrementer quand le schema ou les reglages de reference changent : declenche une migration au prochain appel. */
-    public const SCHEMA_VERSION = 4;
+    public const SCHEMA_VERSION = 5;
 
     /**
      * Migration automatique et rejouable : evite d'avoir a relancer _setup.php (dont le jeton est supprime apres

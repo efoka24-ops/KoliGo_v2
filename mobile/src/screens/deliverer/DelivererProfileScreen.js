@@ -7,9 +7,10 @@ import KenteStripe from '../../components/KenteStripe';
 import Icon from '../../components/Icon';
 
 const VEHICLE_TYPES = [
-  { id: 'moto',     label: 'Moto',     icon: 'moto' },
-  { id: 'tricycle', label: 'Tricycle', icon: 'package' },
-  { id: 'voiture',  label: 'Voiture',  icon: 'bolt' },
+  { id: 'MOTO',       label: 'Moto',       icon: 'moto' },
+  { id: 'TRICYCLE',   label: 'Tricycle',   icon: 'package' },
+  { id: 'VOITURE',    label: 'Voiture',    icon: 'bolt' },
+  { id: 'UTILITAIRE', label: 'Utilitaire', icon: 'package' },
 ];
 
 function MenuRow({ icon, iconBg, label, sub, onPress, last }) {
@@ -32,21 +33,21 @@ function MenuRow({ icon, iconBg, label, sub, onPress, last }) {
 }
 
 export default function DelivererProfileScreen({ navigation }) {
-  const { role, setRole, user, logout, token, api, loginAs, showToast } = useApp();
+  const { role, setRole, user, setUser, logout, token, api, loginAs, showToast } = useApp();
   const isDemo = user?.isTest === true;
 
   const [apiStats, setApiStats]   = useState(null);
-  const [vehicle, setVehicle]     = useState(user?.vehicle || '');
-  const [plate, setPlate]         = useState(user?.plate || '');
+  const [vehicle, setVehicle]     = useState(user?.vehicleType || '');
+  const [plate, setPlate]         = useState(user?.vehiclePlate || '');
   const [saving, setSaving]       = useState(false);
   const [switching, setSwitching] = useState(false);
 
   useEffect(() => {
     if (isDemo || !token) return;
-    api('/user/profile').then(setApiStats).catch(() => {});
-    api('/api/user/profile').then(u => {
-      if (u.vehicle) setVehicle(u.vehicle);
-      if (u.plate) setPlate(u.plate);
+    api('/user/stats').then(setApiStats).catch(() => {});
+    api('/user/profile').then(u => {
+      if (u?.vehicleType) setVehicle(u.vehicleType);
+      if (u?.vehiclePlate) setPlate(u.vehiclePlate);
     }).catch(() => {});
   }, [token, isDemo]);
 
@@ -67,7 +68,8 @@ export default function DelivererProfileScreen({ navigation }) {
     if (!vehicle) return;
     setSaving(true);
     try {
-      await api('/user/profile', { method: 'PATCH', body: JSON.stringify({ vehicle, plate: plate.trim() || null }) });
+      await api('/user/profile', { method: 'PATCH', body: JSON.stringify({ vehicleType: vehicle, vehiclePlate: plate.trim() }) });
+      setUser?.((prev) => (prev ? { ...prev, vehicleType: vehicle, vehiclePlate: plate.trim().toUpperCase() } : prev));
       showToast('Véhicule mis à jour ✓');
     } catch (e) {
       showToast(e.message || 'Erreur', 'error');

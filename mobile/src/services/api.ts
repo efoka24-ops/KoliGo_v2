@@ -127,6 +127,12 @@ export async function apiFetch(path: string, options: RequestInit = {}, token?: 
     return res.data;
   } catch (e: any) {
     if (e.response?.status === 404) return null;
+    // Message lisible : celui du serveur, sinon une phrase claire (jamais "Request failed with status code 400").
+    const server = e.response?.data?.error;
+    if (server) e.message = String(server);
+    else if (e.code === 'ECONNABORTED') e.message = 'Le serveur met trop de temps à répondre. Réessayez.';
+    else if (!e.response) e.message = 'Pas de connexion au serveur. Vérifiez votre réseau.';
+    else e.message = `Erreur serveur (${e.response.status}). Réessayez dans un instant.`;
     throw e;
   }
 }

@@ -76,7 +76,7 @@ export default function SettingsScreen({ navigation }) {
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Déconnecter', style: 'destructive', onPress: () => {
-          logout();
+          logout({ keepBiometric: biometric });
           navigation.getParent()?.reset({ index: 0, routes: [{ name: 'Welcome' }] });
         }
       },
@@ -94,14 +94,14 @@ export default function SettingsScreen({ navigation }) {
 
         {/* Langue */}
         <Section title="Langue">
-          {[['fr', '🇫🇷  Français'], ['en', '🇬🇧  English']].map(([k, label], i) => (
+          {[['fr', '🇫🇷  Français'], ['en', '🇬🇧  English'], ['ff', '🇨🇲  Fulfulde']].map(([k, label], i) => (
             <SettingRow
               key={k}
               icon={k === 'fr' ? 'bell' : 'bolt'}
               iconBg={lang === k ? '#EFF8F1' : '#F0F0EA'}
               label={label}
               onPress={() => setLang(k)}
-              last={i === 1}
+              last={i === 2}
               right={
                 lang === k ? (
                   <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' }}>
@@ -154,8 +154,8 @@ export default function SettingsScreen({ navigation }) {
             icon="shield"
             iconBg="#FEF0E3"
             label="Changer le PIN"
-            sub="Réinitialisation par email"
-            onPress={() => navigation.navigate('ForgotPin')}
+            sub="Avec votre PIN actuel"
+            onPress={() => navigation.navigate('ChangePin')}
           />
           <SettingRow
             icon="id"

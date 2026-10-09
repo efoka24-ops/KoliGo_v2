@@ -54,6 +54,8 @@ import TermsScreen from '../screens/shared/TermsScreen';
 import ChatDetailScreen from '../screens/shared/ChatScreen';
 import DeliveryChatScreen from '../screens/shared/DeliveryChatScreen';
 import HistoryScreen from '../screens/shared/HistoryScreen';
+import ChangePinScreen from '../screens/shared/ChangePinScreen';
+import WalletScreen from '../screens/deliverer/WalletScreen';
 import PaymentAccountScreen from '../screens/shared/PaymentAccountScreen';
 import VendorHistoryScreen from '../screens/vendor/HistoryScreen';
 
@@ -110,6 +112,8 @@ export default function RootNavigator() {
       <Stack.Screen name="ClientReportIssue" component={ClientReportIssueScreen} />
 
       {/* Shared / modals */}
+      <Stack.Screen name="ChangePin" component={ChangePinScreen} />
+      <Stack.Screen name="Wallet" component={WalletScreen} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="Terms" component={TermsScreen} />

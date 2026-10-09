@@ -37,8 +37,43 @@ export default function WalletScreen({ navigation }) {
   const [walletData, setWalletData] = useState(null);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawPhone, setWithdrawPhone] = useState('');
-  const [withdrawProvider, setWithdrawProvider] = useState('MTN_MOMO');
+  const [withdrawProvider, setWithdrawProvider] = useState('MTN');
   const [withdrawLoading, setWithdrawLoading] = useState(false);
+  const [topUpOpen, setTopUpOpen] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState('');
+  const [topUpPhone, setTopUpPhone] = useState('');
+  const [topUpLoading, setTopUpLoading] = useState(false);
+  const [topUpWaiting, setTopUpWaiting] = useState(false);
+  const isStack = navigation?.getState?.()?.type === 'stack';
+
+  const refresh = () => api('/wallet').then(setWalletData).catch(() => {});
+
+  const handleTopUp = async () => {
+    const amount = parseInt(topUpAmount, 10);
+    if (!amount || amount < 100) { showToast('Montant minimum 100 XAF', 'error'); return; }
+    const phone = topUpPhone.replace(/\D/g, '').replace(/^237(?=\d{9}$)/, '');
+    if (!/^6\d{8}$/.test(phone)) { showToast('Numéro invalide (format : 6XXXXXXXX)', 'error'); return; }
+    setTopUpLoading(true);
+    try {
+      await api('/wallet/topup', { method: 'POST', body: JSON.stringify({ amount, phone: '237' + phone }) });
+      setTopUpOpen(false);
+      setTopUpWaiting(true);
+      showToast('Confirmez le paiement sur votre téléphone (saisissez votre code Mobile Money).');
+      // Le solde n'est crédité qu'à la confirmation de l'opérateur : on vérifie pendant ~2 min.
+      const before = walletData?.balance ?? 0;
+      for (let i = 0; i < 24; i++) {
+        await new Promise((r) => setTimeout(r, 5000));
+        const w = await api('/wallet').catch(() => null);
+        if (w) setWalletData(w);
+        if (w && w.balance > before) { showToast('Recharge reçue ✓', 'success'); break; }
+      }
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setTopUpLoading(false);
+      setTopUpWaiting(false);
+    }
+  };
 
   useEffect(() => {
     if (isDemo || !token) return;
@@ -62,7 +97,7 @@ export default function WalletScreen({ navigation }) {
         body: JSON.stringify({ amount: parseInt(withdrawAmount), provider: withdrawProvider, phone: phoneNorm }),
       });
       setWithdrawOpen(false);
-      showToast('Retrait initié · arrive sous 1 min ✅');
+      showToast('Demande de retrait enregistrée · traitée par KoliGo sous 24 h ✅');
       api('/wallet').then(setWalletData).catch(() => {});
     } catch (err) {
       showToast(err.message, 'error');
@@ -75,7 +110,7 @@ export default function WalletScreen({ navigation }) {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF5E6' }} edges={['top']}>
       {toast && <KGToast message={toast.message} kind={toast.kind} />}
       <KenteStripe height={4} />
-      <KGTopBar title="Wallet" />
+      <KGTopBar title="Wallet" onBack={isStack ? () => navigation.goBack() : undefined} />
 
       <ScrollView contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
 
@@ -119,10 +154,10 @@ export default function WalletScreen({ navigation }) {
             <Icon name="upload" size={18} color="#fff" />
             <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: '#fff' }}>Retirer</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={{ flex: 1, height: 50, borderRadius: 14, borderWidth: 1.5, borderColor: colors.green, backgroundColor: '#EFF8F1', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <TouchableOpacity onPress={() => setTopUpOpen(true)} disabled={topUpWaiting}
+            style={{ flex: 1, height: 50, borderRadius: 14, borderWidth: 1.5, borderColor: colors.green, opacity: topUpWaiting ? 0.6 : 1, backgroundColor: '#EFF8F1', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <Icon name="plus" size={18} color={colors.green} />
-            <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: colors.green }}>Recharger</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14, color: colors.green }}>{topUpWaiting ? 'En attente…' : 'Recharger'}</Text>
           </TouchableOpacity>
         </View>
 
@@ -167,6 +202,22 @@ export default function WalletScreen({ navigation }) {
         )}
       </ScrollView>
 
+      {/* Recharge modal */}
+      <Modal visible={topUpOpen} transparent animationType="slide">
+        <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(14,33,22,0.6)' }} activeOpacity={1} onPress={() => setTopUpOpen(false)}>
+          <TouchableOpacity activeOpacity={1} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, gap: 14 }}>
+            <KenteStripe height={3} />
+            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: colors.ink, marginTop: 8 }}>Recharger mon wallet</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55 }}>Vous recevrez une demande de paiement sur ce numéro Mobile Money.</Text>
+            <KGInput label="Montant (XAF)" value={topUpAmount} suffix="XAF" keyboardType="numeric" onChangeText={setTopUpAmount} placeholder="Ex : 5000" />
+            <KGInput label="Numéro Mobile Money" value={topUpPhone} suffix="+237" keyboardType="phone-pad" onChangeText={setTopUpPhone} placeholder="6 XX XX XX XX" />
+            <KGButton kind="primary" size="lg" onPress={handleTopUp} disabled={topUpLoading}>
+              {topUpLoading ? <ActivityIndicator color="#fff" /> : 'Payer'}
+            </KGButton>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
       {/* Withdraw modal */}
       <Modal visible={withdrawOpen} transparent animationType="slide">
         <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(14,33,22,0.6)' }} activeOpacity={1} onPress={() => setWithdrawOpen(false)}>
@@ -175,12 +226,12 @@ export default function WalletScreen({ navigation }) {
             <KenteStripe height={3} />
             <View>
               <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: colors.ink, marginTop: 8 }}>Retrait Mobile Money</Text>
-              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55, marginTop: 3 }}>Instantané · 0 frais</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13, color: colors.ink55, marginTop: 3 }}>Traité sous 24 h · 0 frais</Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 10 }}>
               {[
-                { id: 'MTN_MOMO', label: 'MTN MoMo', bg: '#FFCC00', color: '#1A1A1A' },
-                { id: 'ORANGE_MONEY', label: 'Orange Money', bg: '#C4611A', color: '#fff' },
+                { id: 'MTN', label: 'MTN MoMo', bg: '#FFCC00', color: '#1A1A1A' },
+                { id: 'ORANGE', label: 'Orange Money', bg: '#C4611A', color: '#fff' },
               ].map(p => (
                 <TouchableOpacity key={p.id} onPress={() => setWithdrawProvider(p.id)}
                   style={{ flex: 1, height: 60, borderRadius: 14, borderWidth: withdrawProvider === p.id ? 2.5 : 1.5, borderColor: withdrawProvider === p.id ? colors.green : '#E8DCC8', backgroundColor: p.bg, alignItems: 'center', justifyContent: 'center' }}>

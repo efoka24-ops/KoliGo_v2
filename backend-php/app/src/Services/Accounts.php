@@ -232,6 +232,24 @@ final class Accounts
         return ['reset' => true];
     }
 
+    /** Changement de PIN depuis l'application : le PIN actuel est exige (limite d'essais comme a la connexion). */
+    public static function changePin(string $userId, string $currentPin, string $newPin): array
+    {
+        $u = self::mustUser($userId);
+        $bucket = 'changepin:' . $userId;
+        RateLimit::hit($bucket, 5, 600);
+        if ($currentPin === '' || !password_verify($currentPin, (string)$u['pinHash'])) {
+            throw new HttpError('PIN actuel incorrect');
+        }
+        self::validatePin($newPin);
+        if ($newPin === $currentPin) {
+            throw new HttpError('Le nouveau PIN doit être différent de l\'ancien');
+        }
+        Db::exec('UPDATE `User` SET pinHash = ?, updatedAt = ? WHERE id = ?', [self::hashPin($newPin), Db::now(), $userId]);
+        RateLimit::clear($bucket);
+        return ['changed' => true];
+    }
+
     public static function mustUser(string $id): array
     {
         $u = Db::one('SELECT * FROM `User` WHERE id = ?', [$id]);

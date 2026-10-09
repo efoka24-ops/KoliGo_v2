@@ -31,6 +31,7 @@ export default function LanguageScreen({ navigation }) {
       <View style={{ width: '100%', gap: 10, marginTop: 6 }}>
         <Option code="fr" label="Français" flag="🇫🇷" />
         <Option code="en" label="English" flag="🇬🇧" />
+        <Option code="ff" label="Fulfulde" flag="🇨🇲" />
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
         <Ionicons name="lock-closed" size={11} color={colors.muted} />

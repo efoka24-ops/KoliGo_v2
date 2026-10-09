@@ -45,18 +45,26 @@ export default function SigninScreen({ navigation }) {
         fallbackLabel: 'Utiliser le PIN',
       });
       if (!result.success) return;
-      const storedToken = await storage.getItem('access_token');
-      if (!storedToken) {
-        showToast('Aucun compte enregistré — utilise ton PIN', 'error');
+      // Le jeton d'accès est de courte durée : on le renouvelle avec le jeton de session conservé sur le téléphone.
+      const refreshToken = await storage.getItem('refresh_token');
+      if (!refreshToken) {
+        showToast('Session expirée — connecte-toi avec ton PIN une fois pour réactiver la biométrie.', 'error');
         return;
       }
-      const u = await apiFetch('/user/profile', {}, storedToken);
+      const tokens = await apiFetch('/auth/refresh', { method: 'POST', body: JSON.stringify({ token: refreshToken }) });
+      if (!tokens?.accessToken) {
+        showToast('Session expirée — connecte-toi avec ton PIN.', 'error');
+        return;
+      }
+      await storage.setItem('access_token', tokens.accessToken);
+      if (tokens.refreshToken) await storage.setItem('refresh_token', tokens.refreshToken);
+      const u = await apiFetch('/user/profile', {}, tokens.accessToken);
       if (u?.id) {
-        loginAs({ ...u, role: u.activeRole?.toLowerCase() || role }, storedToken);
+        loginAs({ ...u, role: u.activeRole?.toLowerCase() || role }, tokens.accessToken);
         navigation.reset({ index: 0, routes: [{ name: u.activeRole === 'DELIVERER' ? 'DelivererApp' : 'VendorApp' }] });
       }
-    } catch {
-      showToast('Biométrie échouée', 'error');
+    } catch (e) {
+      showToast(e?.message || 'Biométrie échouée', 'error');
     }
   };
 
@@ -104,6 +112,7 @@ export default function SigninScreen({ navigation }) {
           const phone = data.user?.phone;
           if (phone) await storage.setItem('user_phone', phone);
           if (data.accessToken) await storage.setItem('access_token', data.accessToken);
+          if (data.refreshToken) await storage.setItem('refresh_token', data.refreshToken);
           loginAs(
             { id: data.user?.id, name: data.user?.name, phone: data.user?.phone, role: data.user?.activeRole?.toLowerCase() || role, kycStatus: data.user?.kycStatus },
             data.accessToken
