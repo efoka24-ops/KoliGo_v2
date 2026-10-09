@@ -13,7 +13,7 @@ import RouteLine from '../../components/RouteLine';
 import Icon from '../../components/Icon';
 
 export default function VendorHomeScreen({ navigation }) {
-  const { user, api, token } = useApp();
+  const { user, api, token, unreadCount } = useApp();
   const { kycStatus } = useComplianceGate(navigation);
   const [deliveries, setDeliveries] = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -73,6 +73,11 @@ export default function VendorHomeScreen({ navigation }) {
           <TouchableOpacity onPress={() => navigation.navigate('Notifications')}
             style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="bell" size={20} color={colors.ink} />
+            {unreadCount > 0 && (
+              <View style={{ position: 'absolute', top: 4, right: 4, minWidth: 16, height: 16, borderRadius: 8, paddingHorizontal: 3, backgroundColor: colors.orange, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
 

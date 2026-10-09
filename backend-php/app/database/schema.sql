@@ -265,3 +265,28 @@ CREATE TABLE IF NOT EXISTS `CguVersion` (
   PRIMARY KEY (`version`, `lang`)
 ) {{OPTS}};
 
+
+-- Notifications recues par chaque utilisateur (centre de notifications de l'app + historique des envois push).
+CREATE TABLE IF NOT EXISTS `Notification` (
+  `id` VARCHAR(40) NOT NULL PRIMARY KEY,
+  `userId` VARCHAR(40) NOT NULL,
+  `type` VARCHAR(40) NOT NULL,
+  `title` VARCHAR(160) NOT NULL,
+  `body` VARCHAR(500) NOT NULL,
+  `data` TEXT NULL,
+  `broadcastId` VARCHAR(40) NULL,
+  `readAt` DATETIME NULL,
+  `createdAt` DATETIME NOT NULL
+) {{OPTS}};
+
+-- Messages envoyes depuis le back-office (un vendeur, un livreur, tout le monde).
+CREATE TABLE IF NOT EXISTS `Broadcast` (
+  `id` VARCHAR(40) NOT NULL PRIMARY KEY,
+  `audience` VARCHAR(20) NOT NULL,
+  `targetUserId` VARCHAR(40) NULL,
+  `title` VARCHAR(160) NOT NULL,
+  `body` VARCHAR(500) NOT NULL,
+  `recipients` INT NOT NULL DEFAULT 0,
+  `createdBy` VARCHAR(40) NULL,
+  `createdAt` DATETIME NOT NULL
+) {{OPTS}};

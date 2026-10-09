@@ -5,6 +5,7 @@ use Koligo\Auth;
 use Koligo\Controllers\AdminController as Admin;
 use Koligo\Controllers\AuthController as AuthC;
 use Koligo\Controllers\DeliveryController as Del;
+use Koligo\Controllers\NotificationController as NotifC;
 use Koligo\Controllers\PaymentController as Pay;
 use Koligo\Controllers\PublicController as Pub;
 use Koligo\Controllers\WalletController as Wal;
@@ -66,6 +67,8 @@ return function (Router $r): void {
         $r->patch("$p/user/profile", [AuthC::class, 'updateProfile'], $jwt);
         $r->patch("$p/user/payment-account", [AuthC::class, 'updatePaymentAccount'], $jwt);
         $r->post("$p/user/kyc", [AuthC::class, 'submitKyc'], $jwt);
+        $r->get("$p/notifications", [NotifC::class, 'list'], $jwt);
+        $r->post("$p/notifications/read", [NotifC::class, 'markRead'], $jwt);
         $r->post("$p/user/change-pin", [AuthC::class, 'changePin'], $jwt);
 
         // ── deliveries : routes publiques d'abord (destinataire sans compte) ──
@@ -115,6 +118,8 @@ return function (Router $r): void {
         $a = "$p/admin";
         $adm = [$jwt, $role('ADMIN')];
         $r->get("$a/stats", [Admin::class, 'stats'], ...$adm);
+        $r->get("$a/notifications", [NotifC::class, 'adminHistory'], ...$adm);
+        $r->post("$a/notifications", [NotifC::class, 'adminBroadcast'], ...$adm);
         $r->get("$a/users", [Admin::class, 'listUsers'], ...$adm);
         $r->post("$a/users/create", [Admin::class, 'createUser'], ...$adm);
         $r->get("$a/users/:id", [Admin::class, 'getUser'], ...$adm);

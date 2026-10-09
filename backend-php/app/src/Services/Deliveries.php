@@ -133,6 +133,7 @@ final class Deliveries
         });
 
         $d = self::find($id);
+        self::notifyNewDelivery($d);
         $vendor = Db::one('SELECT * FROM `User` WHERE id = ?', [$vendorId]);
         if ($vendor) {
             if ($vendor['email']) {
@@ -175,6 +176,24 @@ final class Deliveries
 
     // ── Acceptation, annulation ──────────────────────────────────────────────
 
+    /** Previent les livreurs qui peuvent prendre la course : KYC valide, non bloques, vehicule adapte au gabarit. */
+    private static function notifyNewDelivery(array $d): void
+    {
+        try {
+            $rows = Db::all("SELECT id, vehicleType FROM `User` WHERE roles LIKE '%DELIVERER%' AND kycStatus = 'VERIFIED' AND isBlocked = 0 AND id <> ? LIMIT 500", [$d['vendorId']]);
+            $ids = [];
+            foreach ($rows as $r) {
+                if (Pricing::vehicleFits($r['vehicleType'] ?? null, (string)($d['size'] ?: 'M'))) {
+                    $ids[] = $r['id'];
+                }
+            }
+            $where = trim(($d['fromCity'] ? $d['fromCity'] . ' · ' : '') . $d['pickupAddress'] . ' → ' . $d['dropoffAddress']);
+            Notifier::sendMany($ids, 'NEW_DELIVERY', 'Nouvelle course disponible', $where . ' · ' . Notify::xaf((int)$d['delivererEarning']) . ' F pour vous', ['deliveryId' => $d['id']]);
+        } catch (\Throwable $e) {
+            error_log('[notif] ' . $e->getMessage());
+        }
+    }
+
     public static function accept(string $id, string $delivererId): array
     {
         $d = self::find($id);
@@ -197,6 +216,7 @@ final class Deliveries
         $deliverer = Db::one('SELECT name FROM `User` WHERE id = ?', [$delivererId]);
         $vendor = Db::one('SELECT * FROM `User` WHERE id = ?', [$d['vendorId']]);
         $who = $deliverer['name'] ?? 'Un livreur';
+        Notifier::send((string)$d['vendorId'], 'DELIVERY_ACCEPTED', 'Course acceptée', "$who a accepté votre livraison et se rend chez vous.", ['deliveryId' => $id]);
         if ($vendor) {
             if ($vendor['email']) {
                 Notify::email($vendor['email'], '[KoliGo] Un livreur a accepté votre course', "<p>$who a accepté votre livraison.</p>");
@@ -241,6 +261,9 @@ final class Deliveries
         Db::exec('UPDATE `EscrowEntry` SET releasedAt = ? WHERE deliveryId = ?', [$now, $id]);
         if ($fee > 0 && $d['delivererId']) {
             self::chargeCancelFee($vendorId, (string)$d['delivererId'], $fee, $id, "Frais d'annulation (course déjà en route)");
+        }
+        if ($d['delivererId']) {
+            Notifier::send((string)$d['delivererId'], 'DELIVERY_CANCELLED', 'Course annulée', 'Le vendeur a annulé la course' . ($fee > 0 ? " : $fee F vous seront versés en dédommagement." : '.'), ['deliveryId' => $id]);
         }
         return self::find($id);
     }
@@ -305,6 +328,7 @@ final class Deliveries
             'oldPriceXAF' => (int)$d['priceXAF'], 'newPriceXAF' => $new['finalPrice'], 'status' => 'PENDING',
             'expiresAt' => $expires, 'createdAt' => $now,
         ]);
+        Notifier::send((string)$d['vendorId'], 'REVISION_PROPOSED', 'Correction du gabarit', "Le livreur propose le gabarit $size au lieu de $declared (nouveau prix : " . Notify::xaf($new['finalPrice']) . ' F). Répondez avant expiration.', ['deliveryId' => $id]);
         $vendor = Db::one('SELECT phone FROM `User` WHERE id = ?', [$d['vendorId']]);
         if ($vendor) {
             Notify::whatsapp($vendor['phone'], "⚠️ KoliGo — Le livreur propose le gabarit $size au lieu de $declared.\nNouveau prix : " . Notify::xaf($new['finalPrice']) . ' XAF (avant : ' . Notify::xaf((int)$d['priceXAF']) . " XAF).\nOuvrez l'application pour accepter ou refuser.");
@@ -338,6 +362,7 @@ final class Deliveries
                 );
                 Db::exec('UPDATE `EscrowEntry` SET amountXAF = ? WHERE deliveryId = ?', [$new['finalPrice'], $id]);
             });
+            Notifier::send((string)$d['delivererId'], 'REVISION_ACCEPTED', 'Correction acceptée', 'Le vendeur a accepté le nouveau prix : vous pouvez collecter le colis.', ['deliveryId' => $id]);
             return self::find($id);
         }
 
@@ -350,6 +375,7 @@ final class Deliveries
             Db::exec('UPDATE `EscrowEntry` SET releasedAt = ? WHERE deliveryId = ?', [$now, $id]);
         });
         self::chargeCancelFee($vendorId, (string)$d['delivererId'], $fee, $id, 'Frais d\'annulation (prix révisé refusé)');
+        Notifier::send((string)$d['delivererId'], 'REVISION_REFUSED', 'Correction refusée', "Le vendeur a refusé : course annulée, $fee F de dédommagement vous sont dus.", ['deliveryId' => $id]);
         return self::find($id);
     }
 
@@ -426,6 +452,7 @@ final class Deliveries
             throw new HttpError('Wrong collect code');
         }
         Db::exec("UPDATE `Delivery` SET status = 'EN_ROUTE', updatedAt = ? WHERE id = ? AND status = 'ACCEPTE'", [Db::now(), $id]);
+        Notifier::send((string)$d['vendorId'], 'DELIVERY_PICKED_UP', 'Colis collecté', 'Le livreur a récupéré votre colis et est en route vers le destinataire.', ['deliveryId' => $id]);
         return self::find($id);
     }
 
@@ -492,6 +519,8 @@ final class Deliveries
             return;
         }
 
+        Notifier::send((string)$d['vendorId'], 'DELIVERY_DELIVERED', 'Colis livré', 'Votre colis a été livré à ' . $d['dropoffAddress'] . '.', ['deliveryId' => $d['id']]);
+        Notifier::send((string)$d['delivererId'], 'EARNING', 'Gain reçu', 'Course livrée : ' . Notify::xaf((int)$d['delivererEarning']) . ' F crédités sur votre wallet.', ['deliveryId' => $d['id']]);
         $deliverer = Db::one('SELECT * FROM `User` WHERE id = ?', [$d['delivererId']]);
         $vendor = Db::one('SELECT * FROM `User` WHERE id = ?', [$d['vendorId']]);
         $ref = strtoupper(substr($d['id'], -8));

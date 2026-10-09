@@ -13,6 +13,7 @@ use Koligo\Services\Accounts;
 use Koligo\Services\Cgu;
 use Koligo\Services\Invoices;
 use Koligo\Services\Kyc;
+use Koligo\Services\Notifier;
 use Koligo\Services\Payments;
 use Koligo\Services\Pricing;
 
@@ -132,6 +133,12 @@ final class AdminController
         }
         $u = Accounts::mustUser($c->param('id'));
         Kyc::set($u['id'], $status, $status === 'REJECTED' ? ((string)$c->input('reason') ?: null) : null);
+        if ($status === 'VERIFIED') {
+            Notifier::send($u['id'], 'KYC', 'Identité validée', 'Votre dossier KYC est validé : vous pouvez publier et livrer des colis.');
+        } elseif ($status === 'REJECTED') {
+            $why = trim((string)$c->input('reason'));
+            Notifier::send($u['id'], 'KYC', 'Dossier KYC refusé', 'Votre dossier a été refusé' . ($why !== '' ? ' : ' . $why : '.') . ' Vous pouvez le renvoyer.');
+        }
         return self::publicUser($u['id']);
     }
 
@@ -218,7 +225,12 @@ final class AdminController
         if (Db::exec("UPDATE `Withdrawal` SET status = 'SUCCESS' WHERE id = ? AND status = 'PENDING'", [$id]) !== 1) {
             throw new HttpError('Retrait introuvable ou deja traite');
         }
-        return Db::one('SELECT * FROM `Withdrawal` WHERE id = ?', [$id]);
+        $w = Db::one('SELECT * FROM `Withdrawal` WHERE id = ?', [$id]);
+        $owner = $w ? Db::val('SELECT userId FROM `Wallet` WHERE id = ?', [$w['walletId']]) : null;
+        if ($owner) {
+            Notifier::send((string)$owner, 'WITHDRAWAL', 'Retrait effectué', 'Votre retrait de ' . number_format((int)$w['amountXAF'], 0, ',', ' ') . ' F vers ' . $w['phone'] . ' a été traité.');
+        }
+        return $w;
     }
 
     public static function getSettings(Ctx $c): array

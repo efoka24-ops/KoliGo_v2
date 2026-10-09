@@ -9,11 +9,11 @@ use Koligo\Router;
 // autoloader (plusieurs classes partagent un fichier, ex. Http/HttpError/Out).
 foreach ([
     'Env', 'Db', 'Jwt', 'Http', 'Router', 'Auth', 'RateLimit', 'Rel',
-    'Services/Pricing', 'Services/Distance', 'Services/Sungku', 'Services/Smtp', 'Services/Notify',
+    'Services/Pricing', 'Services/Distance', 'Services/Sungku', 'Services/Smtp', 'Services/Notify', 'Services/Notifier',
     'Services/Accounts', 'Services/AdminLogin', 'Services/Uploads', 'Services/Kyc', 'Services/Cgu',
     'Services/Deliveries', 'Services/Payments', 'Services/Invoices', 'Setup',
     'Controllers/AuthController', 'Controllers/DeliveryController', 'Controllers/WalletController',
-    'Controllers/PaymentController', 'Controllers/AdminController', 'Controllers/PublicController',
+    'Controllers/PaymentController', 'Controllers/AdminController', 'Controllers/PublicController', 'Controllers/NotificationController',
 ] as $f) {
     require_once __DIR__ . "/src/$f.php";
 }

@@ -221,20 +221,27 @@ final class Payments
             Db::exec("UPDATE `TopUp` SET status = 'FAILED', updatedAt = ? WHERE id = ? AND status = 'PENDING'", [$now, $t['id']]);
             return;
         }
-        Db::tx(function () use ($t, $paymentId, $now) {
+        $credited = Db::tx(function () use ($t, $paymentId, $now) {
             $won = Db::exec(
                 "UPDATE `TopUp` SET status = 'SUCCESS', paymentId = COALESCE(?, paymentId), updatedAt = ? WHERE id = ? AND status = 'PENDING'",
                 [$paymentId ?: null, $now, $t['id']]
             );
             if ($won !== 1) {
-                return;
+                return false;
             }
             Db::exec('UPDATE `Wallet` SET balanceXAF = balanceXAF + ?, updatedAt = ? WHERE id = ?', [$t['amountXAF'], $now, $t['walletId']]);
             Db::insert('Transaction', [
                 'id' => Db::id(), 'walletId' => $t['walletId'], 'type' => 'TOPUP', 'amountXAF' => $t['amountXAF'],
                 'description' => 'Rechargement mobile money', 'createdAt' => $now,
             ]);
+            return true;
         });
+        if ($credited) {
+            $owner = Db::val('SELECT userId FROM `Wallet` WHERE id = ?', [$t['walletId']]);
+            if ($owner) {
+                Notifier::send((string)$owner, 'TOPUP', 'Recharge reçue', 'Votre wallet a été crédité de ' . Notify::xaf((int)$t['amountXAF']) . ' F.');
+            }
+        }
     }
 
     /** Le solde a ete debite a l'initiation : un echec doit le rendre. */

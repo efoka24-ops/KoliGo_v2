@@ -5,6 +5,7 @@ import * as Network from 'expo-network';
 import * as Application from 'expo-application';
 import * as Location from 'expo-location';
 import { storage as SecureStore } from '../utils/storage';
+import { registerForPush, showLocal } from '../services/push';
 import { apiFetch, setAuthFailureHandler } from '../services/api';
 import { setCurrentLang } from '../i18n/translations.js';
 import { useI18n } from '../i18n';
@@ -71,6 +72,10 @@ export function AppProvider({ children, initialLang = 'fr' }) {
   const biometricRef = useRef(false);
   const [sessionRestored, setSessionRestored] = useState(false);
   const [online, setOnline] = useState(true);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const pushOkRef = useRef(false);
+  const seenNotifRef = useRef(null); // ids déjà connus : au premier chargement on ne notifie pas l'historique
   const toastTimer = useRef(null);
 
   // Etat de la plateforme (mode maintenance reglable depuis le back-office) : lu au demarrage puis toutes les 60 s.
@@ -228,6 +233,36 @@ export function AppProvider({ children, initialLang = 'fr' }) {
     [token]
   );
 
+  // Centre de notifications : relève toutes les 20 s (application ouverte) ; le push FCM prend le relais application fermée.
+  const refreshNotifications = useCallback(async () => {
+    if (!token) return;
+    try {
+      const r = await apiFetch('/notifications?limit=40', {}, token);
+      if (!r) return;
+      setNotifications(r.items || []);
+      setUnreadCount(r.unread || 0);
+      const known = seenNotifRef.current;
+      const fresh = (r.items || []).filter((n) => !n.read && known && !known.has(n.id));
+      if (!pushOkRef.current) fresh.slice(0, 3).forEach((n) => showLocal(n.title, n.body, n.data));
+      seenNotifRef.current = new Set((r.items || []).map((n) => n.id));
+    } catch { /* hors ligne */ }
+  }, [token]);
+
+  const markNotificationsRead = useCallback(async (ids) => {
+    if (!token) return;
+    setNotifications((prev) => prev.map((n) => (!ids || ids.includes(n.id) ? { ...n, read: true } : n)));
+    setUnreadCount((c) => (ids ? Math.max(0, c - ids.length) : 0));
+    try { await apiFetch('/notifications/read', { method: 'POST', body: JSON.stringify(ids ? { ids } : {}) }, token); } catch { /* sera resynchronisé */ }
+  }, [token]);
+
+  useEffect(() => {
+    if (!token || user?.isTest) { setNotifications([]); setUnreadCount(0); seenNotifRef.current = null; return undefined; }
+    registerForPush((p, o) => apiFetch(p, o, token)).then((ok) => { pushOkRef.current = ok; });
+    refreshNotifications();
+    const id = setInterval(refreshNotifications, 20000);
+    return () => clearInterval(id);
+  }, [token, user?.isTest, refreshNotifications]);
+
   // Add a message (from: 'me' | 'them') to an existing conversation
   const _addMsg = (convId, from, text) => {
     const time = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -292,6 +327,7 @@ export function AppProvider({ children, initialLang = 'fr' }) {
       sessionRestored,
       online, setOnline,
       maintenance, refreshConfig,
+      notifications, unreadCount, refreshNotifications, markNotificationsRead,
     }}>
       {children}
     </AppContext.Provider>

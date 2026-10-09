@@ -39,6 +39,8 @@ export const adminApi = {
   adminEmailSetPassword: (setupToken, password) => api.post('/auth/admin/email/set-password', { setupToken, password }).then(r => r.data),
   stats:           ()            => api.get('/admin/stats').then(r => r.data),
   analytics:       (period)      => api.get('/admin/analytics', { params: { period } }).then(r => r.data),
+  notifications:   ()            => api.get('/admin/notifications').then(r => r.data),
+  sendNotification: (b)          => api.post('/admin/notifications', b).then(r => r.data),
   users:           (params)      => api.get('/admin/users', { params }).then(r => r.data),
   getUser:         (id)          => api.get(`/admin/users/${id}`).then(r => r.data),
   blockUser:       (id, blocked) => api.patch(`/admin/users/${id}/block`, { blocked }).then(r => r.data),
