@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, BackHandler } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, BackHandler, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { capturePhoto } from '../../utils/camera';
+import { capturePhoto, pickFromGallery, recoverPendingPhoto } from '../../utils/camera';
 import { colors, fonts } from '../../constants/colors';
 import { useApp } from '../../context/AppContext';
 import KGTopBar from '../../components/KGTopBar';
@@ -37,6 +37,8 @@ export default function KycScreen({ navigation, route }) {
   const [cniVerso, setCniVerso] = useState(null);
   const [selfie, setSelfie]     = useState(null);
   const [loading, setLoading]   = useState(false);
+  const capturingStep = useRef(null);            // etape dont la photo est en cours de prise
+  const [cameraTrouble, setCameraTrouble] = useState(false); // la camera n'a rien rendu : on propose la galerie
 
   useEffect(() => {
     if (!gate) return undefined;
@@ -50,26 +52,58 @@ export default function KycScreen({ navigation, route }) {
   const isSelfie   = step === 3;
   const canProceed = isCNIStep ? cniNumber.trim().length >= 6 : true;
 
-  const captureStepPhoto = async () => {
-    // Selfie : caméra avant. Toute erreur (permission refusée, caméra indisponible) est affichée.
-    const shot = await capturePhoto({ quality: 0.7, front: isSelfie });
-    if (shot.status === 'cancelled') return null;
-    if (shot.status !== 'ok') { showToast(shot.message, 'error'); return null; }
-    if (step === 1) setCniRecto(shot.dataUrl);
-    if (step === 2) setCniVerso(shot.dataUrl);
-    if (step === 3) setSelfie(shot.dataUrl);
+  const applyPhoto = (stepNum, dataUrl) => {
+    if (stepNum === 1) setCniRecto(dataUrl);
+    if (stepNum === 2) setCniVerso(dataUrl);
+    if (stepNum === 3) setSelfie(dataUrl);
+  };
+
+  // Prend la photo de l'etape courante (camera, ou galerie en secours). Toute erreur est affichee.
+  const captureStepPhoto = async (fromGallery = false) => {
+    const stepNum = step;
+    capturingStep.current = stepNum;
+    const shot = fromGallery ? await pickFromGallery({ quality: 0.5 }) : await capturePhoto({ quality: 0.5 });
+    if (capturingStep.current !== stepNum) return null; // deja traitee par la recuperation ci-dessous
+    capturingStep.current = null;
+    if (shot.status === 'cancelled') {
+      setCameraTrouble(true);
+      showToast('Aucune photo prise. Réessaie, ou choisis une photo depuis la galerie.', 'error');
+      return null;
+    }
+    if (shot.status !== 'ok') { setCameraTrouble(true); showToast(shot.message, 'error'); return null; }
+    setCameraTrouble(false);
+    applyPhoto(stepNum, shot.dataUrl);
     return shot.dataUrl;
   };
 
+  // Android peut fermer l'application pendant que l'appli photo est ouverte : la photo est alors recuperee ici.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', async (state) => {
+      if (state !== 'active' || capturingStep.current === null) return;
+      const stepNum = capturingStep.current;
+      const rec = await recoverPendingPhoto();
+      if (rec && capturingStep.current === stepNum) {
+        capturingStep.current = null;
+        setCameraTrouble(false);
+        applyPhoto(stepNum, rec.dataUrl);
+        if (stepNum === 1 || stepNum === 2) setStep(stepNum + 1);
+      }
+    });
+    return () => sub.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleBack = () => { if (step === 0) { if (!gate) navigation.goBack(); } else setStep(s => s - 1); };
 
-  const handleNext = async () => {
+  const handleNext = async (fromGallery = false) => {
     if (step === 0) { setStep(1); return; }
-    if (step === 1 || step === 2) { const p = await captureStepPhoto(); if (!p) return; setStep(s => s + 1); return; }
+    if (step === 1 || step === 2) { const p = await captureStepPhoto(fromGallery); if (!p) return; setStep(s => s + 1); return; }
+    // Selfie : la photo d'abord, SANS bloquer le bouton (il ne doit jamais rester fige si l'appli photo ne rend rien) ;
+    // l'envoi du dossier ensuite.
+    const selfieData = selfie || await captureStepPhoto(fromGallery);
+    if (!selfieData) return;
     setLoading(true);
     try {
-      const selfieData = selfie || await captureStepPhoto();
-      if (!selfieData) { setLoading(false); return; }
       if (api) await api('/api/user/kyc', { method: 'POST', body: JSON.stringify({ cniNumber: cniNumber.trim(), cniRecto, cniVerso, selfie: selfieData }) });
       // Dossier en attente : le serveur refuse de publier ou de livrer tant que le back-office n'a pas validé.
       setUser((prev) => (prev ? { ...prev, kycStatus: 'PENDING', kycByRole: { ...(prev.kycByRole || {}), [roleKey]: 'PENDING' } } : prev));
@@ -182,10 +216,21 @@ export default function KycScreen({ navigation, route }) {
           disabled={!canProceed || loading}
           size="lg"
           icon={isCNIStep ? 'arrow' : loading ? undefined : 'camera'}
-          onPress={handleNext}
+          onPress={() => handleNext(false)}
         >
           {loading ? <ActivityIndicator color="#fff" /> : isCNIStep ? 'Continuer' : isSelfie ? 'Prendre le selfie' : 'Prendre la photo'}
         </KGButton>
+
+        {isSelfie && !selfie && (
+          <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55, textAlign: 'center', lineHeight: 17 }}>
+            Dans l'appli photo, tu peux basculer sur la caméra avant (icône de rotation) pour te prendre avec ta CNI.
+          </Text>
+        )}
+        {!isCNIStep && cameraTrouble && (
+          <KGButton kind="soft" size="lg" icon="camera" disabled={loading} onPress={() => handleNext(true)}>
+            Choisir une photo depuis la galerie
+          </KGButton>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

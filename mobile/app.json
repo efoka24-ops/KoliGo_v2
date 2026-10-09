@@ -3,7 +3,7 @@
     "name": "KoliGo",
     "slug": "koligo",
     "scheme": "koligo",
-    "version": "1.0.9",
+    "version": "1.0.10",
     "orientation": "portrait",
     "icon": "./assets/koligo-logo-1024.png",
     "userInterfaceStyle": "light",
@@ -21,7 +21,7 @@
     },
     "android": {
       "package": "cm.koligo.app",
-      "versionCode": 10,
+      "versionCode": 11,
       "adaptiveIcon": {
         "foregroundImage": "./assets/koligo-logo-1024.png",
         "backgroundColor": "#0E2A1C"
