@@ -118,11 +118,52 @@ final class AdminController
         return $u;
     }
 
-    public static function blockUser(Ctx $c): array
+    private static function audit(Ctx $c, string $userId, string $action): void
+    {
+        Db::insert('AdminAction', ['id' => Db::id(), 'adminId' => $c->user['userId'], 'userId' => $userId, 'action' => $action, 'createdAt' => Db::now()]);
+    }
+
+    /** Un administrateur ne peut pas etre cible ici (ni soi-meme) : evite de se verrouiller ou de prendre un compte admin. */
+    private static function mustManage(Ctx $c): array
     {
         $u = Accounts::mustUser($c->param('id'));
-        Db::update('User', $u['id'], ['isBlocked' => (bool)$c->input('blocked'), 'updatedAt' => Db::now()]);
+        if (str_contains((string)$u['roles'], 'ADMIN') || $u['id'] === $c->user['userId']) {
+            throw new HttpError('Action impossible sur un compte administrateur', 403);
+        }
+        return $u;
+    }
+
+    public static function blockUser(Ctx $c): array
+    {
+        $u = self::mustManage($c);
+        $blocked = (bool)$c->input('blocked');
+        Db::update('User', $u['id'], ['isBlocked' => $blocked, 'updatedAt' => Db::now()]);
+        self::audit($c, $u['id'], $blocked ? 'BLOCK' : 'UNBLOCK');
         return self::publicUser($u['id']);
+    }
+
+    /** POST /admin/users/:id/reset-pin : PIN temporaire a 6 chiffres, affiche une seule fois a l'administrateur. */
+    public static function resetPin(Ctx $c): array
+    {
+        $u = self::mustManage($c);
+        $temp = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        Db::exec('UPDATE `User` SET pinHash = ?, updatedAt = ? WHERE id = ?', [Accounts::hashPin($temp), Db::now(), $u['id']]);
+        RateLimit::clear('signin:' . strtolower((string)$u['phone']));
+        if ($u['email']) {
+            RateLimit::clear('signin:' . strtolower((string)$u['email']));
+        }
+        self::audit($c, $u['id'], 'RESET_PIN');
+        Notifier::send($u['id'], 'SECURITY', 'PIN réinitialisé', 'KoliGo a réinitialisé votre PIN. Utilisez le PIN temporaire communiqué par le support, puis changez-le dans Paramètres.');
+        return ['tempPin' => $temp, 'phone' => $u['phone'], 'name' => $u['name']];
+    }
+
+    /** POST /admin/users/:id/lock-pin : le PIN actuel ne fonctionne plus (le titulaire doit passer par « PIN oublie » ou le support). */
+    public static function lockPin(Ctx $c): array
+    {
+        $u = self::mustManage($c);
+        Db::exec('UPDATE `User` SET pinHash = ?, updatedAt = ? WHERE id = ?', [Accounts::hashPin(bin2hex(random_bytes(16))), Db::now(), $u['id']]);
+        self::audit($c, $u['id'], 'LOCK_PIN');
+        return ['locked' => true];
     }
 
     /** GET /admin/messages?flagged=1&q=&page= : tous les messages des livraisons, les signales en premier si flagged=1. */

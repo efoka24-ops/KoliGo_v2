@@ -26,6 +26,7 @@ export default function Users() {
   const [filter, setFilter] = useState('all');
   const [page,   setPage]   = useState(1);
   const [drawer, setDrawer] = useState(null);
+  const [pinMsg, setPinMsg] = useState(null);
 
   const f = ROLE_FILTERS.find(r => r.key === filter) || ROLE_FILTERS[0];
 
@@ -36,7 +37,7 @@ export default function Users() {
   });
 
   const blockMut = useMutation({
-    mutationFn: (id) => adminApi.blockUser(id),
+    mutationFn: ({ id, blocked }) => adminApi.blockUser(id, blocked),
     onSuccess:  () => qc.invalidateQueries({ queryKey: ['admin-users'] }),
   });
 
@@ -44,6 +45,18 @@ export default function Users() {
     mutationFn: ({ id, decision }) => adminApi.reviewKyc(id, decision),
     onSuccess:  () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); setDrawer(null); },
   });
+
+  const resetPin = useMutation({
+    mutationFn: (id) => adminApi.resetPin(id),
+    onSuccess: (r) => setPinMsg({ ok: true, text: `PIN temporaire de ${r.name} (${r.phone}) : ${r.tempPin} — notez-le maintenant, il ne sera plus affiché. Communiquez-le à la personne, qui le changera dans Paramètres.` }),
+    onError: (e) => setPinMsg({ ok: false, text: e.response?.data?.error || e.message }),
+  });
+  const lockPin = useMutation({
+    mutationFn: (id) => adminApi.lockPin(id),
+    onSuccess: () => setPinMsg({ ok: true, text: 'PIN verrouillé : l’ancien PIN ne fonctionne plus. La personne doit utiliser « PIN oublié » ou demander une réinitialisation.' }),
+    onError: (e) => setPinMsg({ ok: false, text: e.response?.data?.error || e.message }),
+  });
+  const isAdminUser = (u) => String(u.roles || u.role || '').includes('ADMIN');
 
   const rows = data?.items ?? [];
 
@@ -88,7 +101,7 @@ export default function Users() {
               const deliveryCount = u.deliveryCount ?? u.deliveries ?? '—';
 
               return (
-                <tr key={id} onClick={() => setDrawer(u)} style={{ cursor:'pointer' }}>
+                <tr key={id} onClick={() => { setPinMsg(null); setDrawer(u); }} style={{ cursor:'pointer' }}>
                   <td><div className="usr"><Avatar tone="g">{name.charAt(0)}</Avatar><div className="nm">{name}</div></div></td>
                   <td><Pill tone="b">{roleLabel}</Pill></td>
                   <td className="mono-sm muted">{phone}</td>
@@ -97,7 +110,7 @@ export default function Users() {
                   <td className="mono-sm">{deliveryCount}</td>
                   <td onClick={e => e.stopPropagation()}>
                     <button className="btn sm"
-                      onClick={() => blockMut.mutate(u.id)}
+                      onClick={() => blockMut.mutate({ id: u.id, blocked: !blocked })}
                       style={blocked ? {} : { color:'var(--danger)', borderColor:'#F0C9B6' }}>
                       {blocked ? t('unblock') : t('block')}
                     </button>
@@ -135,6 +148,29 @@ export default function Users() {
                 <div><div className="k">{t('role')}</div><div className="v">{String(drawer.roles || drawer.role || '').replace(/[[\]"]/g,'')}</div></div>
                 <div><div className="k">Wallet</div><div className="v">{drawer.walletBalance != null ? `${drawer.walletBalance.toLocaleString('fr-FR')} XAF` : '—'}</div></div>
                 <div><div className="k">{t('deliveries')}</div><div className="v">{drawer.deliveryCount ?? drawer.deliveries ?? '—'}</div></div>
+              </div>
+
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>Identifiants & sécurité</div>
+                <div className="kv" style={{ marginBottom: 10 }}>
+                  <div><div className="k">Identifiant (téléphone)</div><div className="v mono-sm">{drawer.phone || '—'}</div></div>
+                  <div><div className="k">Identifiant (e-mail)</div><div className="v mono-sm">{drawer.email || '—'}</div></div>
+                  <div><div className="k">PIN</div><div className="v">Chiffré : impossible à lire, seulement réinitialisable</div></div>
+                  <div><div className="k">Compte</div><div className="v">{drawer.isBlocked ? 'Bloqué' : 'Actif'}</div></div>
+                </div>
+                {isAdminUser(drawer) ? <div style={{ fontSize: 12, color: 'var(--muted)' }}>Compte administrateur : non modifiable ici.</div> : (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button className="btn sm" disabled={resetPin.isPending}
+                      onClick={() => { setPinMsg(null); window.confirm(`Réinitialiser le PIN de ${drawer.name} ? Un PIN temporaire sera généré.`) && resetPin.mutate(drawer.id); }}>Réinitialiser le PIN</button>
+                    <button className="btn sm" disabled={lockPin.isPending}
+                      onClick={() => { setPinMsg(null); window.confirm(`Verrouiller le PIN de ${drawer.name} ? Il ne pourra plus se connecter avec son PIN actuel.`) && lockPin.mutate(drawer.id); }}>Verrouiller le PIN</button>
+                    <button className="btn sm" style={drawer.isBlocked ? {} : { color: 'var(--danger)', borderColor: '#F0C9B6' }}
+                      onClick={() => window.confirm(drawer.isBlocked ? `Débloquer ${drawer.name} ?` : `Bloquer le compte de ${drawer.name} ? Sa session sera coupée immédiatement.`)
+                        && blockMut.mutate({ id: drawer.id, blocked: !drawer.isBlocked }, { onSuccess: () => setDrawer((d) => ({ ...d, isBlocked: !d.isBlocked })) })}>
+                      {drawer.isBlocked ? 'Débloquer le compte' : 'Bloquer le compte'}</button>
+                  </div>
+                )}
+                {pinMsg && <div style={{ marginTop: 10, padding: 10, borderRadius: 8, fontSize: 13, background: pinMsg.ok ? '#EFF8F1' : '#FDECEC', color: pinMsg.ok ? '#0A5C2F' : '#C00' }}>{pinMsg.text}</div>}
               </div>
 
               {['PENDING', 'VERIFIED', 'REJECTED'].includes(drawer.kycStatus) && (

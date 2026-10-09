@@ -127,6 +127,8 @@ return function (Router $r): void {
         $r->post("$a/users/create", [Admin::class, 'createUser'], ...$adm);
         $r->get("$a/users/:id", [Admin::class, 'getUser'], ...$adm);
         $r->patch("$a/users/:id/block", [Admin::class, 'blockUser'], ...$adm);
+        $r->post("$a/users/:id/reset-pin", [Admin::class, 'resetPin'], ...$adm);
+        $r->post("$a/users/:id/lock-pin", [Admin::class, 'lockPin'], ...$adm);
         $r->patch("$a/users/:id/kyc", [Admin::class, 'reviewKyc'], ...$adm);
         $r->get("$a/kyc-doc/:docId", [Admin::class, 'serveKycDoc'], ...$adm);
         $r->get("$a/deliveries", [Admin::class, 'listDeliveries'], ...$adm);

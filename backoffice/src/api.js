@@ -45,6 +45,8 @@ export const adminApi = {
   sendNotification: (b)          => api.post('/admin/notifications', b).then(r => r.data),
   users:           (params)      => api.get('/admin/users', { params }).then(r => r.data),
   getUser:         (id)          => api.get(`/admin/users/${id}`).then(r => r.data),
+  resetPin:        (id)          => api.post(`/admin/users/${id}/reset-pin`).then(r => r.data),
+  lockPin:         (id)          => api.post(`/admin/users/${id}/lock-pin`).then(r => r.data),
   blockUser:       (id, blocked) => api.patch(`/admin/users/${id}/block`, { blocked }).then(r => r.data),
   reviewKyc:       (id, status, reason) => api.patch(`/admin/users/${id}/kyc`, { status, reason }).then(r => r.data),
   kycDocUrl:       (docId)       => `${BASE}/admin/kyc-doc/${docId}`,

@@ -43,7 +43,7 @@ final class Setup
     ];
 
     /** A incrementer quand le schema ou les reglages de reference changent : declenche une migration au prochain appel. */
-    public const SCHEMA_VERSION = 8;
+    public const SCHEMA_VERSION = 9;
 
     /**
      * Migration automatique et rejouable : evite d'avoir a relancer _setup.php (dont le jeton est supprime apres

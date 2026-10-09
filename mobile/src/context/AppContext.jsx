@@ -106,6 +106,7 @@ export function AppProvider({ children, initialLang = 'fr' }) {
       if (storedLang) {
         setCurrentLang(storedLang);
         setLangState(storedLang);
+        i18nSetLang(storedLang);
       }
       if (storedBio === '1') { setBiometricEnabled(true); biometricRef.current = true; }
       if (storedToken) {

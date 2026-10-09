@@ -50,6 +50,10 @@ final class Auth
         if (($d['type'] ?? '') === 'admin-setup') {
             throw new HttpError('Invalid or expired token', 401);
         }
+        // Un compte bloque perd sa session tout de suite (401 : l'application se deconnecte).
+        if (!empty($d['userId']) && Db::val('SELECT isBlocked FROM `User` WHERE id = ?', [$d['userId']])) {
+            throw new HttpError('Compte suspendu. Contactez KoliGo.', 401, 'ACCOUNT_BLOCKED');
+        }
         $c->user = ['userId' => $d['userId'] ?? '', 'phone' => $d['phone'] ?? '', 'activeRole' => $d['activeRole'] ?? ''];
     }
 

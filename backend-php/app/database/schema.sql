@@ -298,3 +298,12 @@ CREATE TABLE IF NOT EXISTS `OfferDecline` (
   `userId` VARCHAR(40) NOT NULL,
   `createdAt` DATETIME NOT NULL
 ) {{OPTS}};
+
+-- Journal des actions sensibles de l'administrateur sur un compte (PIN, blocage).
+CREATE TABLE IF NOT EXISTS `AdminAction` (
+  `id` VARCHAR(40) NOT NULL PRIMARY KEY,
+  `adminId` VARCHAR(40) NOT NULL,
+  `userId` VARCHAR(40) NOT NULL,
+  `action` VARCHAR(40) NOT NULL,
+  `createdAt` DATETIME NOT NULL
+) {{OPTS}};
