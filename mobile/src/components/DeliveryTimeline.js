@@ -13,6 +13,8 @@ const LABELS = {
   COLLECTED: 'Colis collecté',
   DELIVERED: 'Colis livré',
   CANCELLED: 'Course annulée',
+  REJECTED: 'Colis refusé par le livreur',
+  VALUE_FLAGGED: 'Valeur déclarée signalée',
 };
 
 function when(iso) {

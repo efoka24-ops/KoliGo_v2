@@ -99,13 +99,40 @@ final class DeliveryController
             return null;
         }
         unset($r['photoPath']);
+        $inc = Db::one('SELECT kind, comment, measuredWeightKg FROM `Incident` WHERE revisionId = ?', [$r['id']]);
+        $r['reason'] = $inc['kind'] ?? null;
+        $r['comment'] = $inc['comment'] ?? null;
+        $r['measuredWeightKg'] = $inc['measuredWeightKg'] ?? null;
         return $r;
     }
 
     /** POST /deliveries/:id/revision : le livreur propose un autre gabarit, avec photo. */
     public static function proposeRevision(Ctx $c): array
     {
-        return self::revisionView(Deliveries::proposeRevision($c->param('id'), $c->user['userId'], (string)$c->input('size', ''), (string)$c->input('photo', '')));
+        $kg = $c->input('measuredWeightKg');
+        return self::revisionView(Deliveries::proposeRevision(
+            $c->param('id'), $c->user['userId'], (string)$c->input('size', ''), (string)$c->input('photo', ''),
+            (string)$c->input('reason', 'TAILLE'), (string)$c->input('comment', ''), is_numeric($kg) ? (float)$kg : null
+        ));
+    }
+
+    /** POST /deliveries/:id/reject {reason: VALEUR|INTERDIT|DANGEREUX, comment, photo?} : le livreur refuse le colis. */
+    public static function reject(Ctx $c): array
+    {
+        $photo = $c->input('photo');
+        return Deliveries::reject($c->param('id'), $c->user['userId'], (string)$c->input('reason', ''), (string)$c->input('comment', ''), is_string($photo) ? $photo : null);
+    }
+
+    /** GET /incidents : incidents du vendeur connecte. */
+    public static function myIncidents(Ctx $c): array
+    {
+        return ['items' => \Koligo\Services\Incidents::forVendor($c->user['userId']), 'strikes' => Deliveries::strikeInfo($c->user['userId'])];
+    }
+
+    /** POST /incidents/:id/appeal {text} */
+    public static function appealIncident(Ctx $c): array
+    {
+        return \Koligo\Services\Incidents::appeal($c->param('id'), $c->user['userId'], (string)$c->input('text', ''));
     }
 
     /** PATCH /deliveries/:id/revision : le vendeur accepte ou refuse le nouveau prix. */

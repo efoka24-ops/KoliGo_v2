@@ -16,6 +16,7 @@ const EVENT_LABELS = {
   CREATED: 'Course publiée', ACCEPTED: 'Livreur trouvé', REVISION_PROPOSED: 'Correction du gabarit proposée',
   REVISION_ACCEPTED: 'Correction acceptée', REVISION_REFUSED: 'Correction refusée',
   COLLECTED: 'Colis collecté', DELIVERED: 'Colis livré', CANCELLED: 'Course annulée',
+  REJECTED: 'Colis refusé par le livreur', VALUE_FLAGGED: 'Valeur déclarée signalée',
 };
 const SOURCE_LABELS = { OSRM: 'mesurée par la route', GOOGLE: 'mesurée (Google)', TABLE: 'table des trajets entre villes', SAME: 'même quartier', ESTIMATE: 'ESTIMÉE (non mesurée)', CACHE: 'mesurée' };
 const utc = (iso) => new Date(String(iso).replace(' ', 'T').replace(/Z?$/, 'Z')).toLocaleString('fr-FR');

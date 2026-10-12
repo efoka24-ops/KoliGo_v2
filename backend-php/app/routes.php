@@ -102,6 +102,9 @@ return function (Router $r): void {
         $r->patch("$d/:id/confirm-collect", [Del::class, 'confirmCollect'], $jwt, $role('DELIVERER'));
         $r->patch("$d/:id/confirm-deliver", [Del::class, 'confirmDeliver'], $jwt, $role('DELIVERER'));
         $r->post("$d/:id/decline", [Del::class, 'declineOffer'], $jwt, $role('DELIVERER'));
+        $r->post("$d/:id/reject", [Del::class, 'reject'], $jwt, $role('DELIVERER'));
+        $r->get("$p/incidents", [Del::class, 'myIncidents'], $jwt);
+        $r->post("$p/incidents/:id/appeal", [Del::class, 'appealIncident'], $jwt);
         $r->post("$d/:id/location", [Del::class, 'postLocation'], $jwt, $role('DELIVERER'));
         $r->get("$d/:id/location", [Del::class, 'getLocation'], $jwt);
         $r->get("$d/:id/messages", [Del::class, 'listMessages'], $jwt);
@@ -121,6 +124,10 @@ return function (Router $r): void {
         $r->get("$a/stats", [Admin::class, 'stats'], ...$adm);
         $r->get("$a/notifications", [NotifC::class, 'adminHistory'], ...$adm);
         $r->post("$a/notifications", [NotifC::class, 'adminBroadcast'], ...$adm);
+        $r->get("$a/incidents", [Admin::class, 'listIncidents'], ...$adm);
+        $r->patch("$a/incidents/:id", [Admin::class, 'decideIncident'], ...$adm);
+        $r->get("$a/incidents/:id/photo", [Admin::class, 'serveIncidentPhoto'], ...$adm);
+        $r->post("$a/users/:id/unsuspend", [Admin::class, 'unsuspendUser'], ...$adm);
         $r->get("$a/messages", [Admin::class, 'listMessages'], ...$adm);
         $r->patch("$a/messages/:id/clear", [Admin::class, 'clearMessage'], ...$adm);
         $r->get("$a/users", [Admin::class, 'listUsers'], ...$adm);

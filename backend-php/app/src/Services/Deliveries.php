@@ -40,6 +40,9 @@ final class Deliveries
     /** Publier : CGU a jour acceptees et KYC Vendeur verifie par le back-office. */
     private static function assertCanPublish(array $u): void
     {
+        if (!empty($u['suspendedAt'])) {
+            throw new HttpError('Votre compte vendeur est suspendu (' . ($u['suspendReason'] ?: 'déclarations non conformes') . '). Contestez depuis l\'application ou contactez KoliGo.', 403, 'ACCOUNT_SUSPENDED');
+        }
         self::assertCompliant($u, 'VENDOR', 'publier une livraison');
     }
 
@@ -323,6 +326,7 @@ final class Deliveries
         if (Db::exec("UPDATE `GabaritRevision` SET status = 'EXPIRED', respondedAt = ? WHERE id = ? AND status = 'PENDING'", [$now, $rev['id']]) === 1) {
             Db::exec("UPDATE `Delivery` SET status = 'ANNULE', updatedAt = ? WHERE id = ? AND status = 'ACCEPTE'", [$now, $deliveryId]);
             Db::exec('UPDATE `EscrowEntry` SET releasedAt = ? WHERE deliveryId = ?', [$now, $deliveryId]);
+            Incidents::resolveRevision($rev['id'], 'EXPIRED');
         }
         return null;
     }
@@ -333,8 +337,15 @@ final class Deliveries
         return Db::one('SELECT * FROM `GabaritRevision` WHERE deliveryId = ? ORDER BY createdAt DESC LIMIT 1', [$deliveryId]);
     }
 
-    public static function proposeRevision(string $id, string $delivererId, string $size, string $photo): array
+    public static function proposeRevision(string $id, string $delivererId, string $size, string $photo, string $reason = 'TAILLE', string $comment = '', ?float $measuredKg = null): array
     {
+        $reason = strtoupper(trim($reason));
+        if (!in_array($reason, ['POIDS', 'TAILLE'], true)) {
+            throw new HttpError('Motif invalide : poids ou taille', 400, 'INCIDENT_KIND_INVALID');
+        }
+        if ($measuredKg !== null && ($measuredKg <= 0 || $measuredKg > 2000)) {
+            throw new HttpError('Poids constaté invalide');
+        }
         $d = self::find($id);
         if ($d['delivererId'] !== $delivererId) {
             throw new HttpError('Forbidden', 403);
@@ -369,6 +380,7 @@ final class Deliveries
         ]);
         self::event($id, 'REVISION_PROPOSED', $delivererId, ['declared' => $declared, 'proposed' => $size, 'newPriceXAF' => $new['finalPrice']]);
         Notifier::send((string)$d['vendorId'], 'REVISION_PROPOSED', 'Correction du gabarit', "Le livreur propose le gabarit $size au lieu de $declared (nouveau prix : " . Notify::xaf($new['finalPrice']) . ' F). Répondez avant expiration.', ['deliveryId' => $id]);
+        Incidents::open($d, $reason, $comment, $photoPath, $measuredKg, $rid);
         $vendor = Db::one('SELECT phone FROM `User` WHERE id = ?', [$d['vendorId']]);
         if ($vendor) {
             Notify::whatsapp($vendor['phone'], "⚠️ KoliGo — Le livreur propose le gabarit $size au lieu de $declared.\nNouveau prix : " . Notify::xaf($new['finalPrice']) . ' XAF (avant : ' . Notify::xaf((int)$d['priceXAF']) . " XAF).\nOuvrez l'application pour accepter ou refuser.");
@@ -403,6 +415,7 @@ final class Deliveries
                 Db::exec('UPDATE `EscrowEntry` SET amountXAF = ? WHERE deliveryId = ?', [$new['finalPrice'], $id]);
             });
             self::event($id, 'REVISION_ACCEPTED', $vendorId, ['size' => $rev['proposedSize'], 'newPriceXAF' => $new['finalPrice']]);
+            Incidents::resolveRevision($rev['id'], 'CONFIRMED');
             Notifier::send((string)$d['delivererId'], 'REVISION_ACCEPTED', 'Correction acceptée', 'Le vendeur a accepté le nouveau prix : vous pouvez collecter le colis.', ['deliveryId' => $id]);
             return self::find($id);
         }
@@ -417,23 +430,70 @@ final class Deliveries
         });
         self::chargeCancelFee($vendorId, (string)$d['delivererId'], $fee, $id, 'Frais d\'annulation (prix révisé refusé)');
         self::event($id, 'REVISION_REFUSED', $vendorId, ['feeXAF' => $fee]);
+        Incidents::resolveRevision($rev['id'], 'CONFIRMED');
         Notifier::send((string)$d['delivererId'], 'REVISION_REFUSED', 'Correction refusée', "Le vendeur a refusé : course annulée, $fee F de dédommagement vous sont dus.", ['deliveryId' => $id]);
         return self::find($id);
     }
 
     /**
-     * Ecarts confirmes du vendeur sur la fenetre glissante : corrections acceptees ou refusees.
-     * Au-dela du seuil, le vendeur passe en controle renforce (voir CGU article 10).
+     * Rejet d'un colis par le livreur, avant la collecte (poids et taille passent par proposeRevision).
+     *  - INTERDIT / DANGEREUX : la course est annulee tout de suite et l'incident attend la decision de l'administrateur ;
+     *  - VALEUR : valeur declaree incoherente, signalee a l'administrateur, la course continue.
+     *
+     * @return array{incidentId:string,cancelled:bool}
+     */
+    public static function reject(string $id, string $delivererId, string $kind, string $comment, ?string $photo): array
+    {
+        $kind = strtoupper(trim($kind));
+        if (!in_array($kind, ['VALEUR', 'INTERDIT', 'DANGEREUX'], true)) {
+            throw new HttpError('Motif invalide', 400, 'INCIDENT_KIND_INVALID');
+        }
+        $comment = trim($comment);
+        if (mb_strlen($comment) < 5) {
+            throw new HttpError('Décrivez ce que vous avez constaté (5 caractères minimum).', 400, 'COMMENT_REQUIRED');
+        }
+        $d = self::find($id);
+        if ($d['delivererId'] !== $delivererId) {
+            throw new HttpError('Forbidden', 403);
+        }
+        if (self::pendingRevision($id)) {
+            throw new HttpError('Le vendeur doit d\'abord répondre à la correction du gabarit.', 409, 'REVISION_PENDING');
+        }
+        $d = self::find($id);
+        if ($d['status'] !== 'ACCEPTE') {
+            throw new HttpError('Le colis ne peut plus être refusé : il est déjà parti ou la course est terminée.', 409, 'WRONG_STATE');
+        }
+        if (Db::one("SELECT id FROM `Incident` WHERE deliveryId = ? AND kind = ? AND status <> 'CLEARED'", [$id, $kind])) {
+            throw new HttpError('Ce motif a déjà été signalé pour cette course.', 409, 'INCIDENT_EXISTS');
+        }
+        $photoPath = ($photo !== null && $photo !== '') ? Uploads::storeImage(Uploads::decode($photo), $delivererId, 'incident') : null;
+        $cancel = $kind !== 'VALEUR';
+        $incidentId = Db::tx(function () use ($d, $id, $kind, $comment, $photoPath, $cancel) {
+            if ($cancel) {
+                $now = Db::now();
+                if (Db::exec("UPDATE `Delivery` SET status = 'ANNULE', updatedAt = ? WHERE id = ? AND status = 'ACCEPTE'", [$now, $id]) !== 1) {
+                    throw new HttpError('Course déjà modifiée', 409);
+                }
+                Db::exec('UPDATE `EscrowEntry` SET releasedAt = ? WHERE deliveryId = ?', [$now, $id]);
+            }
+            return Incidents::open($d, $kind, $comment, $photoPath);
+        });
+        self::event($id, $cancel ? 'REJECTED' : 'VALUE_FLAGGED', $delivererId, ['kind' => $kind]);
+        if ($cancel) {
+            Notifier::send((string)$d['vendorId'], 'INCIDENT', 'Colis refusé par le livreur', 'Le livreur a refusé votre colis : ' . Incidents::LABELS[$kind] . '. La course est annulée ; KoliGo examine le dossier. Vous pouvez contester depuis l\'application.', ['deliveryId' => $id]);
+        }
+        return ['incidentId' => $incidentId, 'cancelled' => $cancel];
+    }
+
+    /**
+     * Incidents de declaration confirmes du vendeur (voir Incidents). Au seuil, le compte est suspendu (CGU article 10).
      */
     public static function strikeInfo(string $vendorId): array
     {
         $cfg = Pricing::config();
-        $since = gmdate('Y-m-d H:i:s', time() - $cfg['strikeWindowDays'] * 86400);
-        $count = (int)Db::val(
-            "SELECT COUNT(*) FROM `GabaritRevision` r JOIN `Delivery` d ON d.id = r.deliveryId WHERE d.vendorId = ? AND r.status IN ('ACCEPTED','REFUSED') AND r.respondedAt >= ?",
-            [$vendorId, $since]
-        );
-        return ['count' => $count, 'threshold' => $cfg['strikeThreshold'], 'windowDays' => $cfg['strikeWindowDays'], 'enhancedControl' => $count >= $cfg['strikeThreshold']];
+        $count = Incidents::confirmedCount($vendorId);
+        $suspended = (bool)Db::val('SELECT suspendedAt FROM `User` WHERE id = ?', [$vendorId]);
+        return ['count' => $count, 'threshold' => $cfg['strikeThreshold'], 'windowDays' => $cfg['strikeWindowDays'], 'enhancedControl' => $count >= $cfg['strikeThreshold'], 'suspended' => $suspended];
     }
 
     /**

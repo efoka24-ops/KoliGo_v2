@@ -18,6 +18,7 @@ export default function VendorHomeScreen({ navigation }) {
   const { kycStatus } = useComplianceGate(navigation);
   const [deliveries, setDeliveries] = useState([]);
   const [loading, setLoading]       = useState(true);
+  const [strikes, setStrikes]       = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const displayName = user?.name?.split(' ')[0] || 'Vendeur';
@@ -30,6 +31,17 @@ export default function VendorHomeScreen({ navigation }) {
       setDeliveries(Array.isArray(data) ? data : []);
     } catch {}
   }, [api, token]);
+
+  const loadStrikes = useCallback(async () => {
+    if (!token) return;
+    try { const r = await api('/incidents'); setStrikes(r?.strikes || null); } catch {}
+  }, [api, token]);
+
+  useEffect(() => {
+    loadStrikes();
+    const u = navigation.addListener('focus', loadStrikes);
+    return u;
+  }, [loadStrikes, navigation]);
 
   useEffect(() => {
     load().finally(() => setLoading(false));
@@ -56,6 +68,14 @@ export default function VendorHomeScreen({ navigation }) {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
       <KenteStripe height={4} />
       <KycBanner status={kycStatus} role="VENDOR" />
+      {strikes && (strikes.suspended || strikes.count > 0) && (
+        <TouchableOpacity onPress={() => navigation.navigate('Incidents')} activeOpacity={0.85}
+          style={{ marginHorizontal: 16, marginBottom: 10, padding: 12, borderRadius: 14, borderWidth: 1, backgroundColor: strikes.suspended ? '#FDECEC' : '#FEF0E3', borderColor: strikes.suspended ? '#F0B4B4' : '#E6B8A8' }}>
+          <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 13.5, color: strikes.suspended ? '#B42318' : '#C4611A' }}>
+            {strikes.suspended ? tr('Compte vendeur suspendu : voir mes incidents') : `${strikes.count} / ${strikes.threshold} ${tr('incident(s) de déclaration : voir le détail')}`}
+          </Text>
+        </TouchableOpacity>
+      )}
 
       <ScrollView
         contentContainerStyle={{ paddingBottom: 32 }}

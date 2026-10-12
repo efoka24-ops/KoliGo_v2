@@ -45,6 +45,7 @@ export default function RevisionPrompt({ deliveryId, revision, onDone }) {
     <View style={{ margin: 16, backgroundColor: '#FFF8E3', borderRadius: 18, borderWidth: 1.5, borderColor: '#D4991A', padding: 16, gap: 10 }}>
       <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 18, color: '#0E2116' }}>{tr("Le livreur corrige le gabarit")}</Text>
       <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 14, color: colors.ink, lineHeight: 21 }}>
+        {revision.reason ? `${tr(revision.reason === 'POIDS' ? 'Motif : poids différent' : 'Motif : taille différente')}${revision.measuredWeightKg ? ` (${revision.measuredWeightKg} kg)` : ''}\n` : ''}
         Gabarit {revision.declaredSize} → {revision.proposedSize}{'\n'}
         Prix : {Money(revision.oldPriceXAF)} → {Money(revision.newPriceXAF)}
       </Text>

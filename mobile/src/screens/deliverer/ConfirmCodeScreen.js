@@ -9,6 +9,7 @@ import { errMsg } from '../../utils/apiError';
 import { useApp } from '../../context/AppContext';
 import KGTopBar from '../../components/KGTopBar';
 import KGButton from '../../components/KGButton';
+import KGInput from '../../components/KGInput';
 import KenteStripe from '../../components/KenteStripe';
 import Icon from '../../components/Icon';
 
@@ -174,6 +175,16 @@ function CodeStep({ navigation, route }) {
 // photo. Le vendeur répond dans l'application ; sans réponse dans le délai, la course est annulée sans frais.
 const Money = (n) => `${Number(n || 0).toLocaleString('fr-FR')} XAF`;
 
+// Motifs de non-conformité. Poids et taille passent par une correction du gabarit (le vendeur répond) ;
+// les autres sont signalés à KoliGo : un contenu interdit ou dangereux annule la course immédiatement.
+const REASONS = [
+  { id: 'POIDS', title: 'Poids différent', sub: 'Le colis est plus lourd que déclaré', next: 'correct' },
+  { id: 'TAILLE', title: 'Taille différente', sub: 'Les dimensions dépassent le gabarit déclaré', next: 'correct' },
+  { id: 'VALEUR', title: 'Valeur incohérente', sub: 'La valeur déclarée ne paraît pas crédible', next: 'flag' },
+  { id: 'INTERDIT', title: 'Contenu interdit', sub: 'Drogue, armes, faux documents…', next: 'flag', danger: true },
+  { id: 'DANGEREUX', title: 'Contenu dangereux', sub: 'Risque pour toi ou pour les autres', next: 'flag', danger: true },
+];
+
 export default function ConfirmCodeScreen({ navigation, route }) {
   const { token, api, pricing, showToast } = useApp();
   const deliveryId = route?.params?.deliveryId;
@@ -185,6 +196,10 @@ export default function ConfirmCodeScreen({ navigation, route }) {
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [endedText, setEndedText] = useState('');
+  const [reason, setReason] = useState('TAILLE');
+  const [kg, setKg] = useState('');
+  const [comment, setComment] = useState('');
+  const [flagKind, setFlagKind] = useState(null);
 
   const gabarits = pricing?.gabarits || {};
   const fee = pricing?.cancelFeeXAF ?? 500;
@@ -238,9 +253,30 @@ export default function ConfirmCodeScreen({ navigation, route }) {
     if (!newSize || !photo) return;
     setBusy(true);
     try {
-      const rev = await api(`/deliveries/${deliveryId}/revision`, { method: 'POST', body: JSON.stringify({ size: newSize, photo: photo.data }) });
+      const rev = await api(`/deliveries/${deliveryId}/revision`, { method: 'POST', body: JSON.stringify({ size: newSize, photo: photo.data, reason, comment: comment.trim() || undefined, measuredWeightKg: parseFloat(String(kg).replace(',', '.')) || undefined }) });
       setRevision(rev);
       setPhase('wait');
+    } catch (e) {
+      showToast(errMsg(e), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submitFlag = async () => {
+    if (comment.trim().length < 5) { showToast(tr('Décris ce que tu as constaté (5 caractères minimum).'), 'error'); return; }
+    setBusy(true);
+    try {
+      const r = await api(`/deliveries/${deliveryId}/reject`, { method: 'POST', body: JSON.stringify({ reason: flagKind, comment: comment.trim(), photo: photo?.data }) });
+      if (r?.cancelled) {
+        setEndedText(tr("Le colis est refusé et la course est annulée. KoliGo examine le dossier avec le vendeur."));
+        setPhase('ended');
+      } else {
+        showToast(tr('Signalement envoyé à KoliGo. Tu peux continuer la course.'));
+        setComment('');
+        setPhoto(null);
+        setPhase('check');
+      }
     } catch (e) {
       showToast(errMsg(e), 'error');
     } finally {
@@ -281,7 +317,46 @@ export default function ConfirmCodeScreen({ navigation, route }) {
             {photoSource && <Image source={photoSource} style={{ width: '100%', height: 180, borderRadius: 12, backgroundColor: colors.cream, marginTop: 4 }} resizeMode="cover" />}
           </View>
           <KGButton kind="primary" size="lg" icon="check" onPress={() => setPhase('code')}>{tr("Oui, conforme : saisir le code")}</KGButton>
-          <KGButton kind="soft" size="lg" icon="flag" onPress={() => setPhase('correct')}>{tr("Non, corriger le gabarit")}</KGButton>
+          <KGButton kind="soft" size="lg" icon="flag" onPress={() => setPhase('reason')}>{tr("Non conforme")}</KGButton>
+        </ScrollView>
+      )}
+
+      {phase === 'reason' && (
+        <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
+          <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: '#0E2116' }}>{tr("Qu'est-ce qui ne va pas ?")}</Text>
+          {REASONS.map((r) => (
+            <TouchableOpacity key={r.id} activeOpacity={0.85}
+              onPress={() => { setComment(''); setKg(''); setPhoto(null); if (r.next === 'correct') { setReason(r.id); setNewSize(null); setPhase('correct'); } else { setFlagKind(r.id); setPhase('flag'); } }}
+              style={{ padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: r.danger ? '#E6B8A8' : colors.ink12, backgroundColor: r.danger ? '#FEF0E3' : '#fff' }}>
+              <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 15, color: r.danger ? '#B42318' : colors.ink }}>{tr(r.title)}</Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: colors.ink55, marginTop: 2 }}>{tr(r.sub)}</Text>
+            </TouchableOpacity>
+          ))}
+          <KGButton kind="ghost" size="md" onPress={() => setPhase('check')}>{tr("Retour")}</KGButton>
+        </ScrollView>
+      )}
+
+      {phase === 'flag' && (
+        <ScrollView contentContainerStyle={{ padding: 20, gap: 14 }} keyboardShouldPersistTaps="handled">
+          <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: '#0E2116' }}>{tr(REASONS.find((r) => r.id === flagKind)?.title || 'Signalement')}</Text>
+          {(flagKind === 'INTERDIT' || flagKind === 'DANGEREUX') ? (
+            <View style={{ backgroundColor: '#FEF0E3', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#E6B8A8' }}>
+              <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13.5, color: '#B42318', lineHeight: 20 }}>
+                {tr("Le colis sera refusé et la course annulée tout de suite. KoliGo examine le dossier. Ne prends pas ce colis.")}
+              </Text>
+            </View>
+          ) : (
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13.5, color: colors.ink55, lineHeight: 20 }}>
+              {tr("La course continue. KoliGo est prévenu et vérifiera la valeur déclarée.")}
+            </Text>
+          )}
+          <KGInput label={tr("Ce que tu as constaté (obligatoire)")} value={comment} onChangeText={setComment} placeholder={tr("Décris le contenu ou le problème")} />
+          {photo && <Image source={{ uri: photo.uri }} style={{ width: '100%', height: 160, borderRadius: 14, backgroundColor: colors.cream }} resizeMode="cover" />}
+          <KGButton kind="soft" size="md" icon="camera" onPress={takePhoto}>{photo ? tr('Reprendre la photo') : tr('Ajouter une photo (recommandé)')}</KGButton>
+          <KGButton kind="primary" size="lg" icon="send" disabled={busy || comment.trim().length < 5} onPress={submitFlag}>
+            {busy ? tr('Envoi…') : (flagKind === 'VALEUR' ? tr('Signaler à KoliGo') : tr('Refuser le colis'))}
+          </KGButton>
+          <KGButton kind="ghost" size="md" onPress={() => setPhase('reason')}>{tr("Retour")}</KGButton>
         </ScrollView>
       )}
 
@@ -307,12 +382,14 @@ export default function ConfirmCodeScreen({ navigation, route }) {
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: colors.ink55, lineHeight: 18 }}>
             Pour un colis XXL (plus grand que XL), contacte le support KoliGo : ce gabarit se fait sur devis.
           </Text>
+          {reason === 'POIDS' && <KGInput label={tr("Poids constaté en kg (facultatif)")} value={kg} onChangeText={setKg} keyboardType="numeric" placeholder="ex : 12" />}
+          <KGInput label={tr("Commentaire (facultatif)")} value={comment} onChangeText={setComment} placeholder={tr("Ce que tu as constaté")} />
           {photo && <Image source={{ uri: photo.uri }} style={{ width: '100%', height: 160, borderRadius: 14, backgroundColor: colors.cream }} resizeMode="cover" />}
           <KGButton kind={photo ? 'soft' : 'primary'} size="md" icon="camera" onPress={takePhoto}>{photo ? 'Reprendre la photo' : 'Photographier le colis (obligatoire)'}</KGButton>
           <KGButton kind="primary" size="lg" icon="send" disabled={!newSize || !photo || busy} onPress={submitCorrection}>
             {busy ? 'Envoi…' : 'Envoyer la correction au vendeur'}
           </KGButton>
-          <KGButton kind="ghost" size="md" onPress={() => setPhase('check')}>{tr("Retour")}</KGButton>
+          <KGButton kind="ghost" size="md" onPress={() => setPhase('reason')}>{tr("Retour")}</KGButton>
         </ScrollView>
       )}
 

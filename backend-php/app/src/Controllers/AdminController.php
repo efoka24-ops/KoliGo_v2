@@ -11,6 +11,7 @@ use Koligo\HttpError;
 use Koligo\Rel;
 use Koligo\Services\Accounts;
 use Koligo\Services\Cgu;
+use Koligo\Services\Incidents;
 use Koligo\Services\Invoices;
 use Koligo\Services\Kyc;
 use Koligo\Services\Notifier;
@@ -97,7 +98,7 @@ final class AdminController
             $args[] = Db::like($_GET['role']);
         }
         $items = Db::all(
-            "SELECT id, name, phone, email, activeRole, roles, kycStatus, isBlocked, isOnline, createdAt FROM `User` WHERE $where ORDER BY createdAt DESC LIMIT $take OFFSET $skip",
+            "SELECT id, name, phone, email, activeRole, roles, kycStatus, suspendedAt, isBlocked, isOnline, createdAt FROM `User` WHERE $where ORDER BY createdAt DESC LIMIT $take OFFSET $skip",
             $args
         );
         foreach ($items as &$u) {
@@ -164,6 +165,73 @@ final class AdminController
         Db::exec('UPDATE `User` SET pinHash = ?, updatedAt = ? WHERE id = ?', [Accounts::hashPin(bin2hex(random_bytes(16))), Db::now(), $u['id']]);
         self::audit($c, $u['id'], 'LOCK_PIN');
         return ['locked' => true];
+    }
+
+    /** GET /admin/incidents?status=OPEN|CONFIRMED|CLEARED|EXPIRED|ALL&appeal=1 : incidents de declaration a traiter. */
+    public static function listIncidents(Ctx $c): array
+    {
+        [$take, $skip] = self::page(25);
+        $where = '1=1';
+        $args = [];
+        $status = strtoupper((string)($_GET['status'] ?? 'OPEN'));
+        if ($status !== 'ALL' && in_array($status, ['OPEN', 'CONFIRMED', 'CLEARED', 'EXPIRED'], true)) {
+            $where .= ' AND i.status = ?';
+            $args[] = $status;
+        }
+        if (!empty($_GET['appeal'])) {
+            $where .= ' AND i.appealAt IS NOT NULL';
+        }
+        $items = Db::all(
+            "SELECT i.*, d.pickupAddress, d.dropoffAddress, d.size, d.declaredValueXAF, d.priceXAF,
+                    v.name AS vendorName, v.phone AS vendorPhone, v.suspendedAt AS vendorSuspendedAt,
+                    p.name AS delivererName, p.phone AS delivererPhone
+             FROM `Incident` i JOIN `Delivery` d ON d.id = i.deliveryId
+             LEFT JOIN `User` v ON v.id = i.vendorId LEFT JOIN `User` p ON p.id = i.delivererId
+             WHERE $where ORDER BY (i.status = 'OPEN') DESC, i.createdAt DESC LIMIT $take OFFSET $skip",
+            $args
+        );
+        foreach ($items as &$r) {
+            $r['label'] = Incidents::LABELS[$r['kind']] ?? $r['kind'];
+            $r['hasPhoto'] = !empty($r['photoPath']);
+            $r['vendorConfirmed'] = Incidents::confirmedCount((string)$r['vendorId']);
+            unset($r['photoPath']);
+        }
+        unset($r);
+        return [
+            'items' => $items,
+            'total' => (int)Db::val("SELECT COUNT(*) FROM `Incident` i WHERE $where", $args),
+            'open' => (int)Db::val("SELECT COUNT(*) FROM `Incident` WHERE status = 'OPEN'"),
+            'threshold' => Pricing::config()['strikeThreshold'],
+        ];
+    }
+
+    /** PATCH /admin/incidents/:id {action: confirm|clear, note?} */
+    public static function decideIncident(Ctx $c): array
+    {
+        return Incidents::decide($c->param('id'), $c->user['userId'], (string)$c->input('action', ''), (string)$c->input('note', ''));
+    }
+
+    public static function serveIncidentPhoto(Ctx $c): void
+    {
+        $row = Db::one('SELECT photoPath FROM `Incident` WHERE id = ?', [$c->param('id')]);
+        $real = ($row && $row['photoPath']) ? realpath($row['photoPath']) : false;
+        $root = realpath(AuthController::uploadDir());
+        if (!$real || !$root || !str_starts_with($real, $root) || !is_file($real)) {
+            Http::json(['error' => 'Photo introuvable'], 404);
+        }
+        header('Content-Type: ' . (strtolower(pathinfo($real, PATHINFO_EXTENSION)) === 'png' ? 'image/png' : 'image/jpeg'));
+        header('Cache-Control: private, max-age=3600');
+        header('X-Content-Type-Options: nosniff');
+        readfile($real);
+        exit;
+    }
+
+    /** POST /admin/users/:id/unsuspend : leve la suspension d'un vendeur (apres appel ou examen du recours). */
+    public static function unsuspendUser(Ctx $c): array
+    {
+        $u = self::mustManage($c);
+        Incidents::unsuspend($u['id'], $c->user['userId']);
+        return self::publicUser($u['id']);
     }
 
     /** GET /admin/messages?flagged=1&q=&page= : tous les messages des livraisons, les signales en premier si flagged=1. */

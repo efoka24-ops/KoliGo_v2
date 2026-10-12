@@ -156,7 +156,7 @@ export default function Users() {
                   <div><div className="k">Identifiant (téléphone)</div><div className="v mono-sm">{drawer.phone || '—'}</div></div>
                   <div><div className="k">Identifiant (e-mail)</div><div className="v mono-sm">{drawer.email || '—'}</div></div>
                   <div><div className="k">PIN</div><div className="v">Chiffré : impossible à lire, seulement réinitialisable</div></div>
-                  <div><div className="k">Compte</div><div className="v">{drawer.isBlocked ? 'Bloqué' : 'Actif'}</div></div>
+                  <div><div className="k">Compte</div><div className="v">{drawer.isBlocked ? 'Bloqué' : drawer.suspendedAt ? 'Suspendu (déclarations non conformes)' : 'Actif'}</div></div>
                 </div>
                 {isAdminUser(drawer) ? <div style={{ fontSize: 12, color: 'var(--muted)' }}>Compte administrateur : non modifiable ici.</div> : (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -164,6 +164,7 @@ export default function Users() {
                       onClick={() => { setPinMsg(null); window.confirm(`Réinitialiser le PIN de ${drawer.name} ? Un PIN temporaire sera généré.`) && resetPin.mutate(drawer.id); }}>Réinitialiser le PIN</button>
                     <button className="btn sm" disabled={lockPin.isPending}
                       onClick={() => { setPinMsg(null); window.confirm(`Verrouiller le PIN de ${drawer.name} ? Il ne pourra plus se connecter avec son PIN actuel.`) && lockPin.mutate(drawer.id); }}>Verrouiller le PIN</button>
+                    {drawer.suspendedAt && <button className="btn sm" onClick={() => window.confirm(`Lever la suspension de ${drawer.name} ?`) && adminApi.unsuspendUser(drawer.id).then(() => { setDrawer((d) => ({ ...d, suspendedAt: null })); qc.invalidateQueries({ queryKey: ['admin-users'] }); })}>Lever la suspension</button>}
                     <button className="btn sm" style={drawer.isBlocked ? {} : { color: 'var(--danger)', borderColor: '#F0C9B6' }}
                       onClick={() => window.confirm(drawer.isBlocked ? `Débloquer ${drawer.name} ?` : `Bloquer le compte de ${drawer.name} ? Sa session sera coupée immédiatement.`)
                         && blockMut.mutate({ id: drawer.id, blocked: !drawer.isBlocked }, { onSuccess: () => setDrawer((d) => ({ ...d, isBlocked: !d.isBlocked })) })}>

@@ -109,7 +109,7 @@ final class Pricing
             'cancelFee' => (int)$get('cancel_fee_xaf'),
             'revisionTimeoutMin' => max(1, (int)$get('revision_timeout_min')),
             'cancelGraceMin' => max(0, (int)$get('cancel_grace_min')),
-            'strikeWindowDays' => max(1, (int)$get('strike_window_days')),
+            'strikeWindowDays' => max(0, (int)$get('strike_window_days')),
             'strikeThreshold' => max(1, (int)$get('strike_threshold')),
             'maintenance' => in_array(strtolower((string)$get('maintenance_mode')), ['true', '1', 'on'], true),
             'minWithdrawal' => max(100, (int)$get('min_withdrawal_xaf')),

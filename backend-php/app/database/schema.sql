@@ -325,3 +325,23 @@ CREATE TABLE IF NOT EXISTS `DeliveryEvent` (
   `data` TEXT NULL,
   `createdAt` DATETIME NOT NULL
 ) {{OPTS}};
+
+-- Incidents de declaration (poids, taille, valeur, contenu interdit ou dangereux), imputables au vendeur une fois confirmes.
+CREATE TABLE IF NOT EXISTS `Incident` (
+  `id` VARCHAR(40) NOT NULL PRIMARY KEY,
+  `deliveryId` VARCHAR(40) NOT NULL,
+  `vendorId` VARCHAR(40) NOT NULL,
+  `delivererId` VARCHAR(40) NULL,
+  `revisionId` VARCHAR(40) NULL,
+  `kind` VARCHAR(12) NOT NULL,
+  `comment` VARCHAR(500) NULL,
+  `photoPath` VARCHAR(500) NULL,
+  `measuredWeightKg` DOUBLE NULL,
+  `status` VARCHAR(12) NOT NULL DEFAULT 'OPEN',
+  `decidedBy` VARCHAR(40) NULL,
+  `decidedAt` DATETIME NULL,
+  `decisionNote` VARCHAR(255) NULL,
+  `appealText` VARCHAR(500) NULL,
+  `appealAt` DATETIME NULL,
+  `createdAt` DATETIME NOT NULL
+) {{OPTS}};

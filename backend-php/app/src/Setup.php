@@ -13,6 +13,7 @@ final class Setup
     private const INDEXES = [
         'idx_otp_phone' => ['OtpCode', 'phone'],
         'idx_notif_user' => ['Notification', 'userId'],
+        'idx_incident_vendor' => ['Incident', 'vendorId'],
         'idx_event_delivery' => ['DeliveryEvent', 'deliveryId'],
         'idx_decline_user' => ['OfferDecline', 'userId'],
         'idx_delivery_status' => ['Delivery', 'status'],
@@ -39,6 +40,8 @@ final class Setup
         ['Delivery', 'declaredValueXAF', 'INT NULL'],
         ['Delivery', 'fragile', 'INT NOT NULL DEFAULT 0'],
         ['Delivery', 'handlingNote', 'VARCHAR(255) NULL'],
+        ['User', 'suspendedAt', 'DATETIME NULL'],
+        ['User', 'suspendReason', 'VARCHAR(255) NULL'],
         ['Message', 'flagged', 'INT NOT NULL DEFAULT 0'],
         ['Message', 'flagReason', 'VARCHAR(160) NULL'],
         ['User', 'adminPinSetAt', 'DATETIME NULL'],
@@ -47,7 +50,7 @@ final class Setup
     ];
 
     /** A incrementer quand le schema ou les reglages de reference changent : declenche une migration au prochain appel. */
-    public const SCHEMA_VERSION = 11;
+    public const SCHEMA_VERSION = 12;
 
     /**
      * Migration automatique et rejouable : evite d'avoir a relancer _setup.php (dont le jeton est supprime apres
@@ -128,7 +131,7 @@ final class Setup
             'pricing_gabarits' => json_encode(Pricing::DEFAULT_GABARITS, JSON_UNESCAPED_UNICODE),
             'pricing_default_zone' => 'Grand Sud', 'pricing_min_xaf' => '1000', 'cancel_fee_xaf' => '500',
             'moderation_keywords' => implode("\n", \Koligo\Services\Moderation::DEFAULT_KEYWORDS),
-            'estimated_city_km' => '4', 'revision_timeout_min' => '10', 'cancel_grace_min' => '2', 'strike_window_days' => '30', 'strike_threshold' => '3',
+            'estimated_city_km' => '4', 'revision_timeout_min' => '10', 'cancel_grace_min' => '2', 'strike_window_days' => '0', 'strike_threshold' => '3',
         ];
         foreach ($settings as $k => $v) {
             if (!Db::one('SELECT `key` FROM `PlatformSetting` WHERE `key` = ?', [$k])) {
@@ -154,6 +157,10 @@ final class Setup
                     $quartiers++;
                 }
             }
+        }
+        if (!Db::one("SELECT `key` FROM `PlatformSetting` WHERE `key` = 'strike_window_migrated'")) {
+            Db::exec("UPDATE `PlatformSetting` SET `value` = '0', updatedAt = ? WHERE `key` = 'strike_window_days' AND `value` = '30'", [$now]);
+            Db::exec("INSERT INTO `PlatformSetting` (`key`, `value`, updatedAt) VALUES ('strike_window_migrated', '1', ?)", [$now]);
         }
         // Coordonnees GPS des quartiers (geocodees une fois, controlees) : uniquement pour ceux qui n'en ont pas encore.
         $coords = 0;

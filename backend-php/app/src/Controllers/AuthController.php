@@ -95,6 +95,8 @@ final class AuthController
         $out['currentCguVersion'] = Cgu::latestVersion();
         $out['needsCgu'] = Cgu::needsAcceptance($u);
         $out['strikes'] = Deliveries::strikeInfo($u['id']);
+        $out['suspended'] = !empty($u['suspendedAt']);
+        $out['suspendReason'] = $u['suspendReason'] ?? null;
         return $out;
     }
 
