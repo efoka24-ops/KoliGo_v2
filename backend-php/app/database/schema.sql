@@ -307,3 +307,21 @@ CREATE TABLE IF NOT EXISTS `AdminAction` (
   `action` VARCHAR(40) NOT NULL,
   `createdAt` DATETIME NOT NULL
 ) {{OPTS}};
+
+-- Distances par la route deja calculees (une ligne par paire de lieux, ordre indifferent).
+CREATE TABLE IF NOT EXISTS `RouteCache` (
+  `key` VARCHAR(255) NOT NULL PRIMARY KEY,
+  `km` DOUBLE NOT NULL,
+  `source` VARCHAR(20) NOT NULL,
+  `createdAt` DATETIME NOT NULL
+) {{OPTS}};
+
+-- Historique date de chaque livraison (acceptation, collecte, correction, livraison...).
+CREATE TABLE IF NOT EXISTS `DeliveryEvent` (
+  `id` VARCHAR(40) NOT NULL PRIMARY KEY,
+  `deliveryId` VARCHAR(40) NOT NULL,
+  `type` VARCHAR(40) NOT NULL,
+  `actorId` VARCHAR(40) NULL,
+  `data` TEXT NULL,
+  `createdAt` DATETIME NOT NULL
+) {{OPTS}};

@@ -143,6 +143,9 @@ export default function PostDeliveryScreen({ navigation }) {
   const [fromCity, setFromCity]     = useState('');
   const [type, setType]             = useState('TEMPORAIRE');
   const [productPrice, setProductPrice] = useState('');
+  const [declaredValue, setDeclaredValue] = useState('');
+  const [fragile, setFragile] = useState(false);
+  const [handlingNote, setHandlingNote] = useState('');
 
   const [recipient, setRecipient]           = useState('');
   const [clientPhone, setClientPhone]       = useState('');
@@ -239,6 +242,9 @@ export default function PostDeliveryScreen({ navigation }) {
             recipientEmail: recipientEmail.trim() || undefined,
             clientWhatsApp: phoneNorm,
             productPrice:   productVal,
+            declaredValue:  parseInt(declaredValue, 10) || undefined,
+            fragile,
+            handlingNote:   handlingNote.trim() || undefined,
           }),
         });
         navigation.navigate('VendorCodes', {
@@ -431,7 +437,7 @@ export default function PostDeliveryScreen({ navigation }) {
                 cities={cities}
               />
               <View style={{ paddingVertical: 6, paddingHorizontal: 10, backgroundColor: colors.cream, borderRadius: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{isEn ? 'Estimated distance' : 'Distance estimée'}</Text>
+                <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: quote?.distanceEstimated ? '#C4611A' : colors.ink55 }}>{quote?.distanceEstimated ? (isEn ? 'Estimated distance (to be confirmed)' : 'Distance estimée (à confirmer)') : (isEn ? 'Road distance' : 'Distance par la route')}</Text>
                 {quoteFetching || distance == null
                   ? <ActivityIndicator size="small" color={colors.green} />
                   : <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 13, color: colors.ink }}>{distance} km</Text>}
@@ -483,6 +489,31 @@ export default function PostDeliveryScreen({ navigation }) {
                 icon="wallet"
                 keyboardType="numeric"
                 placeholder={isEn ? 'e.g. 15000' : 'ex: 15000'}
+              />
+            </KGCard>
+
+            <KGSectionTitle>{isEn ? 'Parcel details' : 'Détails du colis'}</KGSectionTitle>
+            <KGCard padding={14} style={{ gap: 12 }}>
+              <KGInput
+                label={isEn ? 'Declared value (XAF, optional)' : 'Valeur déclarée (XAF, facultatif)'}
+                value={declaredValue}
+                onChangeText={(v) => setDeclaredValue(v.replace(/[^0-9]/g, ''))}
+                icon="wallet"
+                keyboardType="numeric"
+                placeholder={isEn ? 'Worth of the content' : 'Valeur du contenu'}
+              />
+              <TouchableOpacity onPress={() => setFragile((v) => !v)} activeOpacity={0.8}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: fragile ? colors.green : colors.ink12, backgroundColor: fragile ? colors.green : '#fff', alignItems: 'center', justifyContent: 'center' }}>
+                  {fragile ? <Icon name="check" size={13} color="#fff" /> : null}
+                </View>
+                <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 14, color: colors.ink }}>{isEn ? 'Fragile parcel' : 'Colis fragile'}</Text>
+              </TouchableOpacity>
+              <KGInput
+                label={isEn ? 'Handling instructions (optional)' : 'Consignes de manutention (facultatif)'}
+                value={handlingNote}
+                onChangeText={setHandlingNote}
+                placeholder={isEn ? 'e.g. keep upright, call on arrival' : 'ex : garder à plat, appeler en arrivant'}
               />
             </KGCard>
 

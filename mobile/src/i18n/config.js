@@ -5,6 +5,7 @@ import { stringsFf } from './strings_ff';
 import { EN } from './en_dict';
 import { FF } from './ff_dict';
 import { TRANSLATIONS } from './translations';
+import { EN_EXTRA } from './en_extra';
 
 export const LANGUAGES = [
   { code: 'fr', label: 'Français', flag: '🇫🇷' },
@@ -17,7 +18,7 @@ export const LANG_CODES = LANGUAGES.map((l) => l.code);
 //  - les identifiants de strings.js (« tabHome », « continue »…)
 //  - les textes français écrits dans les écrans (la clé EST le texte français)
 const fr = {};
-const en = { ...(TRANSLATIONS.en || {}), ...EN };
+const en = { ...(TRANSLATIONS.en || {}), ...EN, ...EN_EXTRA };
 const ff = { ...FF, ...stringsFf };
 Object.entries(strings).forEach(([key, v]) => {
   fr[key] = v.fr;

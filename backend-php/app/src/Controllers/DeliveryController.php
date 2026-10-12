@@ -27,6 +27,10 @@ final class DeliveryController
             'category' => $b['category'] ?? null,
             'photo' => $b['photo'] ?? null,
             'fromCity' => $b['fromCity'] ?? null,
+            'toCity' => $b['toCity'] ?? null,
+            'declaredValueXAF' => $b['declaredValue'] ?? $b['declaredValueXAF'] ?? null,
+            'fragile' => $b['fragile'] ?? false,
+            'handlingNote' => $b['handlingNote'] ?? null,
             'description' => $b['description'] ?? $b['parcelDesc'] ?? null,
             'delivererType' => $b['delivererType'] ?? $b['courierType'] ?? 'TEMPORAIRE',
             'distanceKm' => $b['distanceKm'] ?? $b['distance'] ?? 2,
@@ -83,6 +87,9 @@ final class DeliveryController
         $d['hasPhoto'] = !empty($d['photoPath']);
         unset($d['photoPath']);
         $d['revision'] = self::revisionView(Deliveries::latestRevision($d['id']));
+        // Historique daté : réservé aux parties de la course et à l'admin (pas à un livreur qui consulte une offre).
+        $isParty = $d['vendorId'] === $uid || $d['delivererId'] === $uid || $c->user['activeRole'] === 'ADMIN';
+        $d['events'] = $isParty ? Deliveries::events($d['id']) : [];
         return $d;
     }
 

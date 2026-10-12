@@ -99,12 +99,20 @@ final class Deliveries
         }
 
         // Le prix est toujours calcule ici, jamais pris au client.
-        $km = Distance::googleKm($p['pickupAddress'], $p['dropoffAddress'])
-            ?? Distance::km($p['pickupAddress'], $p['dropoffAddress'])
-            ?? (isset($p['distanceKm']) ? (float)$p['distanceKm'] : 2.0);
         $city = isset($p['fromCity']) ? trim((string)$p['fromCity']) : null;
+        $route = Distance::route((string)$p['pickupAddress'], $city, (string)$p['dropoffAddress'], isset($p['toCity']) ? (string)$p['toCity'] : null);
+        $km = $route['km'];
         $region = Pricing::resolveRegion($city, (string)$p['pickupAddress']);
         $price = Pricing::quote($region, (float)$km, $size, $type);
+        // La provenance de la distance est figee avec le prix : le back-office voit si elle a ete mesuree ou estimee.
+        $price['distanceSource'] = $route['source'];
+        $price['distanceEstimated'] = $route['estimated'];
+
+        $declared = isset($p['declaredValueXAF']) && $p['declaredValueXAF'] !== '' && $p['declaredValueXAF'] !== null ? (int)$p['declaredValueXAF'] : null;
+        if ($declared !== null && ($declared < 0 || $declared > 50000000)) {
+            throw new HttpError('Valeur déclarée invalide', 400, 'DECLARED_VALUE_INVALID');
+        }
+        $note = isset($p['handlingNote']) ? mb_substr(trim((string)$p['handlingNote']), 0, 255) : '';
 
         $id = Db::id();
         $now = Db::now();
@@ -112,7 +120,7 @@ final class Deliveries
         $deliver = Auth::code4();
         $clientToken = Auth::signClientToken($id);
 
-        Db::tx(function () use ($id, $now, $vendorId, $p, $type, $size, $category, $photoPath, $city, $km, $price, $collect, $deliver, $clientToken) {
+        Db::tx(function () use ($id, $now, $vendorId, $p, $type, $size, $category, $photoPath, $city, $km, $price, $collect, $deliver, $clientToken, $declared, $note, $route) {
             Db::insert('Delivery', [
                 'id' => $id, 'vendorId' => $vendorId,
                 'pickupAddress' => $p['pickupAddress'], 'dropoffAddress' => $p['dropoffAddress'],
@@ -127,8 +135,10 @@ final class Deliveries
                 'shopName' => $p['shopName'] ?? null, 'recipientName' => $p['recipientName'] ?? null,
                 'recipientPhone' => $p['recipientPhone'] ?? null,
                 'productPriceXAF' => (int)($p['productPriceXAF'] ?? 0),
+                'declaredValueXAF' => $declared, 'fragile' => !empty($p['fragile']) ? 1 : 0, 'handlingNote' => $note !== '' ? $note : null,
                 'createdAt' => $now, 'updatedAt' => $now,
             ]);
+            self::event($id, 'CREATED', $vendorId, ['km' => $km, 'distanceSource' => $route['source'], 'priceXAF' => $price['finalPrice'], 'size' => $size]);
             Db::insert('EscrowEntry', ['id' => Db::id(), 'deliveryId' => $id, 'amountXAF' => $price['finalPrice'], 'lockedAt' => $now]);
         });
 
@@ -176,6 +186,33 @@ final class Deliveries
 
     // ── Acceptation, annulation ──────────────────────────────────────────────
 
+    /** Ajoute une etape datee a l'historique de la livraison. Ne doit jamais faire echouer l'action metier. */
+    public static function event(string $deliveryId, string $type, ?string $actorId = null, array $data = []): void
+    {
+        try {
+            Db::insert('DeliveryEvent', [
+                'id' => Db::id(), 'deliveryId' => $deliveryId, 'type' => $type, 'actorId' => $actorId,
+                'data' => $data ? json_encode($data, JSON_UNESCAPED_UNICODE) : null, 'createdAt' => Db::now(),
+            ]);
+        } catch (\Throwable $e) {
+            error_log('[event] ' . $e->getMessage());
+        }
+    }
+
+    /** @return array<int,array{type:string,actorId:?string,data:?array,createdAt:string}> */
+    public static function events(string $deliveryId): array
+    {
+        $rows = Db::all('SELECT type, actorId, data, createdAt FROM `DeliveryEvent` WHERE deliveryId = ?', [$deliveryId]);
+        foreach ($rows as &$r) {
+            $r['data'] = $r['data'] ? json_decode((string)$r['data'], true) : null;
+        }
+        unset($r);
+        // Horodatage a la seconde : a egalite, l'ordre logique du cycle de vie departage les etapes.
+        $rank = ['CREATED' => 0, 'ACCEPTED' => 1, 'REVISION_PROPOSED' => 2, 'REVISION_ACCEPTED' => 3, 'REVISION_REFUSED' => 3, 'COLLECTED' => 4, 'DELIVERED' => 5, 'CANCELLED' => 6];
+        usort($rows, fn($a, $b) => [$a['createdAt'], $rank[$a['type']] ?? 9] <=> [$b['createdAt'], $rank[$b['type']] ?? 9]);
+        return $rows;
+    }
+
     /** Previent les livreurs qui peuvent prendre la course : KYC valide, non bloques, vehicule adapte au gabarit. */
     private static function notifyNewDelivery(array $d): void
     {
@@ -216,6 +253,7 @@ final class Deliveries
         $deliverer = Db::one('SELECT name FROM `User` WHERE id = ?', [$delivererId]);
         $vendor = Db::one('SELECT * FROM `User` WHERE id = ?', [$d['vendorId']]);
         $who = $deliverer['name'] ?? 'Un livreur';
+        self::event($id, 'ACCEPTED', $delivererId);
         Notifier::send((string)$d['vendorId'], 'DELIVERY_ACCEPTED', 'Course acceptée', "$who a accepté votre livraison et se rend chez vous.", ['deliveryId' => $id]);
         if ($vendor) {
             if ($vendor['email']) {
@@ -262,6 +300,7 @@ final class Deliveries
         if ($fee > 0 && $d['delivererId']) {
             self::chargeCancelFee($vendorId, (string)$d['delivererId'], $fee, $id, "Frais d'annulation (course déjà en route)");
         }
+        self::event($id, 'CANCELLED', $vendorId, ['feeXAF' => $fee]);
         if ($d['delivererId']) {
             Notifier::send((string)$d['delivererId'], 'DELIVERY_CANCELLED', 'Course annulée', 'Le vendeur a annulé la course' . ($fee > 0 ? " : $fee F vous seront versés en dédommagement." : '.'), ['deliveryId' => $id]);
         }
@@ -328,6 +367,7 @@ final class Deliveries
             'oldPriceXAF' => (int)$d['priceXAF'], 'newPriceXAF' => $new['finalPrice'], 'status' => 'PENDING',
             'expiresAt' => $expires, 'createdAt' => $now,
         ]);
+        self::event($id, 'REVISION_PROPOSED', $delivererId, ['declared' => $declared, 'proposed' => $size, 'newPriceXAF' => $new['finalPrice']]);
         Notifier::send((string)$d['vendorId'], 'REVISION_PROPOSED', 'Correction du gabarit', "Le livreur propose le gabarit $size au lieu de $declared (nouveau prix : " . Notify::xaf($new['finalPrice']) . ' F). Répondez avant expiration.', ['deliveryId' => $id]);
         $vendor = Db::one('SELECT phone FROM `User` WHERE id = ?', [$d['vendorId']]);
         if ($vendor) {
@@ -362,6 +402,7 @@ final class Deliveries
                 );
                 Db::exec('UPDATE `EscrowEntry` SET amountXAF = ? WHERE deliveryId = ?', [$new['finalPrice'], $id]);
             });
+            self::event($id, 'REVISION_ACCEPTED', $vendorId, ['size' => $rev['proposedSize'], 'newPriceXAF' => $new['finalPrice']]);
             Notifier::send((string)$d['delivererId'], 'REVISION_ACCEPTED', 'Correction acceptée', 'Le vendeur a accepté le nouveau prix : vous pouvez collecter le colis.', ['deliveryId' => $id]);
             return self::find($id);
         }
@@ -375,6 +416,7 @@ final class Deliveries
             Db::exec('UPDATE `EscrowEntry` SET releasedAt = ? WHERE deliveryId = ?', [$now, $id]);
         });
         self::chargeCancelFee($vendorId, (string)$d['delivererId'], $fee, $id, 'Frais d\'annulation (prix révisé refusé)');
+        self::event($id, 'REVISION_REFUSED', $vendorId, ['feeXAF' => $fee]);
         Notifier::send((string)$d['delivererId'], 'REVISION_REFUSED', 'Correction refusée', "Le vendeur a refusé : course annulée, $fee F de dédommagement vous sont dus.", ['deliveryId' => $id]);
         return self::find($id);
     }
@@ -452,6 +494,7 @@ final class Deliveries
             throw new HttpError('Wrong collect code');
         }
         Db::exec("UPDATE `Delivery` SET status = 'EN_ROUTE', updatedAt = ? WHERE id = ? AND status = 'ACCEPTE'", [Db::now(), $id]);
+        self::event($id, 'COLLECTED', $delivererId);
         Notifier::send((string)$d['vendorId'], 'DELIVERY_PICKED_UP', 'Colis collecté', 'Le livreur a récupéré votre colis et est en route vers le destinataire.', ['deliveryId' => $id]);
         return self::find($id);
     }
@@ -519,6 +562,7 @@ final class Deliveries
             return;
         }
 
+        self::event((string)$d['id'], 'DELIVERED', (string)$d['delivererId'], ['earningXAF' => (int)$d['delivererEarning']]);
         Notifier::send((string)$d['vendorId'], 'DELIVERY_DELIVERED', 'Colis livré', 'Votre colis a été livré à ' . $d['dropoffAddress'] . '.', ['deliveryId' => $d['id']]);
         Notifier::send((string)$d['delivererId'], 'EARNING', 'Gain reçu', 'Course livrée : ' . Notify::xaf((int)$d['delivererEarning']) . ' F crédités sur votre wallet.', ['deliveryId' => $d['id']]);
         $deliverer = Db::one('SELECT * FROM `User` WHERE id = ?', [$d['delivererId']]);

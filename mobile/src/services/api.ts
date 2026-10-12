@@ -99,6 +99,11 @@ export function normalizeDelivery(d: any) {
     momoRef: d.momoRef ?? null,
     convIdDeliverer: d.convIdDeliverer ?? null,
     convIdClient: d.convIdClient ?? null,
+    events: Array.isArray(d.events) ? d.events : [],
+    declaredValue: d.declaredValueXAF ?? null,
+    fragile: !!d.fragile,
+    handlingNote: d.handlingNote ?? null,
+    distanceEstimated: !!d.priceBreakdown?.distanceEstimated,
   };
 }
 

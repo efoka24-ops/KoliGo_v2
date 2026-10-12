@@ -66,7 +66,7 @@ export default function Zones() {
   const [cityModal,    setCityModal]    = useState(null);
   const [qModal,       setQModal]       = useState(null);
   const [cityForm,     setCityForm]     = useState({ name:'', region:'' });
-  const [qForm,        setQForm]        = useState({ name:'' });
+  const [qForm,        setQForm]        = useState({ name:'', latitude:'', longitude:'' });
   const [saving,       setSaving]       = useState(false);
 
   // ── Load pricing ───────────────────────────────────────────────────────────
@@ -147,7 +147,11 @@ export default function Zones() {
     try {
       qModal === 'create'
         ? await adminApi.createNeighborhood(selectedCity.id, qForm.name.trim())
-        : await adminApi.updateNeighborhood(qModal.id, { name: qForm.name.trim() });
+        : await adminApi.updateNeighborhood(qModal.id, {
+            name: qForm.name.trim(),
+            latitude: qForm.latitude === '' ? null : Number(qForm.latitude),
+            longitude: qForm.longitude === '' ? null : Number(qForm.longitude),
+          });
       setQModal(null);
       loadNeighborhoods(selectedCity.id);
       loadCities();
@@ -234,23 +238,24 @@ export default function Zones() {
               <div>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
                   <span style={{ fontWeight:800, fontSize:13 }}>Quartiers — {selectedCity.name} ({neighborhoods.length})</span>
-                  <button className="btn sm" onClick={() => { setQForm({ name:'' }); setQModal('create'); }}>+ Quartier</button>
+                  <button className="btn sm" onClick={() => { setQForm({ name:'', latitude:'', longitude:'' }); setQModal('create'); }}>+ Quartier</button>
                 </div>
                 <input className="input" placeholder="Rechercher…" value={searchQ} onChange={e => setSearchQ(e.target.value)} style={{ width:'100%', marginBottom:12 }} />
                 {loadingQ ? <div style={{ textAlign:'center', color:'var(--muted)', padding:24 }}>Chargement…</div> : (
                   <div className="card" style={{ overflow:'hidden' }}>
                     <table className="tbl">
-                      <thead><tr><th>Quartier</th><th>Statut</th><th style={{ textAlign:'right' }}>Actions</th></tr></thead>
+                      <thead><tr><th>Quartier</th><th>Position GPS</th><th>Statut</th><th style={{ textAlign:'right' }}>Actions</th></tr></thead>
                       <tbody>
                         {filteredQ.length === 0 ? (
-                          <tr><td colSpan={3} style={{ textAlign:'center', color:'var(--muted)', padding:20 }}>Aucun quartier</td></tr>
+                          <tr><td colSpan={4} style={{ textAlign:'center', color:'var(--muted)', padding:20 }}>Aucun quartier</td></tr>
                         ) : filteredQ.map(q => (
                           <tr key={q.id} style={{ opacity: q.isActive ? 1 : 0.5 }}>
                             <td style={{ fontWeight:600 }}>{q.name}</td>
+                            <td className="mono-sm" style={{ color: q.latitude != null ? 'inherit' : 'var(--muted)' }}>{q.latitude != null ? `${Number(q.latitude).toFixed(4)}, ${Number(q.longitude).toFixed(4)}` : 'non renseignée'}</td>
                             <td><Pill tone={q.isActive ? 'ok' : 'mut'}>{q.isActive ? 'Actif' : 'Inactif'}</Pill></td>
                             <td style={{ textAlign:'right' }}>
                               <div style={{ display:'flex', gap:6, justifyContent:'flex-end' }}>
-                                <button className="btn sm" onClick={() => { setQForm({ name: q.name }); setQModal(q); }}>Modifier</button>
+                                <button className="btn sm" onClick={() => { setQForm({ name: q.name, latitude: q.latitude ?? '', longitude: q.longitude ?? '' }); setQModal(q); }}>Modifier</button>
                                 <button className="btn sm" onClick={() => adminApi.updateNeighborhood(q.id, { isActive: !q.isActive }).then(() => loadNeighborhoods(selectedCity.id))} style={{ color: q.isActive ? 'var(--danger)' : 'var(--green)' }}>{q.isActive ? 'Désact.' : 'Activer'}</button>
                                 <button className="btn sm" onClick={() => window.confirm(`Supprimer "${q.name}" ?`) && adminApi.deleteNeighborhood(q.id).then(() => { loadNeighborhoods(selectedCity.id); loadCities(); })} style={{ color:'var(--danger)' }}>Suppr.</button>
                               </div>
@@ -282,6 +287,16 @@ export default function Zones() {
             <Modal title={qModal === 'create' ? `Nouveau quartier — ${selectedCity?.name}` : `Modifier ${qModal.name}`} onClose={() => setQModal(null)}>
               <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
                 <div><label style={{ fontSize:12, fontWeight:700, marginBottom:4, display:'block' }}>Nom *</label><input className="input" value={qForm.name} onChange={e => setQForm(f => ({ ...f, name: e.target.value }))} placeholder="ex: Bonapriso" /></div>
+                {qModal !== 'create' && (
+                  <div>
+                    <label style={{ fontSize:12, fontWeight:700, marginBottom:4, display:'block' }}>Position GPS (sert au calcul de la distance par la route)</label>
+                    <div style={{ display:'flex', gap:8 }}>
+                      <input className="input" value={qForm.latitude} onChange={e => setQForm(f => ({ ...f, latitude: e.target.value }))} placeholder="Latitude, ex: 4.0525" />
+                      <input className="input" value={qForm.longitude} onChange={e => setQForm(f => ({ ...f, longitude: e.target.value }))} placeholder="Longitude, ex: 9.6963" />
+                    </div>
+                    <div style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}>Astuce : clic droit sur le lieu dans Google Maps, puis cliquez sur les coordonnées pour les copier.</div>
+                  </div>
+                )}
                 <div style={{ display:'flex', gap:10, marginTop:6 }}>
                   <button className="btn" style={{ flex:1 }} onClick={() => setQModal(null)}>Annuler</button>
                   <button className="btn" style={{ flex:1, background:'var(--green)', color:'#fff' }} onClick={saveQ} disabled={saving}>{saving ? '…' : 'Enregistrer'}</button>

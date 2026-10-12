@@ -75,10 +75,10 @@ final class PublicController
         if ($from === '' || $to === '' || $size === '') {
             throw new HttpError('from, to et size requis');
         }
-        $km = Distance::googleKm($from, $to) ?? Distance::km($from, $to) ?? 2.0;
+        $route = Distance::route($from, Http::query('fromCity') ?: null, $to, Http::query('toCity') ?: null);
         $region = Pricing::resolveRegion(Http::query('fromCity') ?: null, $from);
-        $q = Pricing::quote($region, (float)$km, $size, $type);
-        return $q + ['cancelFeeXAF' => Pricing::config()['cancelFee']];
+        $q = Pricing::quote($region, $route['km'], $size, $type);
+        return $q + ['cancelFeeXAF' => Pricing::config()['cancelFee'], 'distanceSource' => $route['source'], 'distanceEstimated' => $route['estimated']];
     }
 
     /** CGU en vigueur dans la langue demandee (texte stocke en base, jetons deja remplaces). */
@@ -94,7 +94,8 @@ final class PublicController
         if (!$from || !$to) {
             throw new HttpError('from et to requis');
         }
-        return ['km' => Distance::km($from, $to)];
+        $r = Distance::route((string)$from, Http::query('fromCity') ?: null, (string)$to, Http::query('toCity') ?: null);
+        return ['km' => $r['km'], 'source' => $r['source'], 'estimated' => $r['estimated']];
     }
 
     // ── Page de suivi (HTML) pour les destinataires ──────────────────────────

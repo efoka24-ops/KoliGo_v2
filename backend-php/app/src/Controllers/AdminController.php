@@ -767,10 +767,17 @@ final class AdminController
         if (!empty($b['name'])) {
             $data['name'] = $b['name'];
         }
-        foreach (['latitude', 'longitude'] as $k) {
+        foreach (['latitude' => [-90, 90], 'longitude' => [-180, 180]] as $k => [$lo, $hi]) {
             if (array_key_exists($k, $b)) {
-                $data[$k] = $b[$k];
+                if ($b[$k] !== null && (!is_numeric($b[$k]) || $b[$k] < $lo || $b[$k] > $hi)) {
+                    throw new HttpError('Coordonnées invalides');
+                }
+                $data[$k] = $b[$k] === null ? null : (float)$b[$k];
             }
+        }
+        // Position modifiée à la main : les distances mémorisées pour ce quartier ne sont plus fiables.
+        if (array_key_exists('latitude', $b) || array_key_exists('longitude', $b)) {
+            Db::exec("DELETE FROM `RouteCache` WHERE source <> 'TABLE'");
         }
         if (array_key_exists('isActive', $b)) {
             $data['isActive'] = (bool)$b['isActive'];

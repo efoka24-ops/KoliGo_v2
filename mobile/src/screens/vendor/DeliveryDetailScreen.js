@@ -1,4 +1,5 @@
 import { tr } from '../../i18n/tr';
+import DeliveryTimeline, { ParcelFlags } from '../../components/DeliveryTimeline';
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -184,6 +185,9 @@ export default function DeliveryDetailScreen({ navigation, route }) {
             <KGCourierBadge type={d.type} size="lg" />
           </View>
         </View>
+
+        <DeliveryTimeline events={d.events} />
+        <ParcelFlags declaredValue={d.declaredValue} fragile={d.fragile} note={d.handlingNote} />
 
         <KGCard padding={14}>
           <RouteLine from={d.from} to={d.to} />

@@ -1,4 +1,5 @@
 import { tr } from '../../i18n/tr';
+import { ParcelFlags } from '../../components/DeliveryTimeline';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -156,6 +157,8 @@ export default function OfferDetailScreen({ navigation, route }) {
             )}
           </View>
         </KGCard>
+
+        <ParcelFlags declaredValue={o.declaredValueXAF} fragile={!!o.fragile} note={o.handlingNote} />
 
         {/* Escort info */}
         <KGCard kind="green" padding={14}>

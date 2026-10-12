@@ -13,6 +13,7 @@ final class Setup
     private const INDEXES = [
         'idx_otp_phone' => ['OtpCode', 'phone'],
         'idx_notif_user' => ['Notification', 'userId'],
+        'idx_event_delivery' => ['DeliveryEvent', 'deliveryId'],
         'idx_decline_user' => ['OfferDecline', 'userId'],
         'idx_delivery_status' => ['Delivery', 'status'],
         'idx_delivery_vendor' => ['Delivery', 'vendorId'],
@@ -35,6 +36,9 @@ final class Setup
         ['KycDocument', 'role', 'VARCHAR(20) NULL'],
         ['User', 'vehicleType', 'VARCHAR(20) NULL'],
         ['User', 'vehiclePlate', 'VARCHAR(20) NULL'],
+        ['Delivery', 'declaredValueXAF', 'INT NULL'],
+        ['Delivery', 'fragile', 'INT NOT NULL DEFAULT 0'],
+        ['Delivery', 'handlingNote', 'VARCHAR(255) NULL'],
         ['Message', 'flagged', 'INT NOT NULL DEFAULT 0'],
         ['Message', 'flagReason', 'VARCHAR(160) NULL'],
         ['User', 'adminPinSetAt', 'DATETIME NULL'],
@@ -43,7 +47,7 @@ final class Setup
     ];
 
     /** A incrementer quand le schema ou les reglages de reference changent : declenche une migration au prochain appel. */
-    public const SCHEMA_VERSION = 9;
+    public const SCHEMA_VERSION = 11;
 
     /**
      * Migration automatique et rejouable : evite d'avoir a relancer _setup.php (dont le jeton est supprime apres
@@ -124,7 +128,7 @@ final class Setup
             'pricing_gabarits' => json_encode(Pricing::DEFAULT_GABARITS, JSON_UNESCAPED_UNICODE),
             'pricing_default_zone' => 'Grand Sud', 'pricing_min_xaf' => '1000', 'cancel_fee_xaf' => '500',
             'moderation_keywords' => implode("\n", \Koligo\Services\Moderation::DEFAULT_KEYWORDS),
-            'revision_timeout_min' => '10', 'cancel_grace_min' => '2', 'strike_window_days' => '30', 'strike_threshold' => '3',
+            'estimated_city_km' => '4', 'revision_timeout_min' => '10', 'cancel_grace_min' => '2', 'strike_window_days' => '30', 'strike_threshold' => '3',
         ];
         foreach ($settings as $k => $v) {
             if (!Db::one('SELECT `key` FROM `PlatformSetting` WHERE `key` = ?', [$k])) {
@@ -151,8 +155,24 @@ final class Setup
                 }
             }
         }
+        // Coordonnees GPS des quartiers (geocodees une fois, controlees) : uniquement pour ceux qui n'en ont pas encore.
+        $coords = 0;
+        $coordFile = __DIR__ . '/../database/geo_coords.json';
+        if (is_file($coordFile)) {
+            $map = json_decode((string)file_get_contents($coordFile), true);
+            foreach (is_array($map) ? $map : [] as $k => $ll) {
+                [$cityName, $hood] = array_pad(explode('|', (string)$k, 2), 2, '');
+                if ($hood === '' || !is_array($ll) || count($ll) < 2) {
+                    continue;
+                }
+                $cid = Db::val('SELECT id FROM `City` WHERE name = ?', [$cityName]);
+                if ($cid) {
+                    $coords += Db::exec('UPDATE `Neighborhood` SET latitude = ?, longitude = ? WHERE cityId = ? AND name = ? AND latitude IS NULL', [(float)$ll[0], (float)$ll[1], $cid, $hood]);
+                }
+            }
+        }
         Cgu::ensureSeeded();
-        return ["reglages OK", "$cities villes et $quartiers quartiers ajoutes", 'CGU v' . Cgu::latestVersion()];
+        return ["reglages OK", "$cities villes et $quartiers quartiers ajoutes, $coords positions GPS", 'CGU v' . Cgu::latestVersion()];
     }
 
     /** Cree l'administrateur s'il n'existe pas ; ne touche jamais a un compte existant. */
