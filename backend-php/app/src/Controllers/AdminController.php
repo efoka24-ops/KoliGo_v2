@@ -167,6 +167,59 @@ final class AdminController
         return ['locked' => true];
     }
 
+    // ── Trajets a prix fixe ──────────────────────────────────────────────────
+
+    public static function listFixedRoutes(Ctx $c): array
+    {
+        return ['items' => Db::all('SELECT * FROM `FixedRoute` ORDER BY fromCity, toCity, fromPlace, toPlace'), 'lightKg' => Pricing::config()['fixedLightKg']];
+    }
+
+    private static function fixedRouteData(array $b): array
+    {
+        $city = fn($v) => mb_substr(trim((string)$v), 0, 100);
+        $place = fn($v) => ($t = mb_substr(trim((string)$v), 0, 191)) !== '' ? $t : null;
+        $data = [
+            'fromCity' => $city($b['fromCity'] ?? ''), 'fromPlace' => $place($b['fromPlace'] ?? ''),
+            'toCity' => $city($b['toCity'] ?? ''), 'toPlace' => $place($b['toPlace'] ?? ''),
+            'priceXAF' => $b['priceXAF'] ?? null, 'bothWays' => !empty($b['bothWays']) ? 1 : 0,
+            'isActive' => array_key_exists('isActive', $b) ? (!empty($b['isActive']) ? 1 : 0) : 1,
+            'note' => ($n = mb_substr(trim((string)($b['note'] ?? '')), 0, 255)) !== '' ? $n : null,
+        ];
+        if (mb_strlen($data['fromCity']) < 2 || mb_strlen($data['toCity']) < 2) {
+            throw new HttpError('Indiquez la ville de départ et la ville d\'arrivée');
+        }
+        if (!is_numeric($data['priceXAF']) || (int)$data['priceXAF'] < 100 || (int)$data['priceXAF'] > 2000000) {
+            throw new HttpError('Prix invalide (entre 100 et 2 000 000 F)');
+        }
+        $data['priceXAF'] = (int)$data['priceXAF'];
+        return $data;
+    }
+
+    public static function createFixedRoute(Ctx $c): array
+    {
+        $data = self::fixedRouteData($c->body());
+        $id = Db::id();
+        $now = Db::now();
+        Db::insert('FixedRoute', ['id' => $id] + $data + ['createdAt' => $now, 'updatedAt' => $now]);
+        http_response_code(201);
+        return Db::one('SELECT * FROM `FixedRoute` WHERE id = ?', [$id]);
+    }
+
+    public static function updateFixedRoute(Ctx $c): array
+    {
+        $id = $c->param('id');
+        if (!Db::one('SELECT id FROM `FixedRoute` WHERE id = ?', [$id])) {
+            throw new HttpError('Trajet introuvable', 404);
+        }
+        Db::update('FixedRoute', $id, self::fixedRouteData($c->body()) + ['updatedAt' => Db::now()]);
+        return Db::one('SELECT * FROM `FixedRoute` WHERE id = ?', [$id]);
+    }
+
+    public static function deleteFixedRoute(Ctx $c): array
+    {
+        Db::exec('DELETE FROM `FixedRoute` WHERE id = ?', [$c->param('id')]);
+        return ['ok' => true];
+    }
     /** GET /admin/incidents?status=OPEN|CONFIRMED|CLEARED|EXPIRED|ALL&appeal=1 : incidents de declaration a traiter. */
     public static function listIncidents(Ctx $c): array
     {

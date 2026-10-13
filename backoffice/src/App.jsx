@@ -21,6 +21,7 @@ import Reset      from './modules/Reset.jsx';
 import SiteContent from './modules/SiteContent.jsx';
 import Invoices   from './modules/Invoices.jsx';
 import Pricing    from './modules/Pricing.jsx';
+import FixedRoutes from './modules/FixedRoutes.jsx';
 import Incidents from './modules/Incidents.jsx';
 import Messages from './modules/Messages.jsx';
 import Notifications from './modules/Notifications.jsx';
@@ -89,6 +90,7 @@ export default function App() {
           <Route path="/analytics"   element={<Analytics />} />
           <Route path="/settings"    element={<Settings />} />
           <Route path="/pricing"     element={<Pricing />} />
+          <Route path="/fixed-routes" element={<FixedRoutes />} />
           <Route path="/incidents" element={<Incidents />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/notifications" element={<Notifications />} />

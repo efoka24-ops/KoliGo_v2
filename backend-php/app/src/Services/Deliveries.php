@@ -106,7 +106,9 @@ final class Deliveries
         $route = Distance::route((string)$p['pickupAddress'], $city, (string)$p['dropoffAddress'], isset($p['toCity']) ? (string)$p['toCity'] : null);
         $km = $route['km'];
         $region = Pricing::resolveRegion($city, (string)$p['pickupAddress']);
-        $price = Pricing::quote($region, (float)$km, $size, $type);
+        [$fc, $tc] = Distance::resolveCities((string)$p['pickupAddress'], $city, (string)$p['dropoffAddress'], isset($p['toCity']) ? (string)$p['toCity'] : null);
+        $fixed = FixedRoutes::find($fc, (string)$p['pickupAddress'], $tc, (string)$p['dropoffAddress']);
+        $price = Pricing::quote($region, (float)$km, $size, $type, $fixed);
         // La provenance de la distance est figee avec le prix : le back-office voit si elle a ete mesuree ou estimee.
         $price['distanceSource'] = $route['source'];
         $price['distanceEstimated'] = $route['estimated'];

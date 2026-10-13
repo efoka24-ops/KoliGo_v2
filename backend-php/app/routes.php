@@ -124,6 +124,10 @@ return function (Router $r): void {
         $r->get("$a/stats", [Admin::class, 'stats'], ...$adm);
         $r->get("$a/notifications", [NotifC::class, 'adminHistory'], ...$adm);
         $r->post("$a/notifications", [NotifC::class, 'adminBroadcast'], ...$adm);
+        $r->get("$a/fixed-routes", [Admin::class, 'listFixedRoutes'], ...$adm);
+        $r->post("$a/fixed-routes", [Admin::class, 'createFixedRoute'], ...$adm);
+        $r->patch("$a/fixed-routes/:id", [Admin::class, 'updateFixedRoute'], ...$adm);
+        $r->delete("$a/fixed-routes/:id", [Admin::class, 'deleteFixedRoute'], ...$adm);
         $r->get("$a/incidents", [Admin::class, 'listIncidents'], ...$adm);
         $r->patch("$a/incidents/:id", [Admin::class, 'decideIncident'], ...$adm);
         $r->get("$a/incidents/:id/photo", [Admin::class, 'serveIncidentPhoto'], ...$adm);

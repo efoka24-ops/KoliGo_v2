@@ -345,3 +345,18 @@ CREATE TABLE IF NOT EXISTS `Incident` (
   `appealAt` DATETIME NULL,
   `createdAt` DATETIME NOT NULL
 ) {{OPTS}};
+
+-- Trajets a prix fixe (tarif reel du terrain, ex. Pitoa <-> Garoua), edites au back-office.
+CREATE TABLE IF NOT EXISTS `FixedRoute` (
+  `id` VARCHAR(40) NOT NULL PRIMARY KEY,
+  `fromCity` VARCHAR(100) NOT NULL,
+  `fromPlace` VARCHAR(191) NULL,
+  `toCity` VARCHAR(100) NOT NULL,
+  `toPlace` VARCHAR(191) NULL,
+  `priceXAF` INT NOT NULL,
+  `bothWays` TINYINT(1) NOT NULL DEFAULT 1,
+  `isActive` TINYINT(1) NOT NULL DEFAULT 1,
+  `note` VARCHAR(255) NULL,
+  `createdAt` DATETIME NOT NULL,
+  `updatedAt` DATETIME NOT NULL
+) {{OPTS}};

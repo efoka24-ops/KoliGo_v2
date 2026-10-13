@@ -66,6 +66,7 @@ final class Pricing
         'strike_threshold' => '3',
         'maintenance_mode' => 'false',
         'min_withdrawal_xaf' => '500',
+        'fixed_route_light_kg' => '2',
     ];
 
     private static ?array $cache = null;
@@ -113,6 +114,7 @@ final class Pricing
             'strikeThreshold' => max(1, (int)$get('strike_threshold')),
             'maintenance' => in_array(strtolower((string)$get('maintenance_mode')), ['true', '1', 'on'], true),
             'minWithdrawal' => max(100, (int)$get('min_withdrawal_xaf')),
+            'fixedLightKg' => max(0.0, (float)$get('fixed_route_light_kg')),
         ];
     }
 
@@ -170,7 +172,11 @@ final class Pricing
      *
      * @return array<string,mixed> clefs : finalPrice, commissionXAF, delivererEarning + detail pour la facture
      */
-    public static function quote(?string $region, float $km, string $size, string $type): array
+    /**
+     * @param array|null $fixed trajet fixe (FixedRoutes::find) : son prix remplace « base + km × tarif au km » ;
+     *                          le supplement de poids ne s'applique qu'au-dela du poids leger, et aucun plancher n'est impose.
+     */
+    public static function quote(?string $region, float $km, string $size, string $type, ?array $fixed = null): array
     {
         $cfg = self::config();
         $g = $cfg['gabarits'][$size] ?? null;
@@ -196,23 +202,39 @@ final class Pricing
         }
         $coef = self::coefficient($type);
         $refKg = (float)$g['refKg'];
-        $subtotal = (float)$zone['base'] + $km * (float)$zone['perKm'] + $cfg['weightRate'] * $refKg;
+        $baseXAF = (float)$zone['base'];
+        $perKm = (float)$zone['perKm'];
+        $lightKg = 0.0;
+        $minPrice = $cfg['minPrice'];
+        $zoneName = (string)$zone['name'];
+        if ($fixed !== null) {
+            $baseXAF = (float)$fixed['priceXAF'];
+            $perKm = 0.0;
+            $lightKg = (float)$cfg['fixedLightKg'];
+            $minPrice = 0;
+            $zoneName = 'Trajet fixe';
+            $fallback = false;
+        }
+        $subtotal = $baseXAF + $km * $perKm + $cfg['weightRate'] * max(0.0, $refKg - $lightKg);
         $raw = (int)round($subtotal * $coef);
-        $total = max($cfg['minPrice'], $raw);
+        $total = max($minPrice, $raw);
         $commission = (int)round($total * $cfg['commissionRate']);
         return [
             'version' => 2,
-            'zone' => (string)$zone['name'],
+            'zone' => $zoneName,
             'zoneFallback' => $fallback,
             'region' => $region,
-            'baseXAF' => (int)$zone['base'],
-            'perKmXAF' => (int)$zone['perKm'],
+            'baseXAF' => (int)$baseXAF,
+            'perKmXAF' => (int)$perKm,
+            'lightKg' => $lightKg,
+            'fixedRouteId' => $fixed['id'] ?? null,
+            'fixedPriceXAF' => $fixed !== null ? (int)$fixed['priceXAF'] : null,
             'km' => $km,
             'size' => $size,
             'refWeightKg' => $refKg,
             'weightRateXAF' => $cfg['weightRate'],
             'coefficient' => $coef,
-            'minPriceXAF' => $cfg['minPrice'],
+            'minPriceXAF' => $minPrice,
             'commissionRate' => $cfg['commissionRate'],
             'basePrice' => $raw,
             'multiplier' => $coef,
@@ -237,7 +259,7 @@ final class Pricing
             throw new HttpError('Ce gabarit est sur devis : contactez le support KoliGo.', 400, 'SIZE_ON_QUOTE');
         }
         $refKg = (float)$g['refKg'];
-        $raw = (int)round(((float)$bd['baseXAF'] + (float)$bd['km'] * (float)$bd['perKmXAF'] + (float)$bd['weightRateXAF'] * $refKg) * (float)$bd['coefficient']);
+        $raw = (int)round(((float)$bd['baseXAF'] + (float)$bd['km'] * (float)$bd['perKmXAF'] + (float)$bd['weightRateXAF'] * max(0.0, $refKg - (float)($bd['lightKg'] ?? 0))) * (float)$bd['coefficient']);
         $total = max((int)$bd['minPriceXAF'], $raw);
         $commission = (int)round($total * (float)$bd['commissionRate']);
         return [

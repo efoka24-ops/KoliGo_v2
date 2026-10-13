@@ -62,6 +62,7 @@ export default function Sidebar({ onLogout, user }) {
       <Item to="/incidents" id="security" label="Incidents" />
       <Item to="/messages" id="support" label="Messages" />
       <Item to="/notifications" id="support" label="Notifications" />
+      <Item to="/fixed-routes" id="invoices" label="Trajets fixes" />
       <Item to="/cgu"        id="siteContent" label="CGU" />
       <Item to="/zones"      id="zones"    label="Villes & Quartiers" />
       <Item to="/analytics"  id="analytics" />

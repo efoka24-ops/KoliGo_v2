@@ -77,7 +77,9 @@ final class PublicController
         }
         $route = Distance::route($from, Http::query('fromCity') ?: null, $to, Http::query('toCity') ?: null);
         $region = Pricing::resolveRegion(Http::query('fromCity') ?: null, $from);
-        $q = Pricing::quote($region, $route['km'], $size, $type);
+        [$fc, $tc] = Distance::resolveCities($from, Http::query('fromCity') ?: null, $to, Http::query('toCity') ?: null);
+        $fixed = \Koligo\Services\FixedRoutes::find($fc, $from, $tc, $to);
+        $q = Pricing::quote($region, $route['km'], $size, $type, $fixed);
         return $q + ['cancelFeeXAF' => Pricing::config()['cancelFee'], 'distanceSource' => $route['source'], 'distanceEstimated' => $route['estimated']];
     }
 

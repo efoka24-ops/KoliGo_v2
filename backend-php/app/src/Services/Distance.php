@@ -106,14 +106,7 @@ final class Distance
     {
         $fromPlace = trim($fromPlace);
         $toPlace = trim($toPlace);
-        $fromCity = self::cityOf($fromPlace, $fromCity);
-        if ($toCity !== null && trim($toCity) !== '') {
-            $toCity = trim($toCity);
-        } elseif (isset(self::COORDS[self::norm($toPlace)]) && ($fromCity === null || self::norm($toPlace) !== self::norm($fromCity))) {
-            $toCity = $toPlace; // l'adresse d'arrivee est elle-meme une ville (ancien format : « Douala » -> « Yaounde »)
-        } else {
-            $toCity = $fromCity ?? self::cityOf($toPlace, null);
-        }
+        [$fromCity, $toCity] = self::resolveCities($fromPlace, $fromCity, $toPlace, $toCity);
 
         $a = self::norm((string)$fromCity) . ':' . self::norm($fromPlace);
         $b = self::norm((string)$toCity) . ':' . self::norm($toPlace);
@@ -155,6 +148,25 @@ final class Distance
             return ['km' => max(1.0, $line), 'source' => 'ESTIMATE', 'estimated' => true];
         }
         return ['km' => self::defaultCityKm(), 'source' => 'ESTIMATE', 'estimated' => true];
+    }
+
+    /**
+     * Villes de depart et d'arrivee : celles envoyees, sinon deduites du quartier (si sans ambiguite).
+     * L'arrivee vaut la ville de depart par defaut, sauf si l'adresse d'arrivee est elle-meme une autre ville.
+     *
+     * @return array{0:?string,1:?string}
+     */
+    public static function resolveCities(string $fromPlace, ?string $fromCity, string $toPlace, ?string $toCity): array
+    {
+        $fromCity = self::cityOf(trim($fromPlace), $fromCity);
+        if ($toCity !== null && trim($toCity) !== '') {
+            $toCity = trim($toCity);
+        } elseif (isset(self::COORDS[self::norm($toPlace)]) && ($fromCity === null || self::norm($toPlace) !== self::norm($fromCity))) {
+            $toCity = trim($toPlace); // l'adresse d'arrivee est elle-meme une ville (ancien format : « Douala » -> « Yaounde »)
+        } else {
+            $toCity = $fromCity ?? self::cityOf(trim($toPlace), null);
+        }
+        return [$fromCity, $toCity];
     }
 
     /** @return array{km:float,source:string,estimated:bool} */
