@@ -56,6 +56,12 @@ final class DeliveryController
             $args[] = $_GET['status'];
         }
         $rows = Db::all("SELECT * FROM `Delivery` WHERE $where ORDER BY createdAt DESC LIMIT 20 OFFSET " . (($page - 1) * 20), $args);
+        foreach ($rows as &$r) {
+            if ($r['delivererId'] === $uid && $r['vendorId'] !== $uid) {
+                $r = self::hideCodes($r);
+            }
+        }
+        unset($r);
         $rows = Rel::user($rows, 'vendorId', 'vendor', ['name']);
         return Rel::user($rows, 'delivererId', 'deliverer', ['name', 'phone']);
     }
@@ -81,6 +87,9 @@ final class DeliveryController
         if ($d['vendorId'] !== $uid && $d['delivererId'] !== $uid && $c->user['activeRole'] !== 'ADMIN') {
             // Offre consultee avant acceptation : ni codes, ni jeton de suivi, ni photo.
             unset($d['collectCode'], $d['deliverCode'], $d['clientToken'], $d['photoPath']);
+        }
+        if ($d['delivererId'] === $uid && $d['vendorId'] !== $uid && $c->user['activeRole'] !== 'ADMIN') {
+            $d = self::hideCodes($d);
         }
         $bd = json_decode((string)($d['priceBreakdown'] ?? ''), true);
         $d['priceBreakdown'] = is_array($bd) ? $bd : null;
@@ -171,9 +180,51 @@ final class DeliveryController
         exit;
     }
 
+    /** Le code de reception est donne par l'acheteur au livreur : le livreur ne le voit jamais (ni le code de collecte, devenu inutile). */
+    private static function hideCodes(array $d): array
+    {
+        unset($d['deliverCode'], $d['collectCode'], $d['clientToken']);
+        return $d;
+    }
+
     public static function accept(Ctx $c): array
     {
-        return Deliveries::accept($c->param('id'), $c->user['userId']);
+        return self::hideCodes(Deliveries::accept($c->param('id'), $c->user['userId']));
+    }
+
+    /** POST /deliveries/:id/pickup : le livreur confirme la conformite du colis et le prend en charge (sans code de collecte). */
+    public static function pickup(Ctx $c): array
+    {
+        return self::hideCodes(Deliveries::confirmCollect($c->param('id'), $c->user['userId'], null));
+    }
+
+    /** POST /deliveries/:id/arrive {latitude?, longitude?} */
+    public static function arrive(Ctx $c): array
+    {
+        $lat = $c->input('latitude');
+        $lng = $c->input('longitude');
+        return Deliveries::arrive($c->param('id'), $c->user['userId'], is_numeric($lat) ? (float)$lat : null, is_numeric($lng) ? (float)$lng : null);
+    }
+
+    /** POST /deliveries/:id/charge {code, phone} : code de l'acheteur + son numero Mobile Money -> prelevement. */
+    public static function charge(Ctx $c): array
+    {
+        return Deliveries::chargeRecipient($c->param('id'), $c->user['userId'], (string)$c->input('code', ''), (string)$c->input('phone', ''));
+    }
+
+    /** GET /deliveries/:id/charge-status : etat du paiement lance par le livreur (interroge le fournisseur si besoin). */
+    public static function chargeStatus(Ctx $c): array
+    {
+        $d = Deliveries::find($c->param('id'));
+        if ($d['delivererId'] !== $c->user['userId']) {
+            throw new HttpError('Forbidden', 403);
+        }
+        $p = Db::one('SELECT * FROM `DeliveryPayment` WHERE deliveryId = ? ORDER BY createdAt DESC LIMIT 1', [$d['id']]);
+        if (!$p) {
+            return ['status' => 'none'];
+        }
+        $r = self::paymentState($d, (string)($p['paymentId'] ?: $p['externalRef']));
+        return ['status' => $r['status'], 'deliveryStatus' => Deliveries::find($d['id'])['status'], 'amountXAF' => (int)$p['amountXAF']];
     }
 
     public static function cancel(Ctx $c): array
@@ -183,7 +234,7 @@ final class DeliveryController
 
     public static function confirmCollect(Ctx $c): array
     {
-        return Deliveries::confirmCollect($c->param('id'), $c->user['userId'], (string)$c->input('collectCode', ''));
+        return self::hideCodes(Deliveries::confirmCollect($c->param('id'), $c->user['userId'], (string)$c->input('collectCode', '')));
     }
 
     public static function confirmDeliver(Ctx $c): array
@@ -428,6 +479,12 @@ final class DeliveryController
         }
         $d = self::fromClientToken($token);
 
+        return self::paymentState($d, $tx);
+    }
+
+    /** Etat d'un paiement de livraison (mode test, webhook deja recu, ou interrogation du fournisseur). */
+    private static function paymentState(array $d, string $tx): array
+    {
         if (Payments::mock() && str_starts_with($tx, 'MOCK-')) {
             // Mode test : auto-confirme apres 5 s, comme avant.
             $created = Db::val('SELECT createdAt FROM `DeliveryPayment` WHERE deliveryId = ? ORDER BY createdAt DESC LIMIT 1', [$d['id']]);

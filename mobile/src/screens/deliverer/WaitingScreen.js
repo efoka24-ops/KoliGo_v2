@@ -16,6 +16,7 @@ import RouteLine from '../../components/RouteLine';
 import Icon from '../../components/Icon';
 import LiveMap from '../../components/LiveMap';
 import { KG_QUARTIER_COORDS } from '../../constants/data';
+import CollectPaymentModal, { currentPosition } from '../../components/CollectPaymentModal';
 
 const POLL_MS = 6000;
 
@@ -25,6 +26,7 @@ export default function WaitingScreen({ navigation, route }) {
   const [delivery, setDelivery] = useState(null);
   const [loading, setLoading] = useState(true);
   const pollRef = useRef(null);
+  const [payOpen, setPayOpen] = useState(false);
 
   const fetchDelivery = async (silent = false) => {
     if (!deliveryId || !token) {
@@ -34,7 +36,7 @@ export default function WaitingScreen({ navigation, route }) {
     try {
       const data = await apiFetch(`/deliveries/${deliveryId}`, {}, token);
       setDelivery(normalizeDelivery(data));
-      if (data.status === 'livre' && !silent) {
+      if ((data.status === 'LIVRE' || data.status === 'livre') && !silent) {
         showToast(tr("Livraison confirmee par le client !"));
         navigation.navigate('DelivererApp');
       }
@@ -69,8 +71,14 @@ export default function WaitingScreen({ navigation, route }) {
     navigation.navigate('DeliveryChat', { deliveryId, title: 'Chat destinataire' });
   };
 
-  const handleConfirmDelivery = () => {
-    navigation.navigate('DelivererWaiting', { deliveryId });
+  // Arrivée : la plateforme l'enregistre (avec la position si disponible), puis la fenêtre de paiement s'ouvre.
+  const handleConfirmDelivery = async () => {
+    if (!deliveryId) { navigation.navigate('DelivererWaiting', { deliveryId }); return; }
+    try {
+      const pos = await currentPosition();
+      await apiFetch(`/deliveries/${deliveryId}/arrive`, { method: 'POST', body: JSON.stringify(pos || {}) }, token);
+    } catch { /* l'arrivée n'est pas bloquante */ }
+    setPayOpen(true);
   };
 
   if (loading) {
@@ -169,25 +177,20 @@ export default function WaitingScreen({ navigation, route }) {
           )}
         </KGCard>
 
-        {/* Delivery code reminder */}
-        {d.code && (
-          <KGCard kind="green" padding={14}>
-            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-              <Icon name="shield" size={22} color={colors.greenDark} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 12, color: colors.greenDark, textTransform: 'uppercase', letterSpacing: 0.05 }}>
-                  {tr("Code de livraison (Code B)")}
-                </Text>
-                <Text style={{ fontFamily: `${fonts.mono}-Medium`, fontSize: 28, color: colors.ink, letterSpacing: 8, marginTop: 4 }}>
-                  {d.code.split('').join(' ')}
-                </Text>
-              </View>
+        {/* Un seul code : celui de l'acheteur, que le livreur ne voit jamais */}
+        <KGCard kind="green" padding={14}>
+          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+            <Icon name="shield" size={22} color={colors.greenDark} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 12, color: colors.greenDark, textTransform: 'uppercase', letterSpacing: 0.05 }}>
+                {tr("Code de réception de l'acheteur")}
+              </Text>
+              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: colors.greenDark, marginTop: 4, lineHeight: 18 }}>
+                {tr("L'acheteur te donnera son code et son numéro Mobile Money à ton arrivée : tu les saisiras pour lancer le paiement.")}
+              </Text>
             </View>
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.greenDark, marginTop: 8, lineHeight: 17, opacity: 0.85 }}>
-              {tr("Le destinataire te donnera ce code pour confirmer la remise du colis.")}
-            </Text>
-          </KGCard>
-        )}
+          </View>
+        </KGCard>
 
         {/* Info reminder */}
         <View style={{ backgroundColor: '#FFF8EC', borderRadius: 14, padding: 14, flexDirection: 'row', gap: 10, borderWidth: 1, borderColor: '#F5D0B8' }}>
@@ -206,6 +209,14 @@ export default function WaitingScreen({ navigation, route }) {
         >
           {tr("Je suis arrive chez le client")}
         </KGButton>
+
+        <CollectPaymentModal
+          visible={payOpen}
+          deliveryId={deliveryId}
+          amount={d.price}
+          onClose={() => setPayOpen(false)}
+          onDone={() => { setPayOpen(false); showToast(tr('Livraison payée et confirmée ✓'), 'success'); navigation.navigate('DelivererApp'); }}
+        />
 
         <KGButton kind="ghost" size="md" onPress={() => navigation.goBack()}>
           {tr("Retour")}

@@ -15,6 +15,8 @@ const LABELS = {
   CANCELLED: 'Course annulée',
   REJECTED: 'Colis refusé par le livreur',
   VALUE_FLAGGED: 'Valeur déclarée signalée',
+  ARRIVED: 'Livreur arrivé chez l\'acheteur',
+  PAYMENT_STARTED: 'Paiement lancé',
 };
 
 function when(iso) {

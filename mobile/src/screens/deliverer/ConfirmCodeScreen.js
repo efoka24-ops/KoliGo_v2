@@ -13,158 +13,40 @@ import KGInput from '../../components/KGInput';
 import KenteStripe from '../../components/KenteStripe';
 import Icon from '../../components/Icon';
 
-function DigitBox({ digit, active }) {
-  const filled = digit !== '';
-  return (
-    <View style={{
-      width: 60, height: 72, borderRadius: 16,
-      borderWidth: 2,
-      borderColor: active ? colors.green : filled ? '#C4611A' : colors.ink12,
-      backgroundColor: filled ? '#FEF0E3' : colors.cream,
-      alignItems: 'center', justifyContent: 'center',
-    }}>
-      <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 32, color: '#C4611A' }}>{digit}</Text>
-    </View>
-  );
-}
-
-function NumPad({ onPress, onBack }) {
-  return (
-    <View style={{ gap: 10 }}>
-      {[[1,2,3],[4,5,6],[7,8,9]].map(row => (
-        <View key={row[0]} style={{ flexDirection: 'row', gap: 10 }}>
-          {row.map(n => (
-            <TouchableOpacity
-              key={n}
-              onPress={() => onPress(String(n))}
-              style={{ flex: 1, height: 56, borderRadius: 14, backgroundColor: '#F5F0E8', alignItems: 'center', justifyContent: 'center' }}
-            >
-              <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 24, color: colors.ink }}>{n}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      ))}
-      <View style={{ flexDirection: 'row', gap: 10 }}>
-        <View style={{ flex: 1 }} />
-        <TouchableOpacity
-          onPress={() => onPress('0')}
-          style={{ flex: 1, height: 56, borderRadius: 14, backgroundColor: '#F5F0E8', alignItems: 'center', justifyContent: 'center' }}
-        >
-          <Text style={{ fontFamily: `${fonts.display}-Bold`, fontSize: 24, color: colors.ink }}>0</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={onBack}
-          style={{ flex: 1, height: 56, borderRadius: 14, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}
-        >
-          <Icon name="back" size={22} color={colors.ink} />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-}
-
-function CodeStep({ navigation, route }) {
-  const { token } = useApp();
+// Prise en charge : le colis est conforme, le livreur le confirme (plus de code de collecte : le seul code
+// de la course est celui que l'acheteur donnera au livreur à la livraison).
+function PickupStep({ navigation, route }) {
+  const { api } = useApp();
   const deliveryId = route?.params?.deliveryId;
-  const [code, setCode]       = useState(['', '', '', '']);
   const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState(null);
+  const [error, setError] = useState(null);
 
-  const pressDigit = (digit) => {
-    if (loading) return;
-    setError(null);
-    setCode(prev => {
-      const i = prev.findIndex(x => x === '');
-      if (i === -1) return prev;
-      const next = [...prev];
-      next[i] = digit;
-      if (i === 3) {
-        const finalCode = [...next].join('');
-        setTimeout(() => confirmCollect(finalCode), 80);
-      }
-      return next;
-    });
-  };
-
-  const backspace = () => {
-    if (loading) return;
-    setCode(prev => {
-      const next = [...prev];
-      for (let i = 3; i >= 0; i--) {
-        if (next[i] !== '') { next[i] = ''; break; }
-      }
-      return next;
-    });
-  };
-
-  const confirmCollect = async (finalCode) => {
-    if (!deliveryId) {
-      navigation.navigate('Waiting');
-      return;
-    }
+  const confirm = async () => {
+    if (!deliveryId) { navigation.navigate('Waiting'); return; }
     setLoading(true);
+    setError(null);
     try {
-      await apiFetch(`/deliveries/${deliveryId}/confirm-collect`, {
-        method: 'PATCH',
-        body: JSON.stringify({ collectCode: finalCode }),
-      }, token);
+      await api(`/deliveries/${deliveryId}/pickup`, { method: 'POST' });
       navigation.navigate('Waiting', { deliveryId });
     } catch (e) {
-      setCode(['', '', '', '']);
-      setError(errMsg(e, 'Code invalide, réessaie.'));
+      setError(errMsg(e, tr('Impossible de confirmer la prise en charge.')));
     } finally {
       setLoading(false);
     }
   };
 
-  const filled = code.filter(d => d !== '').length;
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF5E6' }} edges={['top']}>
       <KenteStripe height={4} />
-      <KGTopBar title={tr("Code de collecte")} onBack={() => navigation.goBack()} />
-
-      <View style={{ flex: 1, padding: 24, gap: 0 }}>
-        <View style={{ marginBottom: 28 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <View style={{ backgroundColor: '#FEF0E3', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
-              <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 12, color: '#C4611A', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                {tr("Chez le vendeur")}
-              </Text>
-            </View>
-          </View>
-          <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 26, color: '#0E2116', letterSpacing: -0.5 }}>
-            {tr("Code de collecte")}
-          </Text>
-          <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13.5, color: colors.ink55, marginTop: 6, lineHeight: 20 }}>
-            {tr("Demande le code 4 chiffres au vendeur pour confirmer la prise en charge du colis.")}
-          </Text>
-        </View>
-
-        {/* Code display */}
-        <View style={{ flexDirection: 'row', gap: 12, justifyContent: 'center', marginBottom: 32 }}>
-          {code.map((d, i) => (
-            <DigitBox key={i} digit={d} active={i === filled && filled < 4} />
-          ))}
-        </View>
-
-        {error && (
-          <View style={{ backgroundColor: '#FEF2F2', borderRadius: 12, padding: 14, flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 16 }}>
-            <Icon name="flag" size={16} color="#D8472A" />
-            <Text style={{ flex: 1, fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: '#D8472A' }}>{error}</Text>
-          </View>
-        )}
-
-        {loading ? (
-          <View style={{ alignItems: 'center', paddingVertical: 24 }}>
-            <ActivityIndicator color={colors.green} size="large" />
-            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink55, marginTop: 8 }}>
-              {tr("Vérification…")}
-            </Text>
-          </View>
-        ) : (
-          <NumPad onPress={pressDigit} onBack={backspace} />
-        )}
+      <KGTopBar title={tr('Prise en charge')} onBack={() => navigation.goBack()} />
+      <View style={{ flex: 1, padding: 24, gap: 18, justifyContent: 'center' }}>
+        <Icon name="check" size={40} color={colors.green} />
+        <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 26, color: '#0E2116', letterSpacing: -0.5 }}>{tr('Colis conforme')}</Text>
+        <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink55, lineHeight: 21 }}>
+          {tr("En confirmant, tu prends le colis en charge et le vendeur est prévenu tout de suite. À la livraison, l'acheteur te donnera son code de réception et son numéro Mobile Money.")}
+        </Text>
+        {!!error && <Text style={{ color: '#C00', fontSize: 13.5 }}>{error}</Text>}
+        <KGButton kind="primary" size="lg" icon="check" disabled={loading} onPress={confirm}>{loading ? tr('Envoi…') : tr('Confirmer la prise en charge')}</KGButton>
       </View>
     </SafeAreaView>
   );
@@ -291,7 +173,7 @@ export default function ConfirmCodeScreen({ navigation, route }) {
     : null;
   const secondsLeft = revision?.expiresAt ? Math.max(0, Math.floor((new Date(`${revision.expiresAt.replace(' ', 'T')}Z`).getTime() - now) / 1000)) : 0;
 
-  if (phase === 'code') return <CodeStep navigation={navigation} route={route} />;
+  if (phase === 'code') return <PickupStep navigation={navigation} route={route} />;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF5E6' }} edges={['top']}>
@@ -316,7 +198,7 @@ export default function ConfirmCodeScreen({ navigation, route }) {
             <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 13, color: colors.green }}>Prix : {Money(delivery?.priceXAF)}</Text>
             {photoSource && <Image source={photoSource} style={{ width: '100%', height: 180, borderRadius: 12, backgroundColor: colors.cream, marginTop: 4 }} resizeMode="cover" />}
           </View>
-          <KGButton kind="primary" size="lg" icon="check" onPress={() => setPhase('code')}>{tr("Oui, conforme : saisir le code")}</KGButton>
+          <KGButton kind="primary" size="lg" icon="check" onPress={() => setPhase('code')}>{tr("Oui, conforme : prendre en charge")}</KGButton>
           <KGButton kind="soft" size="lg" icon="flag" onPress={() => setPhase('reason')}>{tr("Non conforme")}</KGButton>
         </ScrollView>
       )}

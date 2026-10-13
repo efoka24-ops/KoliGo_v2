@@ -103,6 +103,10 @@ return function (Router $r): void {
         $r->patch("$d/:id/confirm-deliver", [Del::class, 'confirmDeliver'], $jwt, $role('DELIVERER'));
         $r->post("$d/:id/decline", [Del::class, 'declineOffer'], $jwt, $role('DELIVERER'));
         $r->post("$d/:id/reject", [Del::class, 'reject'], $jwt, $role('DELIVERER'));
+        $r->post("$d/:id/pickup", [Del::class, 'pickup'], $jwt, $role('DELIVERER'));
+        $r->post("$d/:id/arrive", [Del::class, 'arrive'], $jwt, $role('DELIVERER'));
+        $r->post("$d/:id/charge", [Del::class, 'charge'], $jwt, $role('DELIVERER'));
+        $r->get("$d/:id/charge-status", [Del::class, 'chargeStatus'], $jwt, $role('DELIVERER'));
         $r->get("$p/incidents", [Del::class, 'myIncidents'], $jwt);
         $r->post("$p/incidents/:id/appeal", [Del::class, 'appealIncident'], $jwt);
         $r->post("$d/:id/location", [Del::class, 'postLocation'], $jwt, $role('DELIVERER'));

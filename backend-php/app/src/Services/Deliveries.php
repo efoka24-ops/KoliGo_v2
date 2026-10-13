@@ -6,6 +6,7 @@ namespace Koligo\Services;
 use Koligo\Auth;
 use Koligo\Db;
 use Koligo\HttpError;
+use Koligo\RateLimit;
 
 /**
  * Cycle de vie d'une livraison : EN_ATTENTE -> ACCEPTE -> EN_ROUTE -> LIVRE (ANNULE par le vendeur).
@@ -152,11 +153,11 @@ final class Deliveries
         $vendor = Db::one('SELECT * FROM `User` WHERE id = ?', [$vendorId]);
         if ($vendor) {
             if ($vendor['email']) {
-                Notify::email($vendor['email'], '[KoliGo] Livraison créée — code de collecte',
+                Notify::email($vendor['email'], '[KoliGo] Livraison publiée',
                     '<p>Livraison publiée : ' . htmlspecialchars($d['pickupAddress']) . ' → ' . htmlspecialchars($d['dropoffAddress'])
-                    . '</p><p>Prix : ' . Notify::xaf($d['priceXAF']) . ' XAF</p><p>Code de collecte : <b>' . $d['collectCode'] . '</b></p>');
+                    . '</p><p>Prix : ' . Notify::xaf($d['priceXAF']) . ' XAF</p><p>Code de réception à donner à l\'acheteur : <b>' . $d['deliverCode'] . '</b></p>');
             }
-            Notify::whatsapp($vendor['phone'], "✅ KoliGo — Livraison publiée !\n{$d['pickupAddress']} → {$d['dropoffAddress']}\nPrix : " . Notify::xaf($d['priceXAF']) . " XAF\nCode collecte (pour livreur) : *{$d['collectCode']}*");
+            Notify::whatsapp($vendor['phone'], "✅ KoliGo — Livraison publiée !\n{$d['pickupAddress']} → {$d['dropoffAddress']}\nPrix : " . Notify::xaf($d['priceXAF']) . " XAF\nCode de réception (à donner à l'acheteur) : *{$d['deliverCode']}*");
             if ($d['recipientPhone']) {
                 Notify::whatsapp($d['recipientPhone'], "📦 KoliGo — Un colis arrive pour vous !\nDe : " . ($d['shopName'] ?? $d['pickupAddress']) . "\nVotre code de réception : *{$d['deliverCode']}*\nGardez ce code pour confirmer la livraison et payer.");
             }
@@ -539,7 +540,8 @@ final class Deliveries
 
     // ── Collecte, livraison ──────────────────────────────────────────────────
 
-    public static function confirmCollect(string $id, string $delivererId, string $code): array
+    /** $code = null : flux a un seul code, la conformite confirmee par le livreur suffit (pas de code de collecte). */
+    public static function confirmCollect(string $id, string $delivererId, ?string $code): array
     {
         $d = self::find($id);
         if ($d['delivererId'] !== $delivererId) {
@@ -552,15 +554,73 @@ final class Deliveries
         if ($d['status'] !== 'ACCEPTE') {
             throw new HttpError('Wrong state');
         }
-        if (!hash_equals((string)$d['collectCode'], $code)) {
+        if ($code !== null && !hash_equals((string)$d['collectCode'], $code)) {
             throw new HttpError('Wrong collect code');
         }
         Db::exec("UPDATE `Delivery` SET status = 'EN_ROUTE', updatedAt = ? WHERE id = ? AND status = 'ACCEPTE'", [Db::now(), $id]);
-        self::event($id, 'COLLECTED', $delivererId);
+        self::event($id, 'COLLECTED', $delivererId, ['mode' => $code === null ? 'CONFORME' : 'CODE']);
         Notifier::send((string)$d['vendorId'], 'DELIVERY_PICKED_UP', 'Colis collecté', 'Le livreur a récupéré votre colis et est en route vers le destinataire.', ['deliveryId' => $id]);
         return self::find($id);
     }
 
+    /**
+     * Le livreur signale son arrivee chez le destinataire. La position est facultative et n'est jamais bloquante
+     * (les quartiers sont localises approximativement) : elle sert de preuve en cas de litige.
+     */
+    public static function arrive(string $id, string $delivererId, ?float $lat, ?float $lng): array
+    {
+        $d = self::find($id);
+        if ($d['delivererId'] !== $delivererId) {
+            throw new HttpError('Forbidden', 403);
+        }
+        if ($d['status'] !== 'EN_ROUTE') {
+            throw new HttpError('Le colis doit d\'abord être pris en charge.', 409, 'WRONG_STATE');
+        }
+        $data = [];
+        if ($lat !== null && $lng !== null && abs($lat) <= 90 && abs($lng) <= 180) {
+            $data = ['lat' => round($lat, 5), 'lng' => round($lng, 5)];
+        }
+        // Une arrivee par tranche de 10 minutes : on ne noie pas l'historique si le livreur rappuie.
+        $recent = Db::one("SELECT id FROM `DeliveryEvent` WHERE deliveryId = ? AND type = 'ARRIVED' AND createdAt > ?", [$id, gmdate('Y-m-d H:i:s', time() - 600)]);
+        if (!$recent) {
+            self::event($id, 'ARRIVED', $delivererId, $data);
+            if ($d['recipientPhone']) {
+                Notify::whatsapp($d['recipientPhone'], "🛵 KoliGo — Votre livreur est arrivé !\nDonnez-lui votre code de réception et votre numéro Mobile Money pour régler la livraison.");
+            }
+        }
+        return ['ok' => true, 'amountXAF' => (int)$d['priceXAF']];
+    }
+
+    /**
+     * Flux a un seul code : a l'arrivee, le livreur saisit le code que lui donne l'acheteur et le numero Mobile Money
+     * de l'acheteur. Le code est verifie, puis le prelevement est lance ; la livraison est cloturee et le livreur
+     * credite par le webhook de confirmation (voir Payments), comme pour un paiement fait depuis la page de suivi.
+     */
+    public static function chargeRecipient(string $id, string $delivererId, string $code, string $phone): array
+    {
+        $d = self::find($id);
+        if ($d['delivererId'] !== $delivererId) {
+            throw new HttpError('Forbidden', 403);
+        }
+        if ($d['status'] !== 'EN_ROUTE') {
+            throw new HttpError('La livraison ne peut pas être payée dans cet état.', 409, 'WRONG_STATE');
+        }
+        // Les essais (y compris les codes faux) sont comptes : le code n'a que 4 chiffres.
+        RateLimit::hit('charge:' . $id, 8, 600);
+        if (!hash_equals((string)$d['deliverCode'], trim($code))) {
+            throw new HttpError('Code de réception incorrect', 400, 'CODE_INVALID');
+        }
+        $digits = preg_replace('/\D/', '', $phone) ?? '';
+        if (str_starts_with($digits, '237') && strlen($digits) === 12) {
+            $digits = substr($digits, 3);
+        }
+        if (!preg_match('/^6\d{8}$/', $digits)) {
+            throw new HttpError('Numéro Mobile Money invalide (format : 6XXXXXXXX)', 400, 'PHONE_INVALID');
+        }
+        $out = Payments::startDeliveryPayment($d, $digits);
+        self::event($id, 'PAYMENT_STARTED', $delivererId, ['phone' => substr($digits, 0, 3) . '****' . substr($digits, -2), 'amountXAF' => (int)$d['priceXAF']]);
+        return $out;
+    }
     public static function confirmDeliver(string $id, string $delivererId, string $code, ?string $momoRef): array
     {
         $d = self::find($id);

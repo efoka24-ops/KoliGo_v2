@@ -290,7 +290,7 @@ export default function VendorCodesScreen({ navigation, route }) {
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: fonts.display + '-Bold', fontSize: 15, color: '#1D4ED8' }}>{tr("Livreur en route !")}</Text>
                 <Text style={{ fontFamily: fonts.ui + '-Regular', fontSize: 12.5, color: '#3B82F6', marginTop: 3, lineHeight: 18 }}>
-                  {tr("Il arrive a ta boutique. Prepare le code collecte a lui montrer.")}
+                  {tr("Il arrive a ta boutique. Prepare le colis : il va le verifier.")}
                 </Text>
               </View>
             </View>
@@ -390,35 +390,17 @@ export default function VendorCodesScreen({ navigation, route }) {
 
               {!loadingTrust && !trustDoc && (
                 <Text style={{ fontFamily: fonts.ui + '-Regular', fontSize: 12.5, color: colors.ink55, lineHeight: 18 }}>
-                  {isEn ? 'The invoice will appear here once the pickup code is validated.' : 'La facture apparaitra ici des que le code de collecte est valide.'}
+                  {isEn ? 'The invoice will appear here once the pickup code is validated.' : 'La facture apparaitra ici des que le livreur a pris le colis.'}
                 </Text>
               )}
             </View>
           </View>
         )}
 
-        {/* Code A — Collecte */}
-        <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 20, borderLeftWidth: 4, borderLeftColor: colors.orange }}>
-          <Text style={{ fontFamily: fonts.ui + '-SemiBold', fontSize: 11, color: colors.orange, letterSpacing: 0.06, textTransform: 'uppercase' }}>
-            {isEn ? 'A · Pickup code — show it to the deliverer' : 'A · Code de collecte — a montrer au livreur'}
-          </Text>
-          <Text style={{ fontFamily: fonts.display + '-Bold', fontSize: 13.5, color: colors.ink, marginTop: 4 }}>
-            {tr("Le livreur saisit ce code en arrivant chez toi")}
-          </Text>
-          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 16 }}>
-            {codeCollect.split('').map((d, i) => (
-              <CodeBox key={i} digit={d} color={colors.orange} bg={colors.orangeLight} />
-            ))}
-          </View>
-          <Text style={{ fontFamily: fonts.ui + '-Regular', fontSize: 12, color: colors.ink55, marginTop: 12, lineHeight: 18 }}>
-            KoliGo libere le paiement de la marchandise vers ton compte MoMo et genere la facture de confiance.
-          </Text>
-        </View>
-
         {/* Code B + Client share section */}
         <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 20, borderLeftWidth: 4, borderLeftColor: colors.green }}>
           <Text style={{ fontFamily: fonts.ui + '-SemiBold', fontSize: 11, color: colors.green, letterSpacing: 0.06, textTransform: 'uppercase' }}>
-            {isEn ? 'B · Link + delivery code — share with the client' : 'B · Lien + code de reception — a partager avec le client'}
+            {isEn ? 'Delivery code — give it to the buyer (the deliverer will ask for it)' : 'Code de reception — a donner a l\'acheteur (le livreur le lui demandera)'}
           </Text>
           <Text style={{ fontFamily: fonts.display + '-Bold', fontSize: 13.5, color: colors.ink, marginTop: 4 }}>
             {tr("Le client confirme la reception avec ce code")}
@@ -472,8 +454,8 @@ export default function VendorCodesScreen({ navigation, route }) {
             <Icon name="shield" size={18} color={colors.ink70} />
             <Text style={{ flex: 1, fontFamily: fonts.ui + '-Regular', fontSize: 12, color: colors.ink70, lineHeight: 18 }}>
               {isEn
-                ? 'Never share the pickup code (A) with the client. Share only the delivery code (B) and the tracking link.'
-                : 'Ne partage jamais le code de collecte (A) avec le client. Partage uniquement le code de reception (B) et le lien de suivi.'}
+                ? 'The buyer gives this code to the deliverer on arrival, with their Mobile Money number. Never give it to the deliverer yourself.'
+                : 'L\'acheteur donne ce code au livreur a son arrivee, avec son numero Mobile Money. Ne le donne jamais toi-meme au livreur.'}
             </Text>
           </View>
         </KGCard>
