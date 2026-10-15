@@ -81,6 +81,11 @@ final class AuthController
 
     public static function getProfile(Ctx $c): array
     {
+        // Pas de cron garanti sur l'hebergement : une verification KYC restee en file est reprise ici (requete frequente de l'application).
+        try {
+            \Koligo\Services\KycChecks::processDue(1);
+        } catch (\Throwable) {
+        }
         return self::profileOf(Accounts::mustUser($c->user['userId']));
     }
 
@@ -265,6 +270,15 @@ final class AuthController
             Db::insert('KycDocument', ['id' => Db::id(), 'userId' => $uid, 'type' => $d['type'], 'role' => $role, 'filePath' => $d['filePath'], 'createdAt' => Db::now()]);
         }
         Kyc::set($uid, 'PENDING');
+        // Verification automatique en arriere-plan : lancee APRES l'envoi de la reponse (le client n'attend pas l'analyse des photos).
+        if (\Koligo\Services\KycChecks::enqueue($uid) !== null) {
+            register_shutdown_function(static function (): void {
+                if (function_exists('fastcgi_finish_request')) {
+                    @fastcgi_finish_request();
+                }
+                \Koligo\Services\KycChecks::processDue(1);
+            });
+        }
         return ['status' => 'PENDING'];
     }
 

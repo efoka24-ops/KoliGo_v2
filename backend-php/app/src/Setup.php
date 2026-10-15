@@ -13,6 +13,7 @@ final class Setup
     private const INDEXES = [
         'idx_otp_phone' => ['OtpCode', 'phone'],
         'idx_notif_user' => ['Notification', 'userId'],
+        'idx_kyccheck_user' => ['KycCheck', 'userId'],
         'idx_annonce_status' => ['Annonce', 'status'],
         'idx_annonce_vendor' => ['Annonce', 'vendorId'],
         'idx_annonce_photo' => ['AnnoncePhoto', 'adId'],
@@ -45,6 +46,8 @@ final class Setup
         ['Delivery', 'handlingNote', 'VARCHAR(255) NULL'],
         ['User', 'suspendedAt', 'DATETIME NULL'],
         ['User', 'suspendReason', 'VARCHAR(255) NULL'],
+        ['KycDocument', 'sha256', 'VARCHAR(64) NULL'],
+        ['KycDocument', 'ahash', 'VARCHAR(16) NULL'],
         ['Message', 'flagged', 'INT NOT NULL DEFAULT 0'],
         ['Message', 'flagReason', 'VARCHAR(160) NULL'],
         ['User', 'adminPinSetAt', 'DATETIME NULL'],
@@ -53,7 +56,7 @@ final class Setup
     ];
 
     /** A incrementer quand le schema ou les reglages de reference changent : declenche une migration au prochain appel. */
-    public const SCHEMA_VERSION = 17;
+    public const SCHEMA_VERSION = 18;
 
     /**
      * Migration automatique et rejouable : evite d'avoir a relancer _setup.php (dont le jeton est supprime apres

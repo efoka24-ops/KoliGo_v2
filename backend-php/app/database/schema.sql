@@ -432,3 +432,23 @@ CREATE TABLE IF NOT EXISTS `AnnonceReport` (
   `reason` VARCHAR(300) NOT NULL,
   `createdAt` DATETIME NOT NULL
 ) {{OPTS}};
+
+-- Verifications automatiques des dossiers KYC (historique consultable et relancable par l'administrateur).
+CREATE TABLE IF NOT EXISTS `KycCheck` (
+  `id` VARCHAR(40) NOT NULL PRIMARY KEY,
+  `userId` VARCHAR(40) NOT NULL,
+  `status` VARCHAR(10) NOT NULL DEFAULT 'QUEUED',
+  `decision` VARCHAR(10) NULL,
+  `mode` VARCHAR(10) NOT NULL DEFAULT 'AUTO',
+  `applied` TINYINT(1) NOT NULL DEFAULT 0,
+  `score` INT NULL,
+  `findings` MEDIUMTEXT NULL,
+  `reason` VARCHAR(600) NULL,
+  `docIds` TEXT NULL,
+  `gd` TINYINT(1) NOT NULL DEFAULT 0,
+  `error` VARCHAR(255) NULL,
+  `triggeredBy` VARCHAR(40) NOT NULL DEFAULT 'SYSTEM',
+  `createdAt` DATETIME NOT NULL,
+  `startedAt` DATETIME NULL,
+  `finishedAt` DATETIME NULL
+) {{OPTS}};

@@ -22,6 +22,7 @@ import SiteContent from './modules/SiteContent.jsx';
 import Invoices   from './modules/Invoices.jsx';
 import Pricing    from './modules/Pricing.jsx';
 import FixedRoutes from './modules/FixedRoutes.jsx';
+import KycChecks from './modules/KycChecks.jsx';
 import Ads from './modules/Ads.jsx';
 import Incidents from './modules/Incidents.jsx';
 import Messages from './modules/Messages.jsx';
@@ -92,6 +93,7 @@ export default function App() {
           <Route path="/settings"    element={<Settings />} />
           <Route path="/pricing"     element={<Pricing />} />
           <Route path="/fixed-routes" element={<FixedRoutes />} />
+          <Route path="/kyc-checks" element={<KycChecks />} />
           <Route path="/ads" element={<Ads />} />
           <Route path="/incidents" element={<Incidents />} />
           <Route path="/messages" element={<Messages />} />

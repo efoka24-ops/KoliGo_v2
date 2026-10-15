@@ -14,6 +14,7 @@ use Koligo\Services\Cgu;
 use Koligo\Services\Incidents;
 use Koligo\Services\Invoices;
 use Koligo\Services\Kyc;
+use Koligo\Services\KycChecks;
 use Koligo\Services\Notifier;
 use Koligo\Services\Payments;
 use Koligo\Services\Pricing;
@@ -114,7 +115,8 @@ final class AdminController
     {
         $u = Accounts::mustUser($c->param('id'));
         unset($u['pinHash']);
-        $u['kycDocuments'] = Db::all('SELECT * FROM `KycDocument` WHERE userId = ?', [$u['id']]);
+        $u['kycDocuments'] = Db::all('SELECT id, userId, type, role, createdAt FROM `KycDocument` WHERE userId = ?', [$u['id']]);
+        $u['kycChecks'] = KycChecks::forUser($u['id'], 5);
         $u['wallet'] = Db::one('SELECT * FROM `Wallet` WHERE userId = ?', [$u['id']]);
         return $u;
     }
@@ -219,6 +221,30 @@ final class AdminController
     {
         Db::exec('DELETE FROM `FixedRoute` WHERE id = ?', [$c->param('id')]);
         return ['ok' => true];
+    }
+    // ── Verification automatique du KYC ──────────────────────────────────────
+
+    /** GET /admin/kyc-checks?userId=&decision=APPROVE|REJECT|REVIEW : historique des verifications du systeme. */
+    public static function kycChecks(Ctx $c): array
+    {
+        try {
+            KycChecks::processDue(2);
+        } catch (\Throwable) {
+        }
+        [$take, $skip] = self::page(25);
+        return KycChecks::history($_GET, $take, $skip);
+    }
+
+    /** POST /admin/kyc-checks/:userId/rerun : relance la verification d'un dossier (executee tout de suite). */
+    public static function kycRerun(Ctx $c): array
+    {
+        return KycChecks::rerun($c->param('userId'), $c->user['userId']);
+    }
+
+    /** POST /admin/kyc-checks/:userId/reopen : remet un dossier valide ou refuse en attente puis le reverifie. */
+    public static function kycReopen(Ctx $c): array
+    {
+        return KycChecks::reopen($c->param('userId'), $c->user['userId']);
     }
     /** GET /admin/incidents?status=OPEN|CONFIRMED|CLEARED|EXPIRED|ALL&appeal=1 : incidents de declaration a traiter. */
     public static function listIncidents(Ctx $c): array
