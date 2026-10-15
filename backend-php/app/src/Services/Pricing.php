@@ -67,6 +67,7 @@ final class Pricing
         'maintenance_mode' => 'false',
         'min_withdrawal_xaf' => '500',
         'fixed_route_light_kg' => '2',
+        'offer_min_xaf' => '500',
     ];
 
     private static ?array $cache = null;
@@ -115,6 +116,7 @@ final class Pricing
             'maintenance' => in_array(strtolower((string)$get('maintenance_mode')), ['true', '1', 'on'], true),
             'minWithdrawal' => max(100, (int)$get('min_withdrawal_xaf')),
             'fixedLightKg' => max(0.0, (float)$get('fixed_route_light_kg')),
+            'offerMin' => max(100, (int)$get('offer_min_xaf')),
         ];
     }
 

@@ -18,6 +18,7 @@ const EVENT_LABELS = {
   COLLECTED: 'Colis collecté', DELIVERED: 'Colis livré', CANCELLED: 'Course annulée',
   REJECTED: 'Colis refusé par le livreur', VALUE_FLAGGED: 'Valeur déclarée signalée',
   ARRIVED: 'Livreur arrivé chez l\'acheteur', PAYMENT_STARTED: 'Paiement lancé',
+  PRICE_REQUESTED: 'Nouveau prix demandé', PRICE_ACCEPTED: 'Nouveau prix accepté', PRICE_REFUSED: 'Nouveau prix refusé', PRICE_EXPIRED: 'Demande de prix expirée',
 };
 const SOURCE_LABELS = { OSRM: 'mesurée par la route', GOOGLE: 'mesurée (Google)', TABLE: 'table des trajets entre villes', SAME: 'même quartier', ESTIMATE: 'ESTIMÉE (non mesurée)', CACHE: 'mesurée' };
 const utc = (iso) => new Date(String(iso).replace(' ', 'T').replace(/Z?$/, 'Z')).toLocaleString('fr-FR');
@@ -82,6 +83,7 @@ export default function DeliveryDrawer({ delivery, onClose }) {
                       {d.distanceKm != null ? `${d.distanceKm} km` : '—'}{bd?.distanceSource ? ` · ${SOURCE_LABELS[bd.distanceSource] || bd.distanceSource}` : ''}
                     </div>
                   </div>
+                  {bd?.offers ? <div style={{ gridColumn:'1 / -1' }}><div className="k">Prix proposés par le vendeur</div><div className="v" style={{ fontSize:12 }}>{bd.offers.map((o, i) => <span key={i} style={{ fontWeight: i === bd.level ? 800 : 400, marginRight: 10 }}>{i + 1}) {xaf(o)}{i === bd.level ? ' ← courant' : ''}</span>)}{bd.level === 3 ? <span style={{ fontWeight: 800 }}> · montant négocié {xaf(d.priceXAF)}</span> : null}{bd.estimateXAF ? <span className="muted"> · estimation {xaf(bd.estimateXAF)}</span> : null}</div></div> : null}
                   {d.handlingNote ? <div style={{ gridColumn:'1 / -1' }}><div className="k">Consignes du vendeur</div><div className="v" style={{ fontSize:12 }}>{d.handlingNote}</div></div> : null}
                 </div>
               </div>

@@ -17,6 +17,10 @@ const LABELS = {
   VALUE_FLAGGED: 'Valeur déclarée signalée',
   ARRIVED: 'Livreur arrivé chez l\'acheteur',
   PAYMENT_STARTED: 'Paiement lancé',
+  PRICE_REQUESTED: 'Nouveau prix demandé',
+  PRICE_ACCEPTED: 'Nouveau prix accepté',
+  PRICE_REFUSED: 'Nouveau prix refusé',
+  PRICE_EXPIRED: 'Demande de prix expirée',
 };
 
 function when(iso) {

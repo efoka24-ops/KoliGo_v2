@@ -701,7 +701,7 @@ final class AdminController
             'zones' => $cfg['zones'], 'gabarits' => $cfg['gabarits'], 'defaultZone' => $cfg['defaultZone'],
             'minPriceXAF' => $cfg['minPrice'], 'weightRateXAF' => $cfg['weightRate'], 'commissionRate' => $cfg['commissionRate'],
             'cancelFeeXAF' => $cfg['cancelFee'], 'revisionTimeoutMin' => $cfg['revisionTimeoutMin'], 'cancelGraceMin' => $cfg['cancelGraceMin'],
-            'strikeWindowDays' => $cfg['strikeWindowDays'], 'strikeThreshold' => $cfg['strikeThreshold'],
+            'strikeWindowDays' => $cfg['strikeWindowDays'], 'strikeThreshold' => $cfg['strikeThreshold'], 'offerMinXAF' => $cfg['offerMin'],
             'regions' => array_column(Db::all('SELECT DISTINCT region FROM `City` ORDER BY region ASC'), 'region'),
             'vehicles' => array_keys(Pricing::VEHICLES),
         ];
@@ -713,8 +713,8 @@ final class AdminController
         $ints = [
             'minPriceXAF' => ['pricing_min_xaf', 0, 100000], 'weightRateXAF' => ['weight_surcharge_xaf', 0, 10000],
             'cancelFeeXAF' => ['cancel_fee_xaf', 0, 50000], 'revisionTimeoutMin' => ['revision_timeout_min', 1, 120],
-            'cancelGraceMin' => ['cancel_grace_min', 0, 60], 'strikeWindowDays' => ['strike_window_days', 1, 365],
-            'strikeThreshold' => ['strike_threshold', 1, 100],
+            'cancelGraceMin' => ['cancel_grace_min', 0, 60], 'strikeWindowDays' => ['strike_window_days', 0, 3650],
+            'strikeThreshold' => ['strike_threshold', 1, 100], 'offerMinXAF' => ['offer_min_xaf', 100, 100000],
         ];
         $writes = [];
         foreach ($ints as $field => [$key, $min, $max]) {

@@ -62,6 +62,7 @@ const Money = (n) => `${Number(n || 0).toLocaleString('fr-FR')} XAF`;
 const REASONS = [
   { id: 'POIDS', title: 'Poids différent', sub: 'Le colis est plus lourd que déclaré', next: 'correct' },
   { id: 'TAILLE', title: 'Taille différente', sub: 'Les dimensions dépassent le gabarit déclaré', next: 'correct' },
+  { id: 'AUTRE', title: 'Autre raison', sub: 'Route difficile, détour, attente…', next: 'correct', offersOnly: true },
   { id: 'VALEUR', title: 'Valeur incohérente', sub: 'La valeur déclarée ne paraît pas crédible', next: 'flag' },
   { id: 'INTERDIT', title: 'Contenu interdit', sub: 'Drogue, armes, faux documents…', next: 'flag', danger: true },
   { id: 'DANGEREUX', title: 'Contenu dangereux', sub: 'Risque pour toi ou pour les autres', next: 'flag', danger: true },
@@ -82,6 +83,7 @@ export default function ConfirmCodeScreen({ navigation, route }) {
   const [kg, setKg] = useState('');
   const [comment, setComment] = useState('');
   const [flagKind, setFlagKind] = useState(null);
+  const [minPrice, setMinPrice] = useState('');
 
   const gabarits = pricing?.gabarits || {};
   const fee = pricing?.cancelFeeXAF ?? 500;
@@ -136,6 +138,25 @@ export default function ConfirmCodeScreen({ navigation, route }) {
     setBusy(true);
     try {
       const rev = await api(`/deliveries/${deliveryId}/revision`, { method: 'POST', body: JSON.stringify({ size: newSize, photo: photo.data, reason, comment: comment.trim() || undefined, measuredWeightKg: parseFloat(String(kg).replace(',', '.')) || undefined }) });
+      setRevision(rev);
+      setPhase('wait');
+    } catch (e) {
+      showToast(errMsg(e), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Course à prix proposés : le livreur indique le prix minimum qu'il demande ; le serveur choisit le niveau suivant qui le couvre.
+  const isOffers = delivery?.priceBreakdown?.mode === 'OFFERS';
+  const submitPriceRequest = async () => {
+    const asked = parseInt(minPrice, 10);
+    if (!asked || asked <= (delivery?.priceXAF || 0)) { showToast(tr('Indique un montant supérieur au prix actuel.'), 'error'); return; }
+    if (reason === 'AUTRE' && comment.trim().length < 5) { showToast(tr('Explique pourquoi (5 caractères minimum).'), 'error'); return; }
+    if (reason !== 'AUTRE' && !photo) { showToast(tr('La photo du colis est obligatoire.'), 'error'); return; }
+    setBusy(true);
+    try {
+      const rev = await api(`/deliveries/${deliveryId}/revision`, { method: 'POST', body: JSON.stringify({ reason, comment: comment.trim() || undefined, minPriceXAF: asked, photo: photo?.data }) });
       setRevision(rev);
       setPhase('wait');
     } catch (e) {
@@ -206,15 +227,35 @@ export default function ConfirmCodeScreen({ navigation, route }) {
       {phase === 'reason' && (
         <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
           <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: '#0E2116' }}>{tr("Qu'est-ce qui ne va pas ?")}</Text>
-          {REASONS.map((r) => (
+          {REASONS.filter((r) => !r.offersOnly || isOffers).map((r) => (
             <TouchableOpacity key={r.id} activeOpacity={0.85}
-              onPress={() => { setComment(''); setKg(''); setPhoto(null); if (r.next === 'correct') { setReason(r.id); setNewSize(null); setPhase('correct'); } else { setFlagKind(r.id); setPhase('flag'); } }}
+              onPress={() => { setComment(''); setKg(''); setPhoto(null); if (r.next === 'correct') { setReason(r.id); setNewSize(null); setMinPrice(''); setPhase(isOffers ? 'price' : 'correct'); } else { setFlagKind(r.id); setPhase('flag'); } }}
               style={{ padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: r.danger ? '#E6B8A8' : colors.ink12, backgroundColor: r.danger ? '#FEF0E3' : '#fff' }}>
               <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 15, color: r.danger ? '#B42318' : colors.ink }}>{tr(r.title)}</Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: colors.ink55, marginTop: 2 }}>{tr(r.sub)}</Text>
             </TouchableOpacity>
           ))}
           <KGButton kind="ghost" size="md" onPress={() => setPhase('check')}>{tr("Retour")}</KGButton>
+        </ScrollView>
+      )}
+
+      {phase === 'price' && (
+        <ScrollView contentContainerStyle={{ padding: 20, gap: 14 }} keyboardShouldPersistTaps="handled">
+          <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: '#0E2116' }}>{tr('Demander un nouveau prix')}</Text>
+          <View style={{ backgroundColor: '#fff', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#E8DCC8' }}>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: colors.ink55 }}>{tr('Prix actuel')}</Text>
+            <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 24, color: colors.ink }}>{Money(delivery?.priceXAF)}</Text>
+          </View>
+          <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 13.5, color: colors.ink55, lineHeight: 20 }}>
+            {tr("Indique le prix minimum que tu demandes pour prendre ce colis. KoliGo propose au vendeur le prochain prix qui le couvre ; il accepte ou annule la course.")}
+          </Text>
+          <KGInput label={tr('Prix minimum demandé (F)')} value={minPrice} onChangeText={(v) => setMinPrice(v.replace(/\D/g, ''))} keyboardType="numeric" placeholder="ex : 1500" />
+          {reason === 'POIDS' && <KGInput label={tr("Poids constaté en kg (facultatif)")} value={kg} onChangeText={setKg} keyboardType="numeric" placeholder="ex : 12" />}
+          <KGInput label={reason === 'AUTRE' ? tr('Explique pourquoi (obligatoire)') : tr('Commentaire (facultatif)')} value={comment} onChangeText={setComment} placeholder={tr('Ce que tu as constaté')} />
+          {photo && <Image source={{ uri: photo.uri }} style={{ width: '100%', height: 160, borderRadius: 14, backgroundColor: colors.cream }} resizeMode="cover" />}
+          <KGButton kind={photo ? 'soft' : 'primary'} size="md" icon="camera" onPress={takePhoto}>{photo ? tr('Reprendre la photo') : (reason === 'AUTRE' ? tr('Ajouter une photo (facultatif)') : tr('Photographier le colis (obligatoire)'))}</KGButton>
+          <KGButton kind="primary" size="lg" icon="send" disabled={busy || !minPrice} onPress={submitPriceRequest}>{busy ? tr('Envoi…') : tr('Envoyer la demande au vendeur')}</KGButton>
+          <KGButton kind="ghost" size="md" onPress={() => setPhase('reason')}>{tr("Retour")}</KGButton>
         </ScrollView>
       )}
 
@@ -280,7 +321,7 @@ export default function ConfirmCodeScreen({ navigation, route }) {
           <ActivityIndicator color={colors.green} size="large" />
           <Text style={{ fontFamily: `${fonts.display}-ExtraBold`, fontSize: 22, color: '#0E2116', textAlign: 'center' }}>{tr("En attente du vendeur")}</Text>
           <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink55, textAlign: 'center', lineHeight: 21 }}>
-            Gabarit {revision.declaredSize} → {revision.proposedSize}{'\n'}
+            {revision.declaredSize ? `Gabarit ${revision.declaredSize} → ${revision.proposedSize}\n` : ''}
             Prix : {Money(revision.oldPriceXAF)} → {Money(revision.newPriceXAF)}
           </Text>
           <Text style={{ fontFamily: `${fonts.mono}-Medium`, fontSize: 28, color: secondsLeft < 60 ? '#D8472A' : colors.ink }}>

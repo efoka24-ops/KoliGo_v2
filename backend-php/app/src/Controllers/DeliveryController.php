@@ -27,6 +27,7 @@ final class DeliveryController
             'category' => $b['category'] ?? null,
             'photo' => $b['photo'] ?? null,
             'fromCity' => $b['fromCity'] ?? null,
+            'offers' => $b['offers'] ?? null,
             'toCity' => $b['toCity'] ?? null,
             'declaredValueXAF' => $b['declaredValue'] ?? $b['declaredValueXAF'] ?? null,
             'fragile' => $b['fragile'] ?? false,
@@ -75,6 +76,7 @@ final class DeliveryController
             isset($_GET['city']) && is_string($_GET['city']) ? $_GET['city'] : null,
             isset($_GET['quartier']) && is_string($_GET['quartier']) ? $_GET['quartier'] : null
         );
+        $rows = array_map([self::class, 'hideCodes'], $rows);
         return Rel::user($rows, 'vendorId', 'vendor', ['name']);
     }
 
@@ -87,6 +89,7 @@ final class DeliveryController
         if ($d['vendorId'] !== $uid && $d['delivererId'] !== $uid && $c->user['activeRole'] !== 'ADMIN') {
             // Offre consultee avant acceptation : ni codes, ni jeton de suivi, ni photo.
             unset($d['collectCode'], $d['deliverCode'], $d['clientToken'], $d['photoPath']);
+            $d = self::hideCodes($d);
         }
         if ($d['delivererId'] === $uid && $d['vendorId'] !== $uid && $c->user['activeRole'] !== 'ADMIN') {
             $d = self::hideCodes($d);
@@ -121,7 +124,8 @@ final class DeliveryController
         $kg = $c->input('measuredWeightKg');
         return self::revisionView(Deliveries::proposeRevision(
             $c->param('id'), $c->user['userId'], (string)$c->input('size', ''), (string)$c->input('photo', ''),
-            (string)$c->input('reason', 'TAILLE'), (string)$c->input('comment', ''), is_numeric($kg) ? (float)$kg : null
+            (string)$c->input('reason', 'TAILLE'), (string)$c->input('comment', ''), is_numeric($kg) ? (float)$kg : null,
+            is_numeric($c->input('minPriceXAF')) ? (int)$c->input('minPriceXAF') : null
         ));
     }
 
@@ -166,7 +170,8 @@ final class DeliveryController
             throw new HttpError('Accès refusé', 403);
         }
         $path = ($_GET['kind'] ?? 'parcel') === 'revision'
-            ? Db::val('SELECT photoPath FROM `GabaritRevision` WHERE deliveryId = ? ORDER BY createdAt DESC LIMIT 1', [$d['id']])
+            ? (Db::val('SELECT photoPath FROM `PriceRequest` WHERE deliveryId = ? ORDER BY createdAt DESC LIMIT 1', [$d['id']])
+                ?: Db::val('SELECT photoPath FROM `GabaritRevision` WHERE deliveryId = ? ORDER BY createdAt DESC LIMIT 1', [$d['id']]))
             : $d['photoPath'];
         $real = $path ? realpath((string)$path) : false;
         $root = realpath(Uploads::dir());
@@ -184,6 +189,15 @@ final class DeliveryController
     private static function hideCodes(array $d): array
     {
         unset($d['deliverCode'], $d['collectCode'], $d['clientToken']);
+        // Prix proposes : le livreur ne voit que le prix courant, jamais les niveaux suivants.
+        if (isset($d['priceBreakdown'])) {
+            $raw = $d['priceBreakdown'];
+            $bd = is_string($raw) ? json_decode($raw, true) : $raw;
+            if (is_array($bd) && isset($bd['offers'])) {
+                unset($bd['offers'], $bd['level'], $bd['agreedAtLevel'], $bd['estimateXAF']);
+                $d['priceBreakdown'] = is_string($raw) ? json_encode($bd, JSON_UNESCAPED_UNICODE) : $bd;
+            }
+        }
         return $d;
     }
 

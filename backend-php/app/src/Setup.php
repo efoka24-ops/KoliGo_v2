@@ -50,7 +50,7 @@ final class Setup
     ];
 
     /** A incrementer quand le schema ou les reglages de reference changent : declenche une migration au prochain appel. */
-    public const SCHEMA_VERSION = 14;
+    public const SCHEMA_VERSION = 16;
 
     /**
      * Migration automatique et rejouable : evite d'avoir a relancer _setup.php (dont le jeton est supprime apres
@@ -161,6 +161,13 @@ final class Setup
         if (!Db::one("SELECT `key` FROM `PlatformSetting` WHERE `key` = 'strike_window_migrated'")) {
             Db::exec("UPDATE `PlatformSetting` SET `value` = '0', updatedAt = ? WHERE `key` = 'strike_window_days' AND `value` = '30'", [$now]);
             Db::exec("INSERT INTO `PlatformSetting` (`key`, `value`, updatedAt) VALUES ('strike_window_migrated', '1', ?)", [$now]);
+        }
+        // Courses encore ouvertes : elles passent aux prix proposes (une seule fois ; les terminees ne changent pas).
+        if (!Db::one("SELECT `key` FROM `PlatformSetting` WHERE `key` = 'offers_migrated'")) {
+            foreach (Db::all("SELECT * FROM `Delivery` WHERE status IN ('EN_ATTENTE','ACCEPTE')") as $open) {
+                \Koligo\Services\Deliveries::convertToOffers($open);
+            }
+            Db::exec("INSERT INTO `PlatformSetting` (`key`, `value`, updatedAt) VALUES ('offers_migrated', '1', ?)", [$now]);
         }
         // Coordonnees GPS des quartiers (geocodees une fois, controlees) : uniquement pour ceux qui n'en ont pas encore.
         $coords = 0;

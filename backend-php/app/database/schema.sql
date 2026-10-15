@@ -360,3 +360,23 @@ CREATE TABLE IF NOT EXISTS `FixedRoute` (
   `createdAt` DATETIME NOT NULL,
   `updatedAt` DATETIME NOT NULL
 ) {{OPTS}};
+
+-- Demandes de nouveau prix du livreur a la collecte (prix proposes par le vendeur).
+CREATE TABLE IF NOT EXISTS `PriceRequest` (
+  `id` VARCHAR(40) NOT NULL PRIMARY KEY,
+  `deliveryId` VARCHAR(40) NOT NULL,
+  `kind` VARCHAR(8) NOT NULL,
+  `reason` VARCHAR(12) NOT NULL,
+  `comment` VARCHAR(500) NULL,
+  `photoPath` VARCHAR(500) NULL,
+  `minPriceXAF` INT NULL,
+  `fromLevel` INT NOT NULL,
+  `toLevel` INT NULL,
+  `oldPriceXAF` INT NOT NULL,
+  `newPriceXAF` INT NOT NULL,
+  `status` VARCHAR(12) NOT NULL DEFAULT 'PENDING',
+  `feeXAF` INT NOT NULL DEFAULT 0,
+  `expiresAt` DATETIME NOT NULL,
+  `createdAt` DATETIME NOT NULL,
+  `respondedAt` DATETIME NULL
+) {{OPTS}};

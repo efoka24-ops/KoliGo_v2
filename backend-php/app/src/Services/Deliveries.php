@@ -113,6 +113,9 @@ final class Deliveries
         // La provenance de la distance est figee avec le prix : le back-office voit si elle a ete mesuree ou estimee.
         $price['distanceSource'] = $route['source'];
         $price['distanceEstimated'] = $route['estimated'];
+        // Prix proposes par le vendeur : le calcul ci-dessus ne sert plus que d'estimation indicative.
+        $offers = isset($p['offers']) ? self::validateOffers($p['offers']) : self::deriveOffers((int)$price['finalPrice']);
+        $price = self::offersBreakdown($price, $offers, 0, Pricing::config()['commissionRate']);
 
         $declared = isset($p['declaredValueXAF']) && $p['declaredValueXAF'] !== '' && $p['declaredValueXAF'] !== null ? (int)$p['declaredValueXAF'] : null;
         if ($declared !== null && ($declared < 0 || $declared > 50000000)) {
@@ -192,6 +195,262 @@ final class Deliveries
 
     // ── Acceptation, annulation ──────────────────────────────────────────────
 
+    // ── Prix proposes par le vendeur et negociation encadree ─────────────────
+
+    /** Trois prix croissants a partir d'un prix de reference (+20 % puis +50 %, arrondis a 50 F) : ancienne app ou course convertie. */
+    public static function deriveOffers(int $price): array
+    {
+        $round = fn(float $v): int => (int)(round($v / 50) * 50);
+        $p1 = max(Pricing::config()['offerMin'], $price);
+        $p2 = max($p1 + 50, $round($p1 * 1.2));
+        $p3 = max($p2 + 50, $round($p1 * 1.5));
+        return [$p1, $p2, $p3];
+    }
+
+    /**
+     * Passe une course encore ouverte de l'ancien calcul aux prix proposes : le prix actuel devient le niveau 1
+     * (rien ne change pour le montant), les niveaux 2 et 3 sont derives. Les courses terminees ne sont pas touchees.
+     */
+    public static function convertToOffers(array $d): bool
+    {
+        if (self::isOffers($d) || !in_array($d['status'], ['EN_ATTENTE', 'ACCEPTE'], true)) {
+            return false;
+        }
+        if (Db::one("SELECT id FROM `GabaritRevision` WHERE deliveryId = ? AND status = 'PENDING'", [$d['id']])) {
+            return false; // une correction de gabarit est en cours : on la laisse aboutir
+        }
+        $bd = json_decode((string)$d['priceBreakdown'], true);
+        $bd = is_array($bd) ? $bd : [];
+        $rate = (float)($bd['commissionRate'] ?? Pricing::config()['commissionRate']);
+        $price = (int)$d['priceXAF'];
+        $new = self::offersBreakdown($bd + ['finalPrice' => $price], self::deriveOffers($price), 0, $rate);
+        // Le niveau 1 vaut le prix actuel, meme s'il est sous le plancher des nouvelles courses.
+        $new['offers'][0] = $price;
+        $new['finalPrice'] = $price;
+        $new['basePrice'] = $price;
+        $new['baseXAF'] = $price;
+        $new['commissionXAF'] = (int)$d['commissionXAF'];
+        $new['delivererEarning'] = (int)$d['delivererEarning'];
+        $new['convertedFromLegacy'] = true;
+        Db::exec('UPDATE `Delivery` SET priceBreakdown = ? WHERE id = ?', [json_encode($new, JSON_UNESCAPED_UNICODE), $d['id']]);
+        return true;
+    }
+    /** Course a prix proposes (3 niveaux) ? */
+    public static function isOffers(array $d): bool
+    {
+        $bd = json_decode((string)($d['priceBreakdown'] ?? ''), true);
+        return is_array($bd) && ($bd['mode'] ?? null) === 'OFFERS';
+    }
+
+    /** Valide les trois prix : entiers, strictement croissants, au-dessus du plancher. */
+    public static function validateOffers(mixed $offers): array
+    {
+        if (!is_array($offers) || count($offers) !== 3) {
+            throw new HttpError('Indiquez trois prix de livraison.', 400, 'OFFERS_INVALID');
+        }
+        $min = Pricing::config()['offerMin'];
+        $out = [];
+        foreach (array_values($offers) as $o) {
+            if (!is_numeric($o) || (int)$o != $o) {
+                throw new HttpError('Les prix doivent être des montants entiers en FCFA.', 400, 'OFFERS_INVALID');
+            }
+            $out[] = (int)$o;
+        }
+        if ($out[0] < $min) {
+            throw new HttpError("Le prix minimum est de $min F.", 400, 'OFFER_TOO_LOW');
+        }
+        if ($out[2] > 2000000) {
+            throw new HttpError('Prix trop élevé (2 000 000 F maximum).', 400, 'OFFERS_INVALID');
+        }
+        if (!($out[0] < $out[1] && $out[1] < $out[2])) {
+            throw new HttpError('Les trois prix doivent être croissants et différents.', 400, 'OFFERS_NOT_INCREASING');
+        }
+        return $out;
+    }
+
+    /** Detail du prix d'une course a prix proposes (garde les cles de l'ancien format pour les factures et le back-office). */
+    private static function offersBreakdown(array $estimate, array $offers, int $level, float $commissionRate): array
+    {
+        $price = $offers[$level];
+        $commission = (int)round($price * $commissionRate);
+        return [
+            'version' => 3, 'mode' => 'OFFERS', 'offers' => $offers, 'level' => $level,
+            'zone' => 'Prix proposé', 'zoneFallback' => false, 'baseXAF' => $price, 'perKmXAF' => 0, 'weightRateXAF' => 0, 'lightKg' => 0,
+            'coefficient' => 1.0, 'multiplier' => 1.0, 'minPriceXAF' => 0, 'commissionRate' => $commissionRate,
+            'basePrice' => $price, 'finalPrice' => $price, 'commissionXAF' => $commission, 'delivererEarning' => $price - $commission,
+            'km' => $estimate['km'] ?? null, 'size' => $estimate['size'] ?? null, 'refWeightKg' => $estimate['refWeightKg'] ?? null,
+            'vehicle' => $estimate['vehicle'] ?? 'MOTO', 'region' => $estimate['region'] ?? null,
+            'estimateXAF' => $estimate['finalPrice'] ?? null, 'distanceSource' => $estimate['distanceSource'] ?? null, 'distanceEstimated' => $estimate['distanceEstimated'] ?? null,
+        ];
+    }
+
+    /** Demande de prix en attente (avec expiration : sans reponse du vendeur, la course est annulee sans frais). */
+    public static function pendingPriceRequest(string $deliveryId): ?array
+    {
+        $req = Db::one("SELECT * FROM `PriceRequest` WHERE deliveryId = ? AND status = 'PENDING' ORDER BY createdAt DESC LIMIT 1", [$deliveryId]);
+        if (!$req) {
+            return null;
+        }
+        if ($req['expiresAt'] >= Db::now()) {
+            return $req;
+        }
+        $now = Db::now();
+        if (Db::exec("UPDATE `PriceRequest` SET status = 'EXPIRED', respondedAt = ? WHERE id = ? AND status = 'PENDING'", [$now, $req['id']]) === 1) {
+            Db::exec("UPDATE `Delivery` SET status = 'ANNULE', updatedAt = ? WHERE id = ? AND status = 'ACCEPTE'", [$now, $deliveryId]);
+            Db::exec('UPDATE `EscrowEntry` SET releasedAt = ? WHERE deliveryId = ?', [$now, $deliveryId]);
+            Incidents::resolveRevision($req['id'], 'EXPIRED');
+            self::event($deliveryId, 'PRICE_EXPIRED', null);
+        }
+        return null;
+    }
+
+    /** Derniere demande de prix, au format « correction » lu par les applications. */
+    public static function latestPriceRequest(string $deliveryId): ?array
+    {
+        self::pendingPriceRequest($deliveryId);
+        $r = Db::one('SELECT * FROM `PriceRequest` WHERE deliveryId = ? ORDER BY createdAt DESC, id DESC LIMIT 1', [$deliveryId]);
+        return $r ? self::priceRequestView($r) : null;
+    }
+
+    private static function priceRequestView(array $r): array
+    {
+        return [
+            'id' => $r['id'], 'deliveryId' => $r['deliveryId'], 'status' => $r['status'], 'kind' => $r['kind'] === 'ASK' ? 'PRICE_ASK' : 'PRICE',
+            'declaredSize' => null, 'proposedSize' => null, 'hasPhoto' => !empty($r['photoPath']), 'oldPriceXAF' => (int)$r['oldPriceXAF'], 'newPriceXAF' => (int)$r['newPriceXAF'],
+            'minPriceXAF' => $r['minPriceXAF'] !== null ? (int)$r['minPriceXAF'] : null, 'fromLevel' => (int)$r['fromLevel'], 'toLevel' => $r['toLevel'] !== null ? (int)$r['toLevel'] : null,
+            'feeXAF' => (int)$r['feeXAF'], 'expiresAt' => $r['expiresAt'], 'createdAt' => $r['createdAt'], 'respondedAt' => $r['respondedAt'],
+        ];
+    }
+
+    /**
+     * Le livreur refuse le prix courant et indique son minimum ; le serveur retient le premier niveau superieur qui le couvre.
+     * Au-dela du dernier niveau, la demande porte le montant demande tel quel (le vendeur l'accepte ou refuse).
+     */
+    public static function requestPrice(string $id, string $delivererId, string $reason, string $comment, string $photo, ?int $minPrice): array
+    {
+        $reason = strtoupper(trim($reason));
+        if (!in_array($reason, ['POIDS', 'TAILLE', 'AUTRE'], true)) {
+            throw new HttpError('Motif invalide : poids, taille ou autre', 400, 'INCIDENT_KIND_INVALID');
+        }
+        $comment = trim($comment);
+        if ($reason === 'AUTRE' && mb_strlen($comment) < 5) {
+            throw new HttpError('Expliquez pourquoi le prix doit changer (5 caractères minimum).', 400, 'COMMENT_REQUIRED');
+        }
+        $d = self::find($id);
+        if ($d['delivererId'] !== $delivererId) {
+            throw new HttpError('Forbidden', 403);
+        }
+        if ($d['status'] !== 'ACCEPTE') {
+            throw new HttpError('Le prix ne peut plus être discuté : le colis est déjà parti.', 409, 'WRONG_STATE');
+        }
+        if (self::pendingPriceRequest($id)) {
+            throw new HttpError('Une demande est déjà en attente de réponse du vendeur.', 409, 'REVISION_PENDING');
+        }
+        $d = self::find($id); // l'expiration d'une demande a pu annuler la course
+        if ($d['status'] !== 'ACCEPTE') {
+            throw new HttpError('La course est annulée.', 409, 'WRONG_STATE');
+        }
+        $bd = json_decode((string)$d['priceBreakdown'], true);
+        if (!is_array($bd) || ($bd['mode'] ?? null) !== 'OFFERS') {
+            throw new HttpError('Cette course utilise l\'ancien calcul de prix.', 409, 'LEGACY_DELIVERY');
+        }
+        $offers = array_map('intval', $bd['offers']);
+        $level = (int)$bd['level'];
+        $current = (int)$d['priceXAF'];
+        if ($minPrice !== null && ($minPrice <= $current || $minPrice > 2000000)) {
+            throw new HttpError($minPrice <= $current ? 'Ton minimum est déjà couvert par le prix actuel.' : 'Montant trop élevé.', 400, 'MIN_PRICE_INVALID');
+        }
+        $toLevel = null;
+        $kind = 'LEVEL';
+        $newPrice = null;
+        for ($i = $level + 1; $i < 3; $i++) {
+            if ($minPrice === null || $offers[$i] >= $minPrice) {
+                $toLevel = $i;
+                $newPrice = $offers[$i];
+                break;
+            }
+        }
+        if ($toLevel === null) {
+            if ($minPrice === null) {
+                throw new HttpError('Il n\'y a plus de prix proposé : indique le montant que tu demandes.', 400, 'MIN_PRICE_REQUIRED');
+            }
+            $kind = 'ASK';
+            $newPrice = $minPrice;
+        }
+        $photoPath = $photo !== '' ? Uploads::storeImage(Uploads::decode($photo), $delivererId, 'price') : null;
+        if ($reason !== 'AUTRE' && $photoPath === null) {
+            throw new HttpError('Une photo du colis est obligatoire pour demander un nouveau prix', 400, 'PHOTO_REQUIRED');
+        }
+        $now = Db::now();
+        $rid = Db::id();
+        Db::insert('PriceRequest', [
+            'id' => $rid, 'deliveryId' => $id, 'kind' => $kind, 'reason' => $reason, 'comment' => $comment !== '' ? mb_substr($comment, 0, 500) : null,
+            'photoPath' => $photoPath, 'minPriceXAF' => $minPrice, 'fromLevel' => $level, 'toLevel' => $toLevel,
+            'oldPriceXAF' => $current, 'newPriceXAF' => $newPrice, 'status' => 'PENDING',
+            'expiresAt' => gmdate('Y-m-d H:i:s', time() + Pricing::config()['revisionTimeoutMin'] * 60), 'createdAt' => $now,
+        ]);
+        if ($reason !== 'AUTRE') {
+            Incidents::open($d, $reason, $comment, $photoPath, null, $rid);
+        }
+        self::event($id, 'PRICE_REQUESTED', $delivererId, ['reason' => $reason, 'minPriceXAF' => $minPrice, 'oldPriceXAF' => $current, 'newPriceXAF' => $newPrice, 'ask' => $kind === 'ASK']);
+        Notifier::send((string)$d['vendorId'], 'REVISION_PROPOSED', 'Le livreur demande un nouveau prix',
+            'Prix ' . Notify::xaf($current) . ' F → ' . Notify::xaf($newPrice) . ' F' . ($kind === 'ASK' ? ' (au-delà de vos trois prix)' : '') . '. Répondez avant expiration.', ['deliveryId' => $id]);
+        return self::priceRequestView(Db::one('SELECT * FROM `PriceRequest` WHERE id = ?', [$rid]));
+    }
+
+    /** Reponse du vendeur : accepter applique le nouveau prix, refuser annule la course et dedommage le livreur. */
+    public static function respondPrice(string $id, string $vendorId, bool $accept): array
+    {
+        $d = self::find($id);
+        if ($d['vendorId'] !== $vendorId) {
+            throw new HttpError('Forbidden', 403);
+        }
+        $req = self::pendingPriceRequest($id);
+        if (!$req) {
+            throw new HttpError('Aucune demande en attente (délai dépassé : la course a été annulée sans frais).', 409, 'REVISION_EXPIRED');
+        }
+        $now = Db::now();
+        if ($accept) {
+            $bd = json_decode((string)$d['priceBreakdown'], true);
+            $offers = array_map('intval', $bd['offers']);
+            $rate = (float)($bd['commissionRate'] ?? Pricing::config()['commissionRate']);
+            $new = (int)$req['newPriceXAF'];
+            $commission = (int)round($new * $rate);
+            $bd['finalPrice'] = $new;
+            $bd['basePrice'] = $new;
+            $bd['baseXAF'] = $new;
+            $bd['commissionXAF'] = $commission;
+            $bd['delivererEarning'] = $new - $commission;
+            $bd['level'] = $req['toLevel'] !== null ? (int)$req['toLevel'] : 3; // 3 = montant demande, au-dela des trois prix
+            $bd['agreedAtLevel'] = $bd['level'];
+            Db::tx(function () use ($id, $req, $bd, $new, $commission, $now) {
+                if (Db::exec("UPDATE `PriceRequest` SET status = 'ACCEPTED', respondedAt = ? WHERE id = ? AND status = 'PENDING'", [$now, $req['id']]) !== 1) {
+                    throw new HttpError('Demande déjà traitée', 409);
+                }
+                Db::exec('UPDATE `Delivery` SET priceXAF = ?, commissionXAF = ?, delivererEarning = ?, priceBreakdown = ?, updatedAt = ? WHERE id = ?',
+                    [$new, $commission, $new - $commission, json_encode($bd, JSON_UNESCAPED_UNICODE), $now, $id]);
+                Db::exec('UPDATE `EscrowEntry` SET amountXAF = ? WHERE deliveryId = ?', [$new, $id]);
+            });
+            self::event($id, 'PRICE_ACCEPTED', $vendorId, ['newPriceXAF' => $new]);
+            Incidents::resolveRevision($req['id'], 'CONFIRMED');
+            Notifier::send((string)$d['delivererId'], 'REVISION_ACCEPTED', 'Nouveau prix accepté', 'Le vendeur a accepté ' . Notify::xaf($new) . ' F : tu peux prendre le colis en charge.', ['deliveryId' => $id]);
+            return self::find($id);
+        }
+
+        $fee = Pricing::config()['cancelFee'];
+        Db::tx(function () use ($id, $req, $now, $fee) {
+            if (Db::exec("UPDATE `PriceRequest` SET status = 'REFUSED', feeXAF = ?, respondedAt = ? WHERE id = ? AND status = 'PENDING'", [$fee, $now, $req['id']]) !== 1) {
+                throw new HttpError('Demande déjà traitée', 409);
+            }
+            Db::exec("UPDATE `Delivery` SET status = 'ANNULE', updatedAt = ? WHERE id = ? AND status = 'ACCEPTE'", [$now, $id]);
+            Db::exec('UPDATE `EscrowEntry` SET releasedAt = ? WHERE deliveryId = ?', [$now, $id]);
+        });
+        self::chargeCancelFee($vendorId, (string)$d['delivererId'], $fee, $id, 'Frais d\'annulation (nouveau prix refusé)');
+        self::event($id, 'PRICE_REFUSED', $vendorId, ['feeXAF' => $fee]);
+        Incidents::resolveRevision($req['id'], 'CONFIRMED');
+        Notifier::send((string)$d['delivererId'], 'REVISION_REFUSED', 'Nouveau prix refusé', "Le vendeur a refusé : course annulée, $fee F de dédommagement te sont dus.", ['deliveryId' => $id]);
+        return self::find($id);
+    }
     /** Ajoute une etape datee a l'historique de la livraison. Ne doit jamais faire echouer l'action metier. */
     public static function event(string $deliveryId, string $type, ?string $actorId = null, array $data = []): void
     {
@@ -320,7 +579,7 @@ final class Deliveries
     {
         $rev = Db::one("SELECT * FROM `GabaritRevision` WHERE deliveryId = ? AND status = 'PENDING' ORDER BY createdAt DESC LIMIT 1", [$deliveryId]);
         if (!$rev) {
-            return null;
+            return self::pendingPriceRequest($deliveryId);
         }
         if ($rev['expiresAt'] >= Db::now()) {
             return $rev;
@@ -337,11 +596,16 @@ final class Deliveries
     public static function latestRevision(string $deliveryId): ?array
     {
         self::pendingRevision($deliveryId); // applique l'expiration eventuelle
-        return Db::one('SELECT * FROM `GabaritRevision` WHERE deliveryId = ? ORDER BY createdAt DESC LIMIT 1', [$deliveryId]);
+        $g = Db::one('SELECT * FROM `GabaritRevision` WHERE deliveryId = ? ORDER BY createdAt DESC LIMIT 1', [$deliveryId]);
+        $p = self::latestPriceRequest($deliveryId);
+        return ($p && (!$g || $p['createdAt'] >= $g['createdAt'])) ? $p : $g;
     }
 
-    public static function proposeRevision(string $id, string $delivererId, string $size, string $photo, string $reason = 'TAILLE', string $comment = '', ?float $measuredKg = null): array
+    public static function proposeRevision(string $id, string $delivererId, string $size, string $photo, string $reason = 'TAILLE', string $comment = '', ?float $measuredKg = null, ?int $minPrice = null): array
     {
+        if (self::isOffers(self::find($id))) {
+            return self::requestPrice($id, $delivererId, $reason, $comment, $photo, $minPrice);
+        }
         $reason = strtoupper(trim($reason));
         if (!in_array($reason, ['POIDS', 'TAILLE'], true)) {
             throw new HttpError('Motif invalide : poids ou taille', 400, 'INCIDENT_KIND_INVALID');
@@ -397,6 +661,9 @@ final class Deliveries
         $d = self::find($id);
         if ($d['vendorId'] !== $vendorId) {
             throw new HttpError('Forbidden', 403);
+        }
+        if (self::isOffers($d)) {
+            return self::respondPrice($id, $vendorId, $accept);
         }
         $rev = self::pendingRevision($id);
         if (!$rev) {

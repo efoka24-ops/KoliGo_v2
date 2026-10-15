@@ -144,6 +144,8 @@ export default function PostDeliveryScreen({ navigation }) {
   const [type, setType]             = useState('TEMPORAIRE');
   const [productPrice, setProductPrice] = useState('');
   const [declaredValue, setDeclaredValue] = useState('');
+  const [offers, setOffers] = useState(['', '', '']);
+  const [offersTouched, setOffersTouched] = useState(false);
   const [fragile, setFragile] = useState(false);
   const [handlingNote, setHandlingNote] = useState('');
 
@@ -183,8 +185,26 @@ export default function PostDeliveryScreen({ navigation }) {
     return () => { alive = false; };
   }, [from, to, size, type, fromCity, pricing]);
 
+  useEffect(() => {
+    if (!offersTouched && Array.isArray(quote?.suggestedOffers)) setOffers(quote.suggestedOffers.map(String));
+  }, [quote, offersTouched]);
+
   const distance = quote?.km ?? null;
-  const price    = quote?.finalPrice ?? null;
+  const offerNums = offers.map((o) => parseInt(o, 10) || 0);
+  const offerMin  = quote?.offerMinXAF ?? 500;
+  const estimate  = quote?.finalPrice ?? null;
+  // Le vendeur fixe lui-même ses trois prix ; le premier est celui proposé d'abord au livreur.
+  const price     = offerNums[0] > 0 ? offerNums[0] : null;
+  const offersError = (() => {
+    if (!offerNums.every((n) => n > 0)) return isEn ? 'Enter your three prices.' : 'Indique tes trois prix.';
+    if (offerNums[0] < offerMin) return isEn ? `The first price must be at least ${offerMin} XAF.` : `Le premier prix doit être d'au moins ${offerMin} F.`;
+    if (!(offerNums[0] < offerNums[1] && offerNums[1] < offerNums[2])) return isEn ? 'The three prices must be increasing and different.' : 'Les trois prix doivent être croissants et différents.';
+    return null;
+  })();
+  const offersWarning = (estimate && !offersError && offerNums[0] < estimate * 0.5)
+    ? (isEn ? `Your first price is far below the estimate (${estimate.toLocaleString('fr-FR')} XAF): couriers may decline.` : `Ton premier prix est très inférieur à l'estimation (${estimate.toLocaleString('fr-FR')} F) : un livreur risque de refuser.`)
+    : null;
+  const setOffer = (i, v) => { setOffersTouched(true); setOffers((o) => o.map((x, j) => (j === i ? v.replace(/[^0-9]/g, '') : x))); };
   const sizeOnQuote = !!gabarits[size] && gabarits[size].bookable === false;
   const sizeWarning = (() => {
     if (parcelType === 'APPLIANCE' && ['XS', 'S'].includes(size)) return isEn ? 'An appliance rarely fits this size. Check the size.' : 'Un appareil électroménager tient rarement dans ce gabarit. Vérifiez la taille.';
@@ -210,7 +230,7 @@ export default function PostDeliveryScreen({ navigation }) {
     if (!shopName.trim() && !user?.shopName) errs.shopName = t('Indique le nom de ta boutique');
     if (!parcelDesc.trim()) errs.parcelDesc = t('Décris le colis');
     if (sizeOnQuote) errs.size = isEn ? 'XXL parcels are priced on quote: contact KoliGo support.' : 'Les colis XXL se font sur devis : contactez le support KoliGo.';
-    else if (!price) errs.size = isEn ? 'Price unavailable, check your connection.' : 'Prix indisponible, vérifiez votre connexion.';
+    if (offersError) errs.offers = offersError;
     if (!photo) errs.photo = isEn ? 'A photo of the packed parcel is required' : 'Une photo du colis emballé est obligatoire';
     if (!recipient.trim())  errs.recipient  = t('Indique le nom du destinataire');
     if (!phoneNorm)         errs.clientPhone = t('Numéro requis');
@@ -243,6 +263,7 @@ export default function PostDeliveryScreen({ navigation }) {
             clientWhatsApp: phoneNorm,
             productPrice:   productVal,
             declaredValue:  parseInt(declaredValue, 10) || undefined,
+            offers:         offerNums,
             fragile,
             handlingNote:   handlingNote.trim() || undefined,
           }),
@@ -490,6 +511,35 @@ export default function PostDeliveryScreen({ navigation }) {
                 keyboardType="numeric"
                 placeholder={isEn ? 'e.g. 15000' : 'ex: 15000'}
               />
+            </KGCard>
+
+            <KGSectionTitle>{isEn ? 'Your delivery prices' : 'Tes prix de livraison'}</KGSectionTitle>
+            <KGCard padding={14} style={{ gap: 10 }}>
+              <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12.5, color: colors.ink55, lineHeight: 18 }}>
+                {isEn
+                  ? 'You set three increasing prices. The courier only sees the first. If the parcel does not match at pickup, he may ask for more: you then accept the next price or cancel.'
+                  : "Tu fixes trois prix croissants. Le livreur ne voit que le premier. Si le colis ne correspond pas à la collecte, il peut demander plus : tu acceptes alors le prix suivant ou tu annules."}
+              </Text>
+              {estimate ? (
+                <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12.5, color: colors.greenDark }}>
+                  {isEn ? 'Estimate for this route' : 'Estimation pour ce trajet'} : {estimate.toLocaleString('fr-FR')} F{quote?.distanceEstimated ? (isEn ? ' (approximate)' : ' (approximative)') : ''}
+                </Text>
+              ) : null}
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {[0, 1, 2].map((i) => (
+                  <View key={i} style={{ flex: 1 }}>
+                    <KGInput
+                      label={i === 0 ? (isEn ? 'Price 1' : 'Prix 1') : i === 1 ? (isEn ? 'Price 2' : 'Prix 2') : (isEn ? 'Price 3' : 'Prix 3')}
+                      value={offers[i]}
+                      onChangeText={(v) => setOffer(i, v)}
+                      keyboardType="numeric"
+                      placeholder={i === 0 ? String(offerMin) : ''}
+                    />
+                  </View>
+                ))}
+              </View>
+              {fieldErrors.offers ? <Text style={{ color: '#C00', fontSize: 12.5 }}>{fieldErrors.offers}</Text> : null}
+              {offersWarning ? <Text style={{ color: '#C4611A', fontSize: 12.5 }}>{offersWarning}</Text> : null}
             </KGCard>
 
             <KGSectionTitle>{isEn ? 'Parcel details' : 'Détails du colis'}</KGSectionTitle>

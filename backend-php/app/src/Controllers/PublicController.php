@@ -80,7 +80,10 @@ final class PublicController
         [$fc, $tc] = Distance::resolveCities($from, Http::query('fromCity') ?: null, $to, Http::query('toCity') ?: null);
         $fixed = \Koligo\Services\FixedRoutes::find($fc, $from, $tc, $to);
         $q = Pricing::quote($region, $route['km'], $size, $type, $fixed);
-        return $q + ['cancelFeeXAF' => Pricing::config()['cancelFee'], 'distanceSource' => $route['source'], 'distanceEstimated' => $route['estimated']];
+        $cfg = Pricing::config();
+        // Estimation indicative : le vendeur fixe lui-meme ses trois prix, a partir de cette suggestion.
+        return $q + ['cancelFeeXAF' => $cfg['cancelFee'], 'distanceSource' => $route['source'], 'distanceEstimated' => $route['estimated'],
+            'suggestedOffers' => \Koligo\Services\Deliveries::deriveOffers((int)$q['finalPrice']), 'offerMinXAF' => $cfg['offerMin']];
     }
 
     /** CGU en vigueur dans la langue demandee (texte stocke en base, jetons deja remplaces). */

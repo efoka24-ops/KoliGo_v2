@@ -40,6 +40,7 @@ export default function Pricing() {
       cancelGraceMin: data.cancelGraceMin,
       strikeThreshold: data.strikeThreshold,
       strikeWindowDays: data.strikeWindowDays,
+      offerMinXAF: data.offerMinXAF,
     });
     setSim((s) => ({ ...s, zone: s.zone || data.zones[0]?.name || '' }));
   }, [data]);
@@ -49,7 +50,7 @@ export default function Pricing() {
       zones: f.zones, defaultZone: f.defaultZone, gabarits: f.gabarits,
       minPriceXAF: f.minPriceXAF, weightRateXAF: f.weightRateXAF, commissionRate: Number(f.commissionPct) / 100,
       cancelFeeXAF: f.cancelFeeXAF, revisionTimeoutMin: f.revisionTimeoutMin, cancelGraceMin: f.cancelGraceMin,
-      strikeThreshold: f.strikeThreshold, strikeWindowDays: f.strikeWindowDays,
+      strikeThreshold: f.strikeThreshold, strikeWindowDays: f.strikeWindowDays, offerMinXAF: f.offerMinXAF,
     }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-pricing'] }); setMsg({ ok: true, text: 'Tarifs enregistrés. Ils s\'appliquent aux nouvelles livraisons ; les livraisons et factures existantes ne changent pas.' }); },
     onError: (e) => setMsg({ ok: false, text: e.response?.data?.error || e.message }),
@@ -163,14 +164,15 @@ export default function Pricing() {
         <div className="card pad">
           <h3 style={{ marginTop: 0 }}>Frais et règles</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
-            <Field label="Prix minimum d'une course (XAF)"><input type="number" min="0" value={form.minPriceXAF} onChange={(e) => set('minPriceXAF', num(e.target.value))} /></Field>
+            <Field label="Plancher des prix proposés par les vendeurs (XAF)" hint="Le premier des trois prix ne peut pas descendre en dessous."><input type="number" min="100" value={form.offerMinXAF} onChange={(e) => set('offerMinXAF', num(e.target.value))} /></Field>
+            <Field label="Prix minimum d'une course calculée (XAF)"><input type="number" min="0" value={form.minPriceXAF} onChange={(e) => set('minPriceXAF', num(e.target.value))} /></Field>
             <Field label="Prix du poids (XAF par kg de référence)"><input type="number" min="0" value={form.weightRateXAF} onChange={(e) => set('weightRateXAF', num(e.target.value))} /></Field>
             <Field label="Commission KoliGo (%)"><input type="number" min="0" max="50" step="0.1" value={form.commissionPct} onChange={(e) => set('commissionPct', e.target.value)} /></Field>
             <Field label="Frais d'annulation (XAF)" hint="Dus au livreur quand le vendeur refuse le prix révisé. Affichés dans l'app et les CGU."><input type="number" min="0" value={form.cancelFeeXAF} onChange={(e) => set('cancelFeeXAF', num(e.target.value))} /></Field>
             <Field label="Délai de réponse du vendeur (min)" hint="Sans réponse : course annulée sans frais."><input type="number" min="1" value={form.revisionTimeoutMin} onChange={(e) => set('revisionTimeoutMin', num(e.target.value))} /></Field>
             <Field label="Annulation gratuite après acceptation (min)" hint="Au-delà, les frais d'annulation s'appliquent."><input type="number" min="0" value={form.cancelGraceMin} onChange={(e) => set('cancelGraceMin', num(e.target.value))} /></Field>
             <Field label="Écarts avant contrôle renforcé"><input type="number" min="1" value={form.strikeThreshold} onChange={(e) => set('strikeThreshold', num(e.target.value))} /></Field>
-            <Field label="Fenêtre de calcul des écarts (jours)"><input type="number" min="1" value={form.strikeWindowDays} onChange={(e) => set('strikeWindowDays', num(e.target.value))} /></Field>
+            <Field label="Fenêtre de calcul des incidents (jours, 0 = toute la durée du compte)"><input type="number" min="0" value={form.strikeWindowDays} onChange={(e) => set('strikeWindowDays', num(e.target.value))} /></Field>
           </div>
           <div style={{ fontSize: 11, color: 'var(--muted)' }}>Ces montants et délais sont repris automatiquement dans le texte des CGU (jetons {'{{cancel_fee}}'}, {'{{revision_timeout}}'}…).</div>
         </div>
