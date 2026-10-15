@@ -49,6 +49,12 @@ final class NotificationController
         return $r;
     }
 
+    /** GET /admin/push-status : etat de la connexion a Firebase (notifications telephone verrouille). */
+    public static function adminPushStatus(Ctx $c): array
+    {
+        return Notifier::diagnose();
+    }
+
     /** GET /admin/notifications : historique des messages envoyes depuis le back-office. */
     public static function adminHistory(Ctx $c): array
     {

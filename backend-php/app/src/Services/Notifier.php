@@ -126,6 +126,21 @@ final class Notifier
         return self::serviceAccount() !== null;
     }
 
+    /** Diagnostic de la connexion a Firebase : cle presente, jeton d'acces obtenu aupres de Google. Ne montre aucun secret. */
+    public static function diagnose(): array
+    {
+        $sa = self::serviceAccount();
+        if (!$sa) {
+            return ['configured' => false, 'tokenOk' => false, 'message' => 'Clé du serveur Firebase absente.'];
+        }
+        // Force un jeton neuf : on veut tester la cle, pas le cache.
+        Db::exec("UPDATE `PlatformSetting` SET `value` = '', updatedAt = ? WHERE `key` = 'fcm_access_token'", [Db::now()]);
+        $ok = self::accessToken() !== null;
+        $pushUsers = (int)Db::val("SELECT COUNT(*) FROM `User` WHERE expoPushToken IS NOT NULL AND expoPushToken <> ''");
+        return ['configured' => true, 'project' => $sa['project_id'], 'account' => $sa['client_email'], 'tokenOk' => $ok, 'devicesRegistered' => $pushUsers,
+            'message' => $ok ? 'Connexion à Firebase réussie.' : 'Google a refusé la clé (révoquée, mal copiée, ou API Cloud Messaging désactivée).'];
+    }
+
     private static function b64(string $s): string
     {
         return rtrim(strtr(base64_encode($s), '+/', '-_'), '=');

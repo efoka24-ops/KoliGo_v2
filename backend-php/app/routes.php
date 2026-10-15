@@ -138,6 +138,7 @@ return function (Router $r): void {
         $a = "$p/admin";
         $adm = [$jwt, $role('ADMIN')];
         $r->get("$a/stats", [Admin::class, 'stats'], ...$adm);
+        $r->get("$a/push-status", [NotifC::class, 'adminPushStatus'], ...$adm);
         $r->get("$a/notifications", [NotifC::class, 'adminHistory'], ...$adm);
         $r->post("$a/notifications", [NotifC::class, 'adminBroadcast'], ...$adm);
         $r->get("$a/kyc-checks", [Admin::class, 'kycChecks'], ...$adm);

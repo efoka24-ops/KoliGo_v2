@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "757501250447",
+    "project_id": "koligo-79fd8",
+    "storage_bucket": "koligo-79fd8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:757501250447:android:c855fe8e68d28ced5419fa",
+        "android_client_info": {
+          "package_name": "cm.koligo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJnE-FDiVmSZvpc9D5h8Wc6k3o5GqwZ6A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
