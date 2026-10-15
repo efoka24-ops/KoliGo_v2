@@ -5,6 +5,7 @@ use Koligo\Auth;
 use Koligo\Controllers\AdminController as Admin;
 use Koligo\Controllers\AuthController as AuthC;
 use Koligo\Controllers\DeliveryController as Del;
+use Koligo\Controllers\AnnonceController as AdC;
 use Koligo\Controllers\NotificationController as NotifC;
 use Koligo\Controllers\PaymentController as Pay;
 use Koligo\Controllers\PublicController as Pub;
@@ -31,6 +32,10 @@ return function (Router $r): void {
     foreach (['/api', ''] as $p) {
         // ── public ───────────────────────────────────────────────────────────
         $r->reset();
+        $r->get("$p/public/ads/config", [AdC::class, 'config']);
+        $r->get("$p/public/ads", [AdC::class, 'feed'], [Auth::class, 'optionalJWT']);
+        $r->get("$p/public/ads/:id/photo/:n", [AdC::class, 'photo'], [Auth::class, 'optionalJWT']);
+        $r->get("$p/public/ads/:id", [AdC::class, 'show'], [Auth::class, 'optionalJWT']);
         $r->get("$p/public/cities", [Pub::class, 'cities']);
         $r->get("$p/public/pricing", [Pub::class, 'pricing']);
         $r->get("$p/public/quote", [Pub::class, 'quote']);
@@ -70,6 +75,13 @@ return function (Router $r): void {
         $r->get("$p/notifications", [NotifC::class, 'list'], $jwt);
         $r->post("$p/notifications/read", [NotifC::class, 'markRead'], $jwt);
         $r->post("$p/user/change-pin", [AuthC::class, 'changePin'], $jwt);
+        $r->post("$p/ads", [AdC::class, 'create'], $jwt, $role('VENDOR'));
+        $r->get("$p/ads/mine", [AdC::class, 'mine'], $jwt);
+        $r->post("$p/ads/:id/withdraw", [AdC::class, 'withdraw'], $jwt, $role('VENDOR'));
+        $r->post("$p/ads/:id/republish", [AdC::class, 'republish'], $jwt, $role('VENDOR'));
+        $r->post("$p/ads/:id/contact", [AdC::class, 'contact'], $jwt);
+        $r->post("$p/ads/:id/report", [AdC::class, 'report'], $jwt);
+        $r->get("$p/ads/:id/payment-status", [AdC::class, 'paymentStatus'], $jwt);
 
         // ── deliveries : routes publiques d'abord (destinataire sans compte) ──
         $d = "$p/deliveries";
@@ -128,6 +140,10 @@ return function (Router $r): void {
         $r->get("$a/stats", [Admin::class, 'stats'], ...$adm);
         $r->get("$a/notifications", [NotifC::class, 'adminHistory'], ...$adm);
         $r->post("$a/notifications", [NotifC::class, 'adminBroadcast'], ...$adm);
+        $r->get("$a/ads", [AdC::class, 'adminList'], ...$adm);
+        $r->get("$a/ads-config", [AdC::class, 'adminConfig'], ...$adm);
+        $r->patch("$a/ads-config", [AdC::class, 'adminSaveConfig'], ...$adm);
+        $r->patch("$a/ads/:id", [AdC::class, 'adminDecide'], ...$adm);
         $r->get("$a/fixed-routes", [Admin::class, 'listFixedRoutes'], ...$adm);
         $r->post("$a/fixed-routes", [Admin::class, 'createFixedRoute'], ...$adm);
         $r->patch("$a/fixed-routes/:id", [Admin::class, 'updateFixedRoute'], ...$adm);
@@ -157,6 +173,7 @@ return function (Router $r): void {
         $r->get("$a/test-payment/:id", [Admin::class, 'testPaymentStatus'], ...$adm);
         $r->get("$a/pricing", [Admin::class, 'getPricing'], ...$adm);
         $r->patch("$a/pricing", [Admin::class, 'updatePricing'], ...$adm);
+        $r->get("$a/cgu/recommended", [Admin::class, 'recommendedCgu'], ...$adm);
         $r->get("$a/cgu", [Admin::class, 'getCgu'], ...$adm);
         $r->post("$a/cgu", [Admin::class, 'publishCgu'], ...$adm);
         $r->get("$a/site-content", [Admin::class, 'getSiteContent'], ...$adm);

@@ -54,6 +54,10 @@ import TermsScreen from '../screens/shared/TermsScreen';
 import ChatDetailScreen from '../screens/shared/ChatScreen';
 import DeliveryChatScreen from '../screens/shared/DeliveryChatScreen';
 import HistoryScreen from '../screens/shared/HistoryScreen';
+import AdsFeedScreen from '../screens/ads/AdsFeedScreen';
+import AdDetailScreen from '../screens/ads/AdDetailScreen';
+import PostAdScreen from '../screens/ads/PostAdScreen';
+import MyAdsScreen from '../screens/ads/MyAdsScreen';
 import IncidentsScreen from '../screens/vendor/IncidentsScreen';
 import ChangePinScreen from '../screens/shared/ChangePinScreen';
 import WalletScreen from '../screens/deliverer/WalletScreen';
@@ -113,6 +117,10 @@ export default function RootNavigator() {
       <Stack.Screen name="ClientReportIssue" component={ClientReportIssueScreen} />
 
       {/* Shared / modals */}
+      <Stack.Screen name="Ads" component={AdsFeedScreen} />
+      <Stack.Screen name="AdDetail" component={AdDetailScreen} />
+      <Stack.Screen name="PostAd" component={PostAdScreen} />
+      <Stack.Screen name="MyAds" component={MyAdsScreen} />
       <Stack.Screen name="Incidents" component={IncidentsScreen} />
       <Stack.Screen name="ChangePin" component={ChangePinScreen} />
       <Stack.Screen name="Wallet" component={WalletScreen} />

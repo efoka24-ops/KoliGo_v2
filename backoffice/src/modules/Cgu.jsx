@@ -57,6 +57,11 @@ export default function Cgu() {
             Le texte vit en base : l'application l'affiche telle quelle.
           </div>
         </div>
+        <button className="btn" style={{ marginRight: 8 }} onClick={async () => {
+          if (!window.confirm('Charger le texte recommandé par KoliGo dans l\'éditeur ?\n\nIl remplace le brouillon actuel (rien n\'est publié tant que vous ne cliquez pas sur « Publier »).')) return;
+          try { const r = await adminApi.cguRecommended(); setTexts({ fr: r.fr, en: r.en }); setMsg({ ok: true, text: 'Texte recommandé chargé : relisez-le, puis publiez la nouvelle version.' }); }
+          catch (e) { setMsg({ ok: false, text: e.response?.data?.error || e.message }); }
+        }}>Charger le texte recommandé</button>
         <button className="btn pri" disabled={!dirty || publish.isPending} onClick={doPublish}>
           {publish.isPending ? 'Publication…' : `Publier la version ${data.version + 1}`}
         </button>

@@ -91,6 +91,16 @@ export default function DelivererHomeScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
+        <TouchableOpacity onPress={() => navigation.navigate('Ads')} activeOpacity={0.9}
+          style={{ marginHorizontal: 16, marginBottom: 14, padding: 14, borderRadius: 16, backgroundColor: '#FFF1D6', borderWidth: 1, borderColor: '#EBD9A8', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Text style={{ fontSize: 26 }}>🛍️</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 14.5, color: colors.ink }}>{tr('Marché KoliGo')}</Text>
+            <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 12, color: colors.ink55 }}>{tr('Annonces Flash (24 h) et Boost de ta ville')}</Text>
+          </View>
+          <Icon name="arrow" size={18} color={colors.ink55} />
+        </TouchableOpacity>
+
         {/* Online toggle */}
         <View style={{ marginHorizontal: 16, borderRadius: 18, overflow: 'hidden', marginBottom: 16 }}>
           <View style={{ backgroundColor: online ? '#0E2116' : '#F5F0E8', borderRadius: 18, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>

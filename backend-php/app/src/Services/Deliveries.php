@@ -39,7 +39,7 @@ final class Deliveries
     // ── Regles d'acces ───────────────────────────────────────────────────────
 
     /** Publier : CGU a jour acceptees et KYC Vendeur verifie par le back-office. */
-    private static function assertCanPublish(array $u): void
+    public static function assertCanPublish(array $u): void
     {
         if (!empty($u['suspendedAt'])) {
             throw new HttpError('Votre compte vendeur est suspendu (' . ($u['suspendReason'] ?: 'déclarations non conformes') . '). Contestez depuis l\'application ou contactez KoliGo.', 403, 'ACCOUNT_SUSPENDED');

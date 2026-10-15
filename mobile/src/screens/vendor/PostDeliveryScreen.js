@@ -106,7 +106,7 @@ function FieldError({ msg }) {
   return <Text style={{ fontFamily: `${fonts.ui}-SemiBold`, fontSize: 12, color: '#DC2626', marginTop: 4 }}>{msg}</Text>;
 }
 
-export default function PostDeliveryScreen({ navigation }) {
+export default function PostDeliveryScreen({ navigation, route }) {
   const { api, token, showToast, pricing, lang, user } = useApp();
   const { t } = useI18n();
   const isEn = lang === 'en';
@@ -143,6 +143,14 @@ export default function PostDeliveryScreen({ navigation }) {
   const [fromCity, setFromCity]     = useState('');
   const [type, setType]             = useState('TEMPORAIRE');
   const [productPrice, setProductPrice] = useState('');
+  const prefill = route?.params?.prefill;
+  useEffect(() => {
+    if (!prefill) return;
+    if (prefill.fromCity) setFromCity(prefill.fromCity);
+    if (prefill.from) setFrom(prefill.from);
+    if (prefill.parcelDesc) setParcelDesc(prefill.parcelDesc);
+    if (prefill.productPrice) setProductPrice(prefill.productPrice);
+  }, [prefill]);
   const [declaredValue, setDeclaredValue] = useState('');
   const [offers, setOffers] = useState(['', '', '']);
   const [offersTouched, setOffersTouched] = useState(false);

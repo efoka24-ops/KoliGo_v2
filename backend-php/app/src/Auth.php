@@ -36,6 +36,19 @@ final class Auth
     }
 
     /** Middleware : exige un Bearer valide. */
+    /** Authentification facultative : un visiteur sans jeton valide passe, un connecte est reconnu (routes publiques des annonces). */
+    public static function optionalJWT(Ctx $c): void
+    {
+        if (!Http::header('Authorization')) {
+            return;
+        }
+        try {
+            self::verifyJWT($c);
+        } catch (\Throwable) {
+            $c->user = null;
+        }
+    }
+
     public static function verifyJWT(Ctx $c): void
     {
         $h = Http::header('Authorization');

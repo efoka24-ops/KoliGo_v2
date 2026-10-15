@@ -50,6 +50,7 @@ final class Cgu
             '{{strike_threshold}}' => (string)$cfg['strikeThreshold'],
             '{{strike_window}}' => (string)$cfg['strikeWindowDays'],
             '{{cancel_grace}}' => (string)$cfg['cancelGraceMin'],
+            '{{offer_min}}' => (string)$cfg['offerMin'],
         ];
         foreach ($articles as &$a) {
             $a['title'] = strtr((string)$a['title'], $tokens);

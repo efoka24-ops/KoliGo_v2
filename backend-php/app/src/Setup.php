@@ -13,6 +13,9 @@ final class Setup
     private const INDEXES = [
         'idx_otp_phone' => ['OtpCode', 'phone'],
         'idx_notif_user' => ['Notification', 'userId'],
+        'idx_annonce_status' => ['Annonce', 'status'],
+        'idx_annonce_vendor' => ['Annonce', 'vendorId'],
+        'idx_annonce_photo' => ['AnnoncePhoto', 'adId'],
         'idx_incident_vendor' => ['Incident', 'vendorId'],
         'idx_event_delivery' => ['DeliveryEvent', 'deliveryId'],
         'idx_decline_user' => ['OfferDecline', 'userId'],
@@ -50,7 +53,7 @@ final class Setup
     ];
 
     /** A incrementer quand le schema ou les reglages de reference changent : declenche une migration au prochain appel. */
-    public const SCHEMA_VERSION = 16;
+    public const SCHEMA_VERSION = 17;
 
     /**
      * Migration automatique et rejouable : evite d'avoir a relancer _setup.php (dont le jeton est supprime apres

@@ -757,6 +757,13 @@ final class AdminController
 
     // ── CGU : texte versionné en base, édité ici ─────────────────────────────
 
+    /** GET /admin/cgu/recommended : texte recommande par KoliGo (nouveau modele de prix, incidents, annonces), a charger dans l'editeur SANS publier. */
+    public static function recommendedCgu(Ctx $c): array
+    {
+        $def = require dirname(__DIR__, 2) . '/database/cgu_default.php';
+        return ['fr' => $def['fr'], 'en' => $def['en']];
+    }
+
     public static function getCgu(Ctx $c): array
     {
         Cgu::ensureSeeded();
@@ -765,7 +772,7 @@ final class AdminController
             'version' => $latest,
             'fr' => Cgu::raw('fr')['articles'], 'en' => Cgu::raw('en')['articles'],
             'history' => Cgu::history(),
-            'tokens' => ['{{cancel_fee}}', '{{revision_timeout}}', '{{strike_threshold}}', '{{strike_window}}', '{{cancel_grace}}'],
+            'tokens' => ['{{cancel_fee}}', '{{revision_timeout}}', '{{strike_threshold}}', '{{strike_window}}', '{{cancel_grace}}', '{{offer_min}}'],
             'acceptedLatest' => (int)Db::val('SELECT COUNT(*) FROM `User` WHERE cguVersion = ?', [$latest]),
             'totalUsers' => (int)Db::val("SELECT COUNT(*) FROM `User` WHERE activeRole <> 'ADMIN'"),
         ];

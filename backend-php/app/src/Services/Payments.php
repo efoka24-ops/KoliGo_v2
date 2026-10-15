@@ -39,6 +39,17 @@ final class Payments
         return ['topUpId' => $id] + $out;
     }
 
+    /** Paiement d'un Boost d'annonce par le vendeur : l'annonce n'est activee qu'a la confirmation du fournisseur. */
+    public static function startAdPayment(array $ad, int $amount, string $phone): array
+    {
+        $ref = Sungku::reference('AD', $ad['id']);
+        $id = Db::id();
+        $now = Db::now();
+        Db::insert('AnnoncePayment', ['id' => $id, 'adId' => $ad['id'], 'amountXAF' => $amount, 'phone' => $phone, 'externalRef' => $ref, 'createdAt' => $now, 'updatedAt' => $now]);
+        $out = self::deposit('AnnoncePayment', $id, $ref, $amount, $phone, 'Boost annonce KoliGo', ['adId' => $ad['id']]);
+        return ['adId' => $ad['id'], 'amountXAF' => $amount] + $out;
+    }
+
     /** Paiement du transport par le destinataire a la livraison. */
     public static function startDeliveryPayment(array $d, string $phone): array
     {
@@ -147,6 +158,8 @@ final class Payments
             self::settleWithdrawal($ref, $settled);
         } elseif (str_starts_with($ref, 'KOLIGO-DELIV-')) {
             self::settleDelivery($ref, $settled, $paymentId);
+        } elseif (str_starts_with($ref, 'KOLIGO-AD-')) {
+            self::settleAd($ref, $settled, $paymentId);
         }
     }
 
@@ -163,7 +176,7 @@ final class Payments
             }
         }
         if ($paymentId !== '') {
-            foreach (['TopUp', 'DeliveryPayment', 'Withdrawal'] as $t) {
+            foreach (['TopUp', 'DeliveryPayment', 'Withdrawal', 'AnnoncePayment'] as $t) {
                 $r = Db::val("SELECT externalRef FROM `$t` WHERE paymentId = ?", [$paymentId]);
                 if ($r) {
                     return (string)$r;
@@ -175,7 +188,9 @@ final class Payments
             $meta = json_decode($meta, true);
         }
         if (is_array($meta)) {
-            if (!empty($meta['topUpId'])) {
+            if (!empty($meta['adId'])) {
+                $r = Db::val('SELECT externalRef FROM `AnnoncePayment` WHERE adId = ? ORDER BY createdAt DESC LIMIT 1', [(string)$meta['adId']]);
+            } elseif (!empty($meta['topUpId'])) {
                 $r = Db::val('SELECT externalRef FROM `TopUp` WHERE id = ?', [(string)$meta['topUpId']]);
             } elseif (!empty($meta['deliveryId'])) {
                 $r = Db::val("SELECT externalRef FROM `DeliveryPayment` WHERE deliveryId = ? ORDER BY createdAt DESC LIMIT 1", [(string)$meta['deliveryId']]);
@@ -207,6 +222,22 @@ final class Payments
         $status = (string)($data['status'] ?? '');
         if (Sungku::isSettled($status) || Sungku::isFailed($status)) {
             self::handleWebhook(['id' => $row['paymentId'], 'status' => $status, 'reference' => $row['externalRef']]);
+        }
+    }
+
+    private static function settleAd(string $ref, bool $settled, string $paymentId): void
+    {
+        $p = Db::one('SELECT * FROM `AnnoncePayment` WHERE externalRef = ?', [$ref]);
+        if (!$p || $p['status'] !== 'PENDING') {
+            return;
+        }
+        $now = Db::now();
+        if (!$settled) {
+            Db::exec("UPDATE `AnnoncePayment` SET status = 'FAILED', updatedAt = ? WHERE id = ? AND status = 'PENDING'", [$now, $p['id']]);
+            return;
+        }
+        if (Db::exec("UPDATE `AnnoncePayment` SET status = 'SUCCESS', paymentId = COALESCE(?, paymentId), updatedAt = ? WHERE id = ? AND status = 'PENDING'", [$paymentId ?: null, $now, $p['id']]) === 1) {
+            Annonces::activateBoost((string)$p['adId']);
         }
     }
 

@@ -380,3 +380,55 @@ CREATE TABLE IF NOT EXISTS `PriceRequest` (
   `createdAt` DATETIME NOT NULL,
   `respondedAt` DATETIME NULL
 ) {{OPTS}};
+
+-- Annonces de produits Flash (24 h gratuites) et Boost (payantes).
+CREATE TABLE IF NOT EXISTS `Annonce` (
+  `id` VARCHAR(40) NOT NULL PRIMARY KEY,
+  `vendorId` VARCHAR(40) NOT NULL,
+  `title` VARCHAR(160) NOT NULL,
+  `description` TEXT NOT NULL,
+  `category` VARCHAR(20) NOT NULL,
+  `priceXAF` INT NOT NULL,
+  `city` VARCHAR(100) NOT NULL,
+  `quartier` VARCHAR(191) NULL,
+  `stock` INT NULL,
+  `contactMode` VARCHAR(10) NOT NULL DEFAULT 'CALL',
+  `type` VARCHAR(8) NOT NULL,
+  `durationHours` INT NOT NULL,
+  `status` VARCHAR(12) NOT NULL DEFAULT 'BROUILLON',
+  `publishedAt` DATETIME NULL,
+  `expiresAt` DATETIME NULL,
+  `views` INT NOT NULL DEFAULT 0,
+  `contacts` INT NOT NULL DEFAULT 0,
+  `suspendReason` VARCHAR(255) NULL,
+  `removeReason` VARCHAR(255) NULL,
+  `createdAt` DATETIME NOT NULL,
+  `updatedAt` DATETIME NOT NULL
+) {{OPTS}};
+
+CREATE TABLE IF NOT EXISTS `AnnoncePhoto` (
+  `id` VARCHAR(40) NOT NULL PRIMARY KEY,
+  `adId` VARCHAR(40) NOT NULL,
+  `path` VARCHAR(500) NOT NULL,
+  `position` INT NOT NULL DEFAULT 0
+) {{OPTS}};
+
+CREATE TABLE IF NOT EXISTS `AnnoncePayment` (
+  `id` VARCHAR(40) NOT NULL PRIMARY KEY,
+  `adId` VARCHAR(40) NOT NULL,
+  `amountXAF` INT NOT NULL,
+  `phone` VARCHAR(20) NOT NULL,
+  `externalRef` VARCHAR(100) NOT NULL,
+  `paymentId` VARCHAR(100) NULL,
+  `status` VARCHAR(12) NOT NULL DEFAULT 'PENDING',
+  `createdAt` DATETIME NOT NULL,
+  `updatedAt` DATETIME NOT NULL
+) {{OPTS}};
+
+CREATE TABLE IF NOT EXISTS `AnnonceReport` (
+  `id` VARCHAR(40) NOT NULL PRIMARY KEY,
+  `adId` VARCHAR(40) NOT NULL,
+  `userId` VARCHAR(40) NOT NULL,
+  `reason` VARCHAR(300) NOT NULL,
+  `createdAt` DATETIME NOT NULL
+) {{OPTS}};
