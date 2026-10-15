@@ -65,6 +65,7 @@ export default function Sidebar({ onLogout, user }) {
       <Item to="/messages" id="support" label="Messages" />
       <Item to="/notifications" id="support" label="Notifications" />
       <Item to="/fixed-routes" id="invoices" label="Trajets fixes" />
+      <Item to="/versions" id="settings" label="Versions de l'app" />
       <Item to="/cgu"        id="siteContent" label="CGU" />
       <Item to="/zones"      id="zones"    label="Villes & Quartiers" />
       <Item to="/analytics"  id="analytics" />

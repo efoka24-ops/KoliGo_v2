@@ -171,6 +171,34 @@ final class AdminController
 
     // ── Trajets a prix fixe ──────────────────────────────────────────────────
 
+    public static function listAppVersions(Ctx $c): array
+    {
+        return ['items' => \Koligo\Services\AppVersions::all()];
+    }
+
+    public static function createAppVersion(Ctx $c): array
+    {
+        $r = \Koligo\Services\AppVersions::create($c->body(), $c->user['userId']);
+        http_response_code(201);
+        return $r;
+    }
+
+    public static function activateAppVersion(Ctx $c): array
+    {
+        return \Koligo\Services\AppVersions::activate($c->param('id'));
+    }
+
+    public static function updateAppVersion(Ctx $c): array
+    {
+        return \Koligo\Services\AppVersions::update($c->param('id'), $c->body());
+    }
+
+    public static function deleteAppVersion(Ctx $c): array
+    {
+        \Koligo\Services\AppVersions::delete($c->param('id'));
+        return ['ok' => true];
+    }
+
     public static function listFixedRoutes(Ctx $c): array
     {
         return ['items' => Db::all('SELECT * FROM `FixedRoute` ORDER BY fromCity, toCity, fromPlace, toPlace'), 'lightKg' => Pricing::config()['fixedLightKg']];

@@ -56,7 +56,7 @@ final class Setup
     ];
 
     /** A incrementer quand le schema ou les reglages de reference changent : declenche une migration au prochain appel. */
-    public const SCHEMA_VERSION = 18;
+    public const SCHEMA_VERSION = 20;
 
     /**
      * Migration automatique et rejouable : evite d'avoir a relancer _setup.php (dont le jeton est supprime apres
@@ -190,6 +190,21 @@ final class Setup
                     $coords += Db::exec('UPDATE `Neighborhood` SET latitude = ?, longitude = ? WHERE cityId = ? AND name = ? AND latitude IS NULL', [(float)$ll[0], (float)$ll[1], $cid, $hood]);
                 }
             }
+        }
+        // Historique des versions : on part de la version actuellement publiee (les suivantes s'ajoutent depuis le back-office).
+        if (!Db::val('SELECT COUNT(*) FROM `AppVersion`')) {
+            Db::insert('AppVersion', [
+                'id' => Db::id(), 'version' => '1.0.20', 'versionCode' => 21, 'downloadUrl' => '/landing/koligo-v1.0.20.apk',
+                'notes' => 'Version de départ.', 'forceUpdate' => 1, 'isCurrent' => 1, 'createdAt' => $now, 'activatedAt' => $now,
+            ]);
+        }
+        // 1.0.21 (notifications push + controle de version) : dans l'historique mais NON activee ; l'administrateur l'active quand il veut.
+        if (!Db::one('SELECT id FROM `AppVersion` WHERE versionCode = 22')) {
+            Db::insert('AppVersion', [
+                'id' => Db::id(), 'version' => '1.0.21', 'versionCode' => 22, 'downloadUrl' => '/landing/koligo-v1.0.21.apk',
+                'notes' => 'Notifications sur le téléphone, mise à jour guidée, annonces Flash et Boost, vérification KYC automatique.',
+                'forceUpdate' => 1, 'isCurrent' => 0, 'createdAt' => $now,
+            ]);
         }
         Cgu::ensureSeeded();
         return ["reglages OK", "$cities villes et $quartiers quartiers ajoutes, $coords positions GPS", 'CGU v' . Cgu::latestVersion()];

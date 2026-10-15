@@ -92,6 +92,12 @@ final class PublicController
         return Cgu::get((string)(Http::query('lang') ?: 'fr'));
     }
 
+    /** Controle de version du telephone : GET /public/app-version?versionCode=22. */
+    public static function appVersion(Ctx $c): array
+    {
+        return \Koligo\Services\AppVersions::check((int)Http::query('versionCode'));
+    }
+
     public static function distance(Ctx $c): array
     {
         $from = Http::query('from');

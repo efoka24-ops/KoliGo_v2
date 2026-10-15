@@ -452,3 +452,17 @@ CREATE TABLE IF NOT EXISTS `KycCheck` (
   `startedAt` DATETIME NULL,
   `finishedAt` DATETIME NULL
 ) {{OPTS}};
+
+-- Versions de l'application mobile : historique, version active (isCurrent) imposee aux telephones.
+CREATE TABLE IF NOT EXISTS `AppVersion` (
+  `id` VARCHAR(40) NOT NULL PRIMARY KEY,
+  `version` VARCHAR(20) NOT NULL,
+  `versionCode` INT NOT NULL,
+  `downloadUrl` VARCHAR(500) NOT NULL,
+  `notes` VARCHAR(1000) NULL,
+  `forceUpdate` TINYINT(1) NOT NULL DEFAULT 1,
+  `isCurrent` TINYINT(1) NOT NULL DEFAULT 0,
+  `createdBy` VARCHAR(40) NULL,
+  `createdAt` DATETIME NOT NULL,
+  `activatedAt` DATETIME NULL
+) {{OPTS}};

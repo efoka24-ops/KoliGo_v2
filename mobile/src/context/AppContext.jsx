@@ -68,6 +68,7 @@ export function AppProvider({ children, initialLang = 'fr' }) {
   const [pricing, setPricing] = useState({ baseRate: 300, perKmRate: 150, minPrice: 1000, weightSurcharge: 100, commissionRate: 15 });
   const [lang, setLangState] = useState(initialLang);
   const [maintenance, setMaintenance] = useState(false);
+  const [update, setUpdate] = useState(null); // mise à jour imposée par le back-office : { version, downloadUrl, notes, downgrade }
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const biometricRef = useRef(false);
   const [sessionRestored, setSessionRestored] = useState(false);
@@ -83,6 +84,14 @@ export function AppProvider({ children, initialLang = 'fr' }) {
     try {
       const c = await apiFetch('/public/config');
       if (c && typeof c.maintenance === 'boolean') setMaintenance(c.maintenance);
+    } catch { /* hors ligne : on garde l'etat connu */ }
+    // Version imposée : numéro de build de cet APK comparé à la version active du back-office (aucun blocage si inconnu ou hors ligne).
+    try {
+      const code = parseInt(Application.nativeBuildVersion || '0', 10) || 0;
+      if (Platform.OS === 'android' && code > 0) {
+        const v = await apiFetch(`/public/app-version?versionCode=${code}`);
+        setUpdate(v && v.mustUpdate ? v : null);
+      }
     } catch { /* hors ligne : on garde l'etat connu */ }
   }, []);
   useEffect(() => {
@@ -327,7 +336,7 @@ export function AppProvider({ children, initialLang = 'fr' }) {
       biometricEnabled, enableBiometric,
       sessionRestored,
       online, setOnline,
-      maintenance, refreshConfig,
+      maintenance, refreshConfig, update,
       notifications, unreadCount, refreshNotifications, markNotificationsRead,
     }}>
       {children}

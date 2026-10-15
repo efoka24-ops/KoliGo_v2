@@ -41,6 +41,7 @@ return function (Router $r): void {
         $r->get("$p/public/quote", [Pub::class, 'quote']);
         $r->get("$p/public/config", [Pub::class, 'config']);
         $r->get("$p/public/cgu", [Pub::class, 'cgu']);
+        $r->get("$p/public/app-version", [Pub::class, 'appVersion']);
         $r->get("$p/public/distance", [Pub::class, 'distance']);
 
         // ── auth ─────────────────────────────────────────────────────────────
@@ -148,6 +149,11 @@ return function (Router $r): void {
         $r->get("$a/ads-config", [AdC::class, 'adminConfig'], ...$adm);
         $r->patch("$a/ads-config", [AdC::class, 'adminSaveConfig'], ...$adm);
         $r->patch("$a/ads/:id", [AdC::class, 'adminDecide'], ...$adm);
+        $r->get("$a/app-versions", [Admin::class, 'listAppVersions'], ...$adm);
+        $r->post("$a/app-versions", [Admin::class, 'createAppVersion'], ...$adm);
+        $r->post("$a/app-versions/:id/activate", [Admin::class, 'activateAppVersion'], ...$adm);
+        $r->patch("$a/app-versions/:id", [Admin::class, 'updateAppVersion'], ...$adm);
+        $r->delete("$a/app-versions/:id", [Admin::class, 'deleteAppVersion'], ...$adm);
         $r->get("$a/fixed-routes", [Admin::class, 'listFixedRoutes'], ...$adm);
         $r->post("$a/fixed-routes", [Admin::class, 'createFixedRoute'], ...$adm);
         $r->patch("$a/fixed-routes/:id", [Admin::class, 'updateFixedRoute'], ...$adm);
