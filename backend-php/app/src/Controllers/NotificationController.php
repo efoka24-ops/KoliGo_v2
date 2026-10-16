@@ -19,6 +19,7 @@ final class NotificationController
             $n['data'] = $n['data'] ? json_decode((string)$n['data'], true) : null;
             $n['read'] = $n['readAt'] !== null;
         }
+        \Koligo\Services\Payments::scheduleSweep();
         return [
             'items' => $items,
             'unread' => (int)Db::val('SELECT COUNT(*) FROM `Notification` WHERE userId = ? AND readAt IS NULL', [$uid]),

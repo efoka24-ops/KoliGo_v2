@@ -492,6 +492,37 @@ final class Annonces
     }
 
     /**
+     * Validation manuelle d'un paiement Boost par un administrateur, sur preuve du debit (reference de l'operateur).
+     * Met l'annonce en ligne SANS confirmation de Sungku : la preuve, l'administrateur et l'heure sont conservés (gatewayInfo + journal d'audit).
+     */
+    public static function adminValidatePayment(string $id, string $adminId, string $proof): array
+    {
+        $proof = trim($proof);
+        if (!preg_match('/^[A-Za-z0-9._\-]{8,60}$/', $proof)) {
+            throw new HttpError("Indiquez la référence de l'opérateur pour ce débit (ex. MP261016.1013.D53600)");
+        }
+        $p = Db::one('SELECT * FROM `AnnoncePayment` WHERE id = ?', [$id]);
+        if (!$p) {
+            throw new HttpError('Paiement introuvable', 404);
+        }
+        if ($p['status'] !== 'PENDING') {
+            throw new HttpError("Ce paiement n'est pas en attente (statut " . $p['status'] . ')');
+        }
+        $ad = Db::one('SELECT id, vendorId, status FROM `Annonce` WHERE id = ?', [$p['adId']]);
+        if (!$ad || $ad['status'] !== 'BROUILLON') {
+            throw new HttpError("L'annonce n'est plus en brouillon (statut " . ($ad['status'] ?? 'introuvable') . ') : validation impossible');
+        }
+        $now = Db::now();
+        $info = json_encode(['at' => $now, 'etape' => 'validation manuelle', 'admin' => $adminId, 'reference' => $proof], JSON_UNESCAPED_UNICODE);
+        if (Db::exec("UPDATE `AnnoncePayment` SET status = 'SUCCESS', gatewayInfo = ?, updatedAt = ? WHERE id = ? AND status = 'PENDING'", [$info, $now, $id]) !== 1) {
+            throw new HttpError('Ce paiement vient de changer de statut');
+        }
+        Db::insert('AdminAction', ['id' => Db::id(), 'adminId' => $adminId, 'userId' => (string)$ad['vendorId'], 'action' => 'AD_PAYMENT_MANUAL', 'createdAt' => $now]);
+        self::activateBoost((string)$p['adId']);
+        return ['status' => 'SUCCESS', 'adStatus' => self::row((string)$p['adId'])['status'], 'message' => "Paiement validé à la main (référence $proof) : l'annonce est en ligne."];
+    }
+
+    /**
      * Revérifie un paiement Boost aupres de Sungku, sans delai d'attente, et applique le resultat (annonce en ligne si confirme).
      * Renvoie ce que Sungku a repondu, pour comprendre un paiement bloque.
      */

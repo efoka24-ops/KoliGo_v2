@@ -45,6 +45,16 @@ function PaymentsPanel() {
     onSuccess: (r, id) => { setRes((m) => ({ ...m, [id]: r.message })); qc.invalidateQueries({ queryKey: ['admin-ad-payments'] }); qc.invalidateQueries({ queryKey: ['admin-ads'] }); },
     onError: (e, id) => setRes((m) => ({ ...m, [id]: e.response?.data?.error || e.message })),
   });
+  const validate = useMutation({
+    mutationFn: ({ id, proof }) => adminApi.validateAdPayment(id, proof),
+    onSuccess: (r, v) => { setRes((m) => ({ ...m, [v.id]: r.message })); qc.invalidateQueries({ queryKey: ['admin-ad-payments'] }); qc.invalidateQueries({ queryKey: ['admin-ads'] }); },
+    onError: (e, v) => setRes((m) => ({ ...m, [v.id]: e.response?.data?.error || e.message })),
+  });
+  const manual = (p) => {
+    const proof = window.prompt(`Validation manuelle de ${xaf(p.amountXAF)} (${p.phone}).\n\nSaisissez la référence de l'opérateur du débit (ex. MP261016.1013.D53600) :`);
+    if (!proof) return;
+    if (window.confirm(`Mettre l'annonce « ${p.title} » en ligne sans confirmation de Sungku, sur la référence ${proof.trim()} ?\n\nLa référence et votre identité sont enregistrées.`)) validate.mutate({ id: p.id, proof });
+  };
   const rows = list.data?.items ?? [];
   const wh = list.data?.lastWebhook;
   const gw = list.data?.gateway;
@@ -74,7 +84,7 @@ function PaymentsPanel() {
                 <td>{p.phone}<div className="muted mono-sm">{p.externalRef}</div></td>
                 <td>{xaf(p.amountXAF)}</td>
                 <td><b style={{ color: COLOR[p.status] }}>{LABEL[p.status] || p.status}</b>{res[p.id] ? <div className="muted mono-sm" style={{ maxWidth: 260 }}>{res[p.id]}</div> : null}{p.gatewayInfo ? <div className="muted mono-sm" style={{ maxWidth: 320, wordBreak: 'break-all' }}>Sungku : {p.gatewayInfo}</div> : null}</td>
-                <td style={{ textAlign: 'right' }}>{p.status === 'PENDING' && <button className="btn sm" disabled={check.isPending} onClick={() => check.mutate(p.id)}>Revérifier chez Sungku</button>}</td>
+                <td style={{ textAlign: 'right' }}>{p.status === 'PENDING' && <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', flexWrap: 'wrap' }}><button className="btn sm" disabled={check.isPending} onClick={() => check.mutate(p.id)}>Revérifier chez Sungku</button><button className="btn sm" disabled={validate.isPending} onClick={() => manual(p)}>Valider à la main</button></div>}</td>
               </tr>
             ))}
         </tbody>

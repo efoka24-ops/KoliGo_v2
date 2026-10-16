@@ -230,6 +230,58 @@ final class Payments
         }
     }
 
+    /**
+     * Revérification automatique des paiements encore en attente (le webhook peut ne jamais arriver).
+     * Déclenchée par l'activité habituelle (relève des notifications, tableau d'administration), au plus une fois par minute,
+     * APRES l'envoi de la réponse : personne n'attend. N'applique que ce que Sungku confirme lui-même.
+     */
+    public static function scheduleSweep(): void
+    {
+        if (self::mock() || !Sungku::isConfigured()) {
+            return;
+        }
+        try {
+            $now = time();
+            $last = Db::val("SELECT `value` FROM `PlatformSetting` WHERE `key` = 'payments_sweep_at'");
+            if ($last === null || $last === false) {
+                Db::exec("INSERT INTO `PlatformSetting` (`key`, `value`, updatedAt) VALUES ('payments_sweep_at', ?, ?)", [(string)$now, Db::now()]);
+            } elseif ((int)$last > $now - 60 || Db::exec("UPDATE `PlatformSetting` SET `value` = ?, updatedAt = ? WHERE `key` = 'payments_sweep_at' AND `value` = ?", [(string)$now, Db::now(), (string)$last]) !== 1) {
+                return; // deja fait il y a moins d'une minute, ou pris par une requete concurrente
+            }
+        } catch (\Throwable) {
+            return;
+        }
+        register_shutdown_function(static function (): void {
+            if (function_exists('fastcgi_finish_request')) {
+                @fastcgi_finish_request();
+            }
+            self::sweepPending(3);
+        });
+    }
+
+    /** Interroge Sungku pour les paiements en attente les plus recents (de 20 s a 3 jours). @return int nombre de paiements interroges */
+    public static function sweepPending(int $max = 3): int
+    {
+        $done = 0;
+        $from = gmdate('Y-m-d H:i:s', time() - 3 * 86400);
+        $to = gmdate('Y-m-d H:i:s', time() - 20);
+        foreach (['AnnoncePayment', 'DeliveryPayment', 'TopUp'] as $table) {
+            if ($done >= $max) {
+                break;
+            }
+            try {
+                $rows = Db::all("SELECT * FROM `$table` WHERE status = 'PENDING' AND paymentId IS NOT NULL AND paymentId <> '' AND createdAt > ? AND createdAt < ? ORDER BY createdAt DESC LIMIT " . ($max - $done), [$from, $to]);
+            } catch (\Throwable) {
+                continue;
+            }
+            foreach ($rows as $row) {
+                self::reconcile($table, $row);
+                $done++;
+            }
+        }
+        return $done;
+    }
+
     /** Garde la derniere reponse brute de Sungku sur la ligne de paiement (HTTP, extrait du corps ; jamais la cle API) : sert au diagnostic au back-office. */
     public static function noteGateway(string $table, string $rowId, string $step): void
     {
