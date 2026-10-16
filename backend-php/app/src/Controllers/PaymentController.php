@@ -29,9 +29,11 @@ final class PaymentController
             // Trace utile au diagnostic (aucun secret, aucune signature n'est journalisee).
             error_log(sprintf('[payment] webhook REFUSE signature invalide : timestamp=%s signature=%s taille=%d',
                 Http::header('X-Apisungku-Timestamp') ? 'oui' : 'absent', Http::header('X-Apisungku-Signature') ? 'oui' : 'absent', strlen($raw)));
+            Payments::noteWebhook(false, 'signature refusee (horodatage ' . (Http::header('X-Apisungku-Timestamp') ? 'present' : 'absent') . ', signature ' . (Http::header('X-Apisungku-Signature') ? 'presente' : 'absente') . ')');
             throw new HttpError('Invalid signature', 401);
         }
         error_log('[payment] webhook recu et authentifie : ' . substr($raw, 0, 400));
+        Payments::noteWebhook(true, $raw);
         $payload = json_decode($raw, true);
         try {
             if (is_array($payload)) {

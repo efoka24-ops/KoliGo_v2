@@ -46,10 +46,16 @@ function PaymentsPanel() {
     onError: (e, id) => setRes((m) => ({ ...m, [id]: e.response?.data?.error || e.message })),
   });
   const rows = list.data?.items ?? [];
+  const wh = list.data?.lastWebhook;
   const COLOR = { PENDING: '#C4611A', SUCCESS: '#0A7A3E', FAILED: '#B42318' };
   const LABEL = { PENDING: 'En attente', SUCCESS: 'Payé', FAILED: 'Échoué' };
   return (
     <div className="card" style={{ marginBottom: 14, overflow: 'hidden' }}>
+      <div style={{ padding: '10px 14px', fontSize: 13, background: wh ? (wh.ok ? '#EFF8F1' : '#FDECEC') : '#FFF6E5' }}>
+        {wh
+          ? <>Dernier appel reçu de Sungku : <b>{utc(wh.at)}</b> — {wh.ok ? 'accepté' : 'REFUSÉ'} <span className="muted mono-sm">{wh.detail}</span></>
+          : <>Aucun appel de confirmation reçu de Sungku depuis la mise en place de ce suivi : vérifiez que l'adresse <b>/api/payment/webhook/sungku</b> est bien enregistrée chez Sungku.</>}
+      </div>
       <table className="tbl">
         <thead><tr><th>Date</th><th>Annonce</th><th>Payeur</th><th>Montant</th><th>Statut</th><th /></tr></thead>
         <tbody>
@@ -61,7 +67,7 @@ function PaymentsPanel() {
                 <td><b>{p.title || '—'}</b><div className="muted mono-sm">{p.vendorName || ''} · {p.type} {p.durationHours ? Math.round(p.durationHours / 24) + ' j' : ''} · annonce {STATUS_LABEL[p.adStatus] || p.adStatus || '—'}</div></td>
                 <td>{p.phone}<div className="muted mono-sm">{p.externalRef}</div></td>
                 <td>{xaf(p.amountXAF)}</td>
-                <td><b style={{ color: COLOR[p.status] }}>{LABEL[p.status] || p.status}</b>{res[p.id] ? <div className="muted mono-sm" style={{ maxWidth: 260 }}>{res[p.id]}</div> : null}</td>
+                <td><b style={{ color: COLOR[p.status] }}>{LABEL[p.status] || p.status}</b>{res[p.id] ? <div className="muted mono-sm" style={{ maxWidth: 260 }}>{res[p.id]}</div> : null}{p.gatewayInfo ? <div className="muted mono-sm" style={{ maxWidth: 320, wordBreak: 'break-all' }}>Sungku : {p.gatewayInfo}</div> : null}</td>
                 <td style={{ textAlign: 'right' }}>{p.status === 'PENDING' && <button className="btn sm" disabled={check.isPending} onClick={() => check.mutate(p.id)}>Revérifier chez Sungku</button>}</td>
               </tr>
             ))}

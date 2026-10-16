@@ -31,6 +31,9 @@ final class Setup
 
     /** Colonnes ajoutees apres la premiere version du schema : CREATE TABLE IF NOT EXISTS ne les ajoute pas aux bases existantes. */
     private const COLUMNS = [
+        ['AnnoncePayment', 'gatewayInfo', 'TEXT NULL'],
+        ['DeliveryPayment', 'gatewayInfo', 'TEXT NULL'],
+        ['TopUp', 'gatewayInfo', 'TEXT NULL'],
         ['Delivery', 'size', 'VARCHAR(5) NULL'],
         ['Delivery', 'category', 'VARCHAR(40) NULL'],
         ['Delivery', 'photoPath', 'VARCHAR(500) NULL'],
@@ -56,7 +59,7 @@ final class Setup
     ];
 
     /** A incrementer quand le schema ou les reglages de reference changent : declenche une migration au prochain appel. */
-    public const SCHEMA_VERSION = 20;
+    public const SCHEMA_VERSION = 21;
 
     /**
      * Migration automatique et rejouable : evite d'avoir a relancer _setup.php (dont le jeton est supprime apres

@@ -485,7 +485,7 @@ final class Annonces
     public static function adminPayments(): array
     {
         return Db::all(
-            'SELECT p.id, p.adId, p.amountXAF, p.phone, p.status, p.paymentId, p.externalRef, p.createdAt, p.updatedAt, a.title, a.status AS adStatus, a.type, a.durationHours, u.name AS vendorName, u.phone AS vendorPhone '
+            'SELECT p.id, p.adId, p.amountXAF, p.phone, p.status, p.paymentId, p.externalRef, p.createdAt, p.updatedAt, p.gatewayInfo, a.title, a.status AS adStatus, a.type, a.durationHours, u.name AS vendorName, u.phone AS vendorPhone '
             . 'FROM `AnnoncePayment` p LEFT JOIN `Annonce` a ON a.id = p.adId LEFT JOIN `User` u ON u.id = a.vendorId '
             . 'ORDER BY p.createdAt DESC LIMIT 50'
         );
@@ -512,7 +512,9 @@ final class Annonces
         }
         try {
             $res = \Koligo\Services\Sungku::fetchDeposit((string)$p['paymentId']);
+            Payments::noteGateway('AnnoncePayment', $id, 'revérification');
         } catch (\Throwable $e) {
+            Payments::noteGateway('AnnoncePayment', $id, 'revérification');
             return ['status' => 'PENDING', 'message' => 'Sungku ne répond pas : ' . $e->getMessage()];
         }
         $data = $res['data'] ?? $res;

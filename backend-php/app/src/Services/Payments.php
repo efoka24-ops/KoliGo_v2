@@ -100,15 +100,18 @@ final class Payments
                 'metadata' => $meta,
             ]);
         } catch (SungkuRejected $e) {
+            self::noteGateway($table, $rowId, 'demande');
             Db::exec("UPDATE `$table` SET status = 'FAILED', updatedAt = ? WHERE id = ?", [Db::now(), $rowId]);
             throw new HttpError($e->getMessage());
         } catch (SungkuUnavailable $e) {
+            self::noteGateway($table, $rowId, 'demande');
             error_log("[payment] $table $rowId ref $ref : " . $e->getMessage());
             // L'argent a peut-etre bouge : on laisse PENDING, le webhook tranchera.
             return ['paymentId' => '', 'status' => 'PENDING', 'unverified' => true,
                 'message' => 'Paiement en cours de vérification. Consultez votre historique dans un instant.'];
         }
 
+        self::noteGateway($table, $rowId, 'demande');
         $data = $res['data'] ?? $res;
         $paymentId = (string)($data['id'] ?? $data['transactionId'] ?? $data['depositId'] ?? '');
         $status = (string)($data['status'] ?? 'PENDING');
@@ -215,14 +218,50 @@ final class Payments
         try {
             $res = Sungku::fetchDeposit((string)$row['paymentId']);
         } catch (\Throwable $e) {
+            self::noteGateway($table, (string)$row['id'], 'verification');
             error_log("[payment] verification $table {$row['id']} : " . $e->getMessage());
             return;
         }
+        self::noteGateway($table, (string)$row['id'], 'verification');
         $data = $res['data'] ?? $res;
         $status = (string)($data['status'] ?? '');
         if (Sungku::isSettled($status) || Sungku::isFailed($status)) {
             self::handleWebhook(['id' => $row['paymentId'], 'status' => $status, 'reference' => $row['externalRef']]);
         }
+    }
+
+    /** Garde la derniere reponse brute de Sungku sur la ligne de paiement (HTTP, extrait du corps ; jamais la cle API) : sert au diagnostic au back-office. */
+    public static function noteGateway(string $table, string $rowId, string $step): void
+    {
+        $l = Sungku::$last;
+        if (!$l || !in_array($table, ['AnnoncePayment', 'DeliveryPayment', 'TopUp'], true)) {
+            return;
+        }
+        try {
+            Db::exec("UPDATE `$table` SET gatewayInfo = ? WHERE id = ?", [json_encode(['at' => Db::now(), 'etape' => $step] + $l, JSON_UNESCAPED_UNICODE), $rowId]);
+        } catch (\Throwable) {
+            // diagnostic seulement : ne doit jamais gener le paiement
+        }
+    }
+
+    /** Memorise le dernier appel recu de Sungku (accepte ou refuse) : permet de savoir si la passerelle nous joint. */
+    public static function noteWebhook(bool $ok, string $detail): void
+    {
+        $v = json_encode(['at' => Db::now(), 'ok' => $ok, 'detail' => mb_substr($detail, 0, 300)], JSON_UNESCAPED_UNICODE);
+        try {
+            if (Db::exec("UPDATE `PlatformSetting` SET `value` = ?, updatedAt = ? WHERE `key` = 'sungku_last_webhook'", [$v, Db::now()]) === 0
+                && !Db::one("SELECT `key` FROM `PlatformSetting` WHERE `key` = 'sungku_last_webhook'")) {
+                Db::exec("INSERT INTO `PlatformSetting` (`key`, `value`, updatedAt) VALUES ('sungku_last_webhook', ?, ?)", [$v, Db::now()]);
+            }
+        } catch (\Throwable) {
+        }
+    }
+
+    public static function lastWebhook(): ?array
+    {
+        $v = Db::val("SELECT `value` FROM `PlatformSetting` WHERE `key` = 'sungku_last_webhook'");
+        $j = $v ? json_decode((string)$v, true) : null;
+        return is_array($j) ? $j : null;
     }
 
     private static function settleAd(string $ref, bool $settled, string $paymentId): void

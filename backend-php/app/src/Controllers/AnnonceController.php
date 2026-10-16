@@ -103,7 +103,7 @@ final class AnnonceController
 
     public static function adminPayments(Ctx $c): array
     {
-        return ['items' => Annonces::adminPayments()];
+        return ['items' => Annonces::adminPayments(), 'lastWebhook' => \Koligo\Services\Payments::lastWebhook()];
     }
 
     public static function adminCheckPayment(Ctx $c): array
