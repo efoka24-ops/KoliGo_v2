@@ -129,6 +129,19 @@ final class Sungku
      * Comparaison en temps constant. Sans cette verification, quiconque connait
      * l'URL pourrait annoncer un paiement reussi.
      */
+    /**
+     * En-tetes de signature du webhook. Sungku envoie X-Sungku-Timestamp / X-Sungku-Signature ; l'ancien nom
+     * X-Apisungku-* reste accepte. Un seul nom lu = tous les webhooks refuses en 401.
+     *
+     * @return array{0:?string,1:?string} [horodatage, signature]
+     */
+    public static function webhookHeaders(): array
+    {
+        $ts = \Koligo\Http::header('X-Sungku-Timestamp') ?: \Koligo\Http::header('X-Apisungku-Timestamp');
+        $sig = \Koligo\Http::header('X-Sungku-Signature') ?: \Koligo\Http::header('X-Apisungku-Signature');
+        return [$ts ?: null, $sig ?: null];
+    }
+
     public static function verifySignature(string $rawBody, ?string $timestamp, ?string $signature): bool
     {
         $secret = Env::get('SUNGKU_WEBHOOK_SECRET', '') ?? '';

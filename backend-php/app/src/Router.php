@@ -57,6 +57,9 @@ final class Router
                 Http::json(['error' => self::publicMessage($e)], 400);
             }
         }
+        if (stripos($path, 'webhook') !== false) {
+            \Koligo\Services\Payments::noteWebhook(false, ($pathMatched ? 'methode refusee (405) ' : 'adresse inconnue (404) ') . $method . ' ' . substr($path, 0, 120));
+        }
         Http::json(['error' => $pathMatched ? 'Method not allowed' : 'Not found'], $pathMatched ? 405 : 404);
     }
 

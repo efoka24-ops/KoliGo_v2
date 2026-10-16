@@ -47,10 +47,16 @@ function PaymentsPanel() {
   });
   const rows = list.data?.items ?? [];
   const wh = list.data?.lastWebhook;
+  const gw = list.data?.gateway;
   const COLOR = { PENDING: '#C4611A', SUCCESS: '#0A7A3E', FAILED: '#B42318' };
   const LABEL = { PENDING: 'En attente', SUCCESS: 'Payé', FAILED: 'Échoué' };
   return (
     <div className="card" style={{ marginBottom: 14, overflow: 'hidden' }}>
+      {gw && (
+        <div style={{ padding: '8px 14px', fontSize: 12.5, background: gw.apiKey && gw.webhookSecret && !gw.mock ? '#F4F7F5' : '#FDECEC' }}>
+          Passerelle <b>{gw.host}</b> · clé API : <b>{gw.apiKey ? 'configurée' : 'ABSENTE'}</b> · secret de signature des confirmations : <b>{gw.webhookSecret ? 'configuré' : 'ABSENT (toutes les confirmations seront refusées)'}</b>{gw.mock ? ' · MODE TEST ACTIF' : ''}
+        </div>
+      )}
       <div style={{ padding: '10px 14px', fontSize: 13, background: wh ? (wh.ok ? '#EFF8F1' : '#FDECEC') : '#FFF6E5' }}>
         {wh
           ? <>Dernier appel reçu de Sungku : <b>{utc(wh.at)}</b> — {wh.ok ? 'accepté' : 'REFUSÉ'} <span className="muted mono-sm">{wh.detail}</span></>

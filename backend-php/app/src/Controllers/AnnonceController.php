@@ -103,7 +103,12 @@ final class AnnonceController
 
     public static function adminPayments(Ctx $c): array
     {
-        return ['items' => Annonces::adminPayments(), 'lastWebhook' => \Koligo\Services\Payments::lastWebhook()];
+        return ['items' => Annonces::adminPayments(), 'lastWebhook' => \Koligo\Services\Payments::lastWebhook(), 'gateway' => [
+            'apiKey' => \Koligo\Services\Sungku::isConfigured(),
+            'webhookSecret' => (\Koligo\Env::get('SUNGKU_WEBHOOK_SECRET', '') ?? '') !== '',
+            'mock' => \Koligo\Services\Payments::mock(),
+            'host' => (string)parse_url(\Koligo\Services\Sungku::baseUrl(), PHP_URL_HOST),
+        ]];
     }
 
     public static function adminCheckPayment(Ctx $c): array
