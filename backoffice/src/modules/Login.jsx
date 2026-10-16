@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { adminApi } from '../api.js';
 
-// Connexion par e-mail, en étapes :
-//   email    -> saisie de l'adresse
+// Connexion : un seul écran avec l'e-mail et le mot de passe. Étapes :
+//   login    -> e-mail + mot de passe (cas courant)
 //   code     -> première connexion (ou oubli) : code à 6 chiffres reçu par e-mail
-//   create   -> création du mot de passe (PIN de 6 à 12 chiffres) pour les connexions suivantes
-//   password -> connexions suivantes : e-mail + mot de passe
+//   create   -> création du mot de passe (6 à 12 chiffres) pour les connexions suivantes
 export default function Login({ onLogin }) {
-  const [step,     setStep]     = useState('email');
+  const [step,     setStep]     = useState('login');
   const [email,    setEmail]    = useState('');
   const [code,     setCode]     = useState('');
   const [password, setPassword] = useState('');
@@ -42,7 +41,7 @@ export default function Login({ onLogin }) {
         const r = await adminApi.adminEmailStart(email.trim(), reset);
         setCode(''); setPassword('');
         setInfo(r.step === 'code' ? `Un code à 6 chiffres vient d'être envoyé à ${email.trim()} (valable 10 minutes). Pensez à vérifier les courriers indésirables.` : '');
-        setStep(r.step);
+        setStep(r.step === 'code' ? 'code' : 'login');
       } catch (err) { fail(err, 'Serveur indisponible.'); }
     });
   };
@@ -76,7 +75,7 @@ export default function Login({ onLogin }) {
     });
   };
 
-  const back = () => { setStep('email'); setError(''); setInfo(''); setPassword(''); setConfirm(''); setCode(''); };
+  const back = () => { setStep('login'); setError(''); setInfo(''); setPassword(''); setConfirm(''); setCode(''); };
 
   return (
     <div style={{ display:'grid', placeItems:'center', height:'100vh', background:'var(--app)' }}>
@@ -94,22 +93,14 @@ export default function Login({ onLogin }) {
             </div>
           </div>
 
-          {step === 'email' && (
-            <form onSubmit={startEmail} style={formStyle}>
-              <Field label="Adresse e-mail" value={email} onChange={setEmail} placeholder="prenom@exemple.com" type="email" autoFocus />
-              <Message error={error} />
-              <Submit disabled={loading || !email} loading={loading} label="Continuer" />
-            </form>
-          )}
-
-          {step === 'password' && (
+          {step === 'login' && (
             <form onSubmit={signIn} style={formStyle}>
-              <Recap email={email} onBack={back} />
-              <Field label="Mot de passe" value={password} onChange={setPassword} placeholder="••••••" type="password" autoFocus />
+              <Field label="Adresse e-mail" value={email} onChange={setEmail} placeholder="prenom@exemple.com" type="email" autoFocus />
+              <Field label="Mot de passe" value={password} onChange={setPassword} placeholder="••••••" type="password" />
               <Message error={error} />
-              <Submit disabled={loading || !password} loading={loading} label="Se connecter" />
-              <button type="button" onClick={(e) => startEmail(e, true)} disabled={loading} style={linkStyle}>
-                Mot de passe oublié ? Recevoir un code par e-mail
+              <Submit disabled={loading || !email || !password} loading={loading} label="Se connecter" />
+              <button type="button" onClick={(e) => startEmail(e, true)} disabled={loading || !email} style={linkStyle}>
+                Première connexion ou mot de passe oublié ? Recevoir un code par e-mail
               </button>
             </form>
           )}
