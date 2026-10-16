@@ -51,6 +51,8 @@ export const adminApi = {
   kycChecks:       (params)      => api.get('/admin/kyc-checks', { params }).then(r => r.data),
   kycRerun:        (userId)      => api.post(`/admin/kyc-checks/${userId}/rerun`).then(r => r.data),
   kycReopen:       (userId)      => api.post(`/admin/kyc-checks/${userId}/reopen`).then(r => r.data),
+  adPayments:      ()            => api.get('/admin/ad-payments').then(r => r.data),
+  checkAdPayment:  (id)          => api.post(`/admin/ad-payments/${id}/check`).then(r => r.data),
   ads:             (params)      => api.get('/admin/ads', { params }).then(r => r.data),
   decideAd:        (id, action, reason) => api.patch(`/admin/ads/${id}`, { action, reason }).then(r => r.data),
   adsConfig:       ()            => api.get('/admin/ads-config').then(r => r.data),

@@ -65,6 +65,7 @@ export function AdPaymentWait({ visible, adId, amount, onDone }) {
   const alive = useRef(true);
   const finished = useRef(false);
   const [timedOut, setTimedOut] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const finish = useCallback((r) => { if (!finished.current) { finished.current = true; onDone?.(r); } }, [onDone]);
@@ -75,19 +76,25 @@ export function AdPaymentWait({ visible, adId, amount, onDone }) {
     setTimedOut(false);
     let stop = false;
     (async () => {
+      const check = async () => {
+        try {
+          const r = await api(`/ads/${adId}/payment-status`);
+          if (r?.status === 'success') { finish('success'); return true; }
+          if (r?.status === 'failed') { finish('failed'); return true; }
+        } catch { /* réseau : on réessaie */ }
+        return false;
+      };
+
+      if (await check()) return;
       for (let i = 0; i < 45 && alive.current && !stop; i++) {
         await new Promise((r) => setTimeout(r, 4000));
         if (!alive.current || stop) return;
-        try {
-          const r = await api(`/ads/${adId}/payment-status`);
-          if (r?.status === 'success') { finish('success'); return; }
-          if (r?.status === 'failed') { finish('failed'); return; }
-        } catch { /* réseau : on réessaie */ }
+        if (await check()) return;
       }
       if (alive.current && !stop) setTimedOut(true);
     })();
     return () => { stop = true; };
-  }, [visible, adId, api, finish]);
+  }, [visible, adId, api, finish, attempt]);
 
   return (
     <Modal visible={!!visible} transparent animationType="fade">
@@ -100,7 +107,15 @@ export function AdPaymentWait({ visible, adId, amount, onDone }) {
               ? tr("Nous n'avons pas reçu la confirmation. Si tu as été débité, ton annonce se mettra en ligne dès sa réception ; sinon, réessaie.")
               : `${tr('Valide le paiement de')} ${money(amount)} ${tr('sur ton téléphone avec ton code Mobile Money. Ton annonce se met en ligne dès la confirmation.')}`}
           </Text>
-          {timedOut ? <KGButton kind="primary" size="md" onPress={() => finish('timeout')}>{tr('Fermer')}</KGButton> : null}
+          {!timedOut ? (
+            <KGButton kind="ghost" size="md" onPress={() => finish('timeout')}>{tr('Continuer sans attendre')}</KGButton>
+          ) : null}
+          {timedOut ? (
+            <View style={{ width: '100%', gap: 10 }}>
+              <KGButton kind="primary" size="md" onPress={() => { setTimedOut(false); setAttempt((v) => v + 1); }}>{tr('Réessayer')}</KGButton>
+              <KGButton kind="ghost" size="md" onPress={() => finish('timeout')}>{tr('Fermer')}</KGButton>
+            </View>
+          ) : null}
         </View>
       </View>
     </Modal>

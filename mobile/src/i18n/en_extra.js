@@ -99,6 +99,7 @@ export const EN_EXTRA = {
   'Numéro invalide (format : 6XXXXXXXX)': 'Invalid number (format: 6XXXXXXXX)',
   'Payer': 'Pay',
   'Paiement en attente': 'Payment pending',
+  'Vérifier le paiement': 'Check payment',
   'En vérification': 'Under review',
   'En ligne': 'Live',
   'Retirée': 'Removed',

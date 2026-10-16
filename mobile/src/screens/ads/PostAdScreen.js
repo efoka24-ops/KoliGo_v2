@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts } from '../../constants/colors';
 import { useApp } from '../../context/AppContext';
 import { apiFetch } from '../../services/api';
@@ -38,6 +38,7 @@ function Pick({ items, value, onChange, label = (x) => x }) {
 /** Publier une annonce : Flash gratuit (24 h) ou Boost payant, mis en ligne à la confirmation du paiement. */
 export default function PostAdScreen({ navigation }) {
   const { api, toast, showToast } = useApp();
+  const insets = useSafeAreaInsets();
   const [config, setConfig] = useState(null);
   const [cities, setCities] = useState([]);
   const [photos, setPhotos] = useState([]);
@@ -125,7 +126,7 @@ export default function PostAdScreen({ navigation }) {
       {toast && <KGToast message={toast.message} kind={toast.kind} />}
       <KenteStripe height={4} />
       <KGTopBar title={tr('Publier une annonce')} onBack={() => navigation.goBack()} />
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 60 }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
         <Section>{tr('Photos')} ({photos.length}/{maxPhotos})</Section>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {photos.map((p, i) => (
@@ -162,10 +163,13 @@ export default function PostAdScreen({ navigation }) {
           {tr("Le Boost est payé avant la mise en ligne et n'est pas remboursable. L'annonce disparaît à l'expiration ; tu pourras la republier.")}
         </Text>
 
+      </ScrollView>
+
+      <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: Math.max(insets.bottom, 12) + 16, backgroundColor: '#FBF5E6', borderTopWidth: 1, borderTopColor: 'rgba(14,33,22,0.08)' }}>
         <KGButton kind="primary" size="lg" icon="check" disabled={busy} onPress={publish}>
           {busy ? tr('Envoi…') : duration.type === 'BOOST' && tariff ? `${tr('Payer et publier')} · ${money(tariff.priceXAF)}` : tr('Publier gratuitement')}
         </KGButton>
-      </ScrollView>
+      </View>
 
       <PhoneModal visible={phoneOpen} amount={tariff?.priceXAF || 0} onCancel={() => setPhoneOpen(false)} onConfirm={(phone) => { setPhoneOpen(false); submit(phone); }} />
       <AdPaymentWait visible={!!pay} adId={pay?.adId} amount={pay?.amount} onDone={onPaymentDone} />

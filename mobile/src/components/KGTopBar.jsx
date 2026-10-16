@@ -9,6 +9,7 @@ export default function KGTopBar({ title, onBack, action, dark, transparent }) {
   const textColor = dark ? '#fff' : colors.ink;
   const bg = transparent || dark ? 'transparent' : '#fff';
   const btnBg = dark ? 'rgba(255,255,255,0.12)' : colors.ink06;
+  const actionNode = action || <View style={{ width: 40, height: 40 }} />;
 
   return (
     <View style={{
@@ -24,11 +25,11 @@ export default function KGTopBar({ title, onBack, action, dark, transparent }) {
       >
         <Icon name="back" size={20} color={textColor} />
       </TouchableOpacity>
-      <Text style={{ flex: 1, textAlign: 'center', fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: textColor, letterSpacing: -0.01 }}>
+      <Text numberOfLines={1} style={{ flex: 1, textAlign: 'center', fontFamily: `${fonts.display}-Bold`, fontSize: 16, color: textColor, letterSpacing: -0.01, marginHorizontal: 12 }}>
         {title}
       </Text>
-      <View style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
-        {action || null}
+      <View style={{ minWidth: 40, minHeight: 40, alignItems: 'flex-end', justifyContent: 'center', flexShrink: 0 }}>
+        {actionNode}
       </View>
     </View>
   );

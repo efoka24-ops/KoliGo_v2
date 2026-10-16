@@ -31,6 +31,7 @@ export default function MyAdsScreen({ navigation }) {
   const [phoneOpen, setPhoneOpen] = useState(false);
   const [pay, setPay] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [checkingId, setCheckingId] = useState(null);
 
   const load = useCallback(async () => {
     try { const r = await api('/ads/mine'); setItems(r?.items || []); } catch (e) { showToast(errMsg(e), 'error'); }
@@ -78,6 +79,28 @@ export default function MyAdsScreen({ navigation }) {
     load();
   };
 
+  const resumePendingPayment = async (ad) => {
+    setCheckingId(ad.id);
+    try {
+      const r = await api(`/ads/${ad.id}/payment-status`);
+      if (r?.status === 'success') {
+        showToast(tr('Paiement confirmé : annonce en ligne ✓'), 'success');
+        await load();
+        return;
+      }
+      if (r?.status === 'failed') {
+        showToast(tr("Le paiement n'a pas abouti."), 'error');
+        await load();
+        return;
+      }
+      setPay({ adId: ad.id, amount: r?.amountXAF || 0 });
+    } catch (e) {
+      showToast(errMsg(e), 'error');
+    } finally {
+      setCheckingId(null);
+    }
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF5E6' }} edges={['top']}>
       {toast && <KGToast message={toast.message} kind={toast.kind} />}
@@ -103,6 +126,11 @@ export default function MyAdsScreen({ navigation }) {
                 {a.suspendReason ? <Text style={{ fontSize: 12, color: '#C4611A' }}>⚠ {a.suspendReason}</Text> : null}
                 {a.removeReason && a.status === 'SUPPRIMEE' ? <Text style={{ fontSize: 12, color: colors.ink55 }}>{a.removeReason}</Text> : null}
                 <View style={{ flexDirection: 'row', gap: 14, marginTop: 4 }}>
+                  {a.status === 'BROUILLON' ? (
+                    <TouchableOpacity onPress={() => resumePendingPayment(a)} disabled={checkingId === a.id}>
+                      <Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 13, color: colors.green }}>{checkingId === a.id ? tr('Vérification…') : tr('Vérifier le paiement')}</Text>
+                    </TouchableOpacity>
+                  ) : null}
                   {['EXPIREE', 'SUPPRIMEE'].includes(a.status) && !a.live ? (
                     <TouchableOpacity onPress={() => { setTarget(a); setDuration({ type: 'FLASH' }); }}><Text style={{ fontFamily: `${fonts.ui}-Bold`, fontSize: 13, color: colors.green }}>{tr('Republier')}</Text></TouchableOpacity>
                   ) : null}

@@ -145,6 +145,8 @@ return function (Router $r): void {
         $r->get("$a/kyc-checks", [Admin::class, 'kycChecks'], ...$adm);
         $r->post("$a/kyc-checks/:userId/rerun", [Admin::class, 'kycRerun'], ...$adm);
         $r->post("$a/kyc-checks/:userId/reopen", [Admin::class, 'kycReopen'], ...$adm);
+        $r->get("$a/ad-payments", [AdC::class, 'adminPayments'], ...$adm);
+        $r->post("$a/ad-payments/:id/check", [AdC::class, 'adminCheckPayment'], ...$adm);
         $r->get("$a/ads", [AdC::class, 'adminList'], ...$adm);
         $r->get("$a/ads-config", [AdC::class, 'adminConfig'], ...$adm);
         $r->patch("$a/ads-config", [AdC::class, 'adminSaveConfig'], ...$adm);

@@ -101,6 +101,16 @@ final class AnnonceController
 
     // ── Administration ───────────────────────────────────────────────────────
 
+    public static function adminPayments(Ctx $c): array
+    {
+        return ['items' => Annonces::adminPayments()];
+    }
+
+    public static function adminCheckPayment(Ctx $c): array
+    {
+        return Annonces::adminCheckPayment($c->param('id'));
+    }
+
     public static function adminList(Ctx $c): array
     {
         $page = max(1, (int)($_GET['page'] ?? 1));

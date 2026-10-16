@@ -481,6 +481,52 @@ final class Annonces
 
     // ── Administration ───────────────────────────────────────────────────────
 
+    /** Derniers paiements Boost, avec l'annonce et le vendeur : sert a suivre un paiement qui tarde. */
+    public static function adminPayments(): array
+    {
+        return Db::all(
+            'SELECT p.id, p.adId, p.amountXAF, p.phone, p.status, p.paymentId, p.externalRef, p.createdAt, p.updatedAt, a.title, a.status AS adStatus, a.type, a.durationHours, u.name AS vendorName, u.phone AS vendorPhone '
+            . 'FROM `AnnoncePayment` p LEFT JOIN `Annonce` a ON a.id = p.adId LEFT JOIN `User` u ON u.id = a.vendorId '
+            . 'ORDER BY p.createdAt DESC LIMIT 50'
+        );
+    }
+
+    /**
+     * Revérifie un paiement Boost aupres de Sungku, sans delai d'attente, et applique le resultat (annonce en ligne si confirme).
+     * Renvoie ce que Sungku a repondu, pour comprendre un paiement bloque.
+     */
+    public static function adminCheckPayment(string $id): array
+    {
+        $p = Db::one('SELECT * FROM `AnnoncePayment` WHERE id = ?', [$id]);
+        if (!$p) {
+            throw new HttpError('Paiement introuvable', 404);
+        }
+        if ($p['status'] !== 'PENDING') {
+            return ['status' => $p['status'], 'message' => 'Ce paiement est déjà clôturé.'];
+        }
+        if (Payments::mock()) {
+            return ['status' => 'PENDING', 'message' => 'Mode test : aucune vérification réelle.'];
+        }
+        if (empty($p['paymentId'])) {
+            return ['status' => 'PENDING', 'message' => "Sungku n'a jamais renvoyé d'identifiant pour cette demande : aucune demande de paiement n'a été créée côté opérateur. Le vendeur peut relancer."];
+        }
+        try {
+            $res = \Koligo\Services\Sungku::fetchDeposit((string)$p['paymentId']);
+        } catch (\Throwable $e) {
+            return ['status' => 'PENDING', 'message' => 'Sungku ne répond pas : ' . $e->getMessage()];
+        }
+        $data = $res['data'] ?? $res;
+        $remote = (string)($data['status'] ?? '');
+        $applied = false;
+        if (\Koligo\Services\Sungku::isSettled($remote) || \Koligo\Services\Sungku::isFailed($remote)) {
+            Payments::handleWebhook(['id' => $p['paymentId'], 'status' => $remote, 'reference' => $p['externalRef']]);
+            $applied = true;
+        }
+        $now = Db::one('SELECT status FROM `AnnoncePayment` WHERE id = ?', [$id]);
+        return ['status' => $now['status'], 'sungkuStatus' => $remote, 'applied' => $applied,
+            'message' => $applied ? 'Résultat appliqué.' : "Sungku indique « $remote » : l'opérateur n'a pas encore confirmé ni refusé."];
+    }
+
     public static function adminList(array $q, int $take, int $skip): array
     {
         $where = '1=1';

@@ -35,6 +35,42 @@ function AdThumb({ id }) {
     : <div style={{ width: 88, height: 88, borderRadius: 10, background: 'var(--cream)' }} />;
 }
 
+/** Paiements Boost récents : permet de revérifier auprès de Sungku un paiement qui tarde à être confirmé. */
+function PaymentsPanel() {
+  const qc = useQueryClient();
+  const [res, setRes] = useState({});
+  const list = useQuery({ queryKey: ['admin-ad-payments'], queryFn: adminApi.adPayments, refetchInterval: 15000 });
+  const check = useMutation({
+    mutationFn: (id) => adminApi.checkAdPayment(id),
+    onSuccess: (r, id) => { setRes((m) => ({ ...m, [id]: r.message })); qc.invalidateQueries({ queryKey: ['admin-ad-payments'] }); qc.invalidateQueries({ queryKey: ['admin-ads'] }); },
+    onError: (e, id) => setRes((m) => ({ ...m, [id]: e.response?.data?.error || e.message })),
+  });
+  const rows = list.data?.items ?? [];
+  const COLOR = { PENDING: '#C4611A', SUCCESS: '#0A7A3E', FAILED: '#B42318' };
+  const LABEL = { PENDING: 'En attente', SUCCESS: 'Payé', FAILED: 'Échoué' };
+  return (
+    <div className="card" style={{ marginBottom: 14, overflow: 'hidden' }}>
+      <table className="tbl">
+        <thead><tr><th>Date</th><th>Annonce</th><th>Payeur</th><th>Montant</th><th>Statut</th><th /></tr></thead>
+        <tbody>
+          {list.isLoading ? <tr><td colSpan={6}><Skeleton h={18} /></td></tr>
+            : rows.length === 0 ? <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--muted)', padding: 22 }}>Aucun paiement Boost.</td></tr>
+            : rows.map((p) => (
+              <tr key={p.id}>
+                <td>{utc(p.createdAt)}</td>
+                <td><b>{p.title || '—'}</b><div className="muted mono-sm">{p.vendorName || ''} · {p.type} {p.durationHours ? Math.round(p.durationHours / 24) + ' j' : ''} · annonce {STATUS_LABEL[p.adStatus] || p.adStatus || '—'}</div></td>
+                <td>{p.phone}<div className="muted mono-sm">{p.externalRef}</div></td>
+                <td>{xaf(p.amountXAF)}</td>
+                <td><b style={{ color: COLOR[p.status] }}>{LABEL[p.status] || p.status}</b>{res[p.id] ? <div className="muted mono-sm" style={{ maxWidth: 260 }}>{res[p.id]}</div> : null}</td>
+                <td style={{ textAlign: 'right' }}>{p.status === 'PENDING' && <button className="btn sm" disabled={check.isPending} onClick={() => check.mutate(p.id)}>Revérifier chez Sungku</button>}</td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function ConfigPanel() {
   const qc = useQueryClient();
   const cfg = useQuery({ queryKey: ['admin-ads-config'], queryFn: adminApi.adsConfig });
@@ -77,6 +113,7 @@ export default function Ads() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [showCfg, setShowCfg] = useState(false);
+  const [showPay, setShowPay] = useState(false);
   const [msg, setMsg] = useState(null);
 
   const params = { status: ['ALL', 'REPORTED'].includes(filter) ? undefined : filter, reported: filter === 'REPORTED' ? 1 : undefined, q: search || undefined, page };
@@ -106,7 +143,10 @@ export default function Ads() {
           <h2>Annonces</h2>
           <div className="sub">Annonces Flash (24 h gratuites) et Boost (payantes). Une annonce qui contient un mot surveillé est mise en attente de votre validation.</div>
         </div>
-        <button className="btn" onClick={() => setShowCfg((v) => !v)}>Tarifs et limites</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn" onClick={() => setShowPay((v) => !v)}>Paiements Boost</button>
+          <button className="btn" onClick={() => setShowCfg((v) => !v)}>Tarifs et limites</button>
+        </div>
       </div>
 
       {st && (
@@ -116,6 +156,7 @@ export default function Ads() {
           ))}
         </div>
       )}
+      {showPay && <PaymentsPanel />}
       {showCfg && <ConfigPanel />}
       {msg && <div style={{ marginBottom: 12, padding: 10, borderRadius: 8, fontSize: 13, background: msg.ok ? '#EFF8F1' : '#FDECEC', color: msg.ok ? '#0A5C2F' : '#C00' }}>{msg.text}</div>}
 
