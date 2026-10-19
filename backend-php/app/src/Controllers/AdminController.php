@@ -160,6 +160,80 @@ final class AdminController
         return ['tempPin' => $temp, 'phone' => $u['phone'], 'name' => $u['name']];
     }
 
+    /**
+     * POST /admin/users/:id/otp { channels?: ["sms","whatsApp","email"] }
+     * Genere un OTP pour un utilisateur precis, l'envoie par les canaux demandes (aucun = simple
+     * generation) et le renvoie a l'administrateur pour qu'il puisse le copier. Le code est valable
+     * 5 minutes, journalise, et refuse pour un compte administrateur (cf. mustManage).
+     */
+    public static function sendUserOtp(Ctx $c): array
+    {
+        $u = self::mustManage($c);
+        RateLimit::hit('admin-otp:' . $c->user['userId'], 30, 600);
+        $channels = array_values(array_intersect((array)($c->input('channels') ?? []), ['sms', 'whatsApp', 'email']));
+
+        $code = \Koligo\Auth::code4();
+        $ttl = 300;
+        Db::insert('OtpCode', [
+            'id' => Db::id(), 'phone' => $u['phone'], 'code' => $code,
+            'expiresAt' => gmdate('Y-m-d H:i:s', time() + $ttl), 'createdAt' => Db::now(),
+        ]);
+        $res = $channels ? \Koligo\Services\Notify::otp($u['phone'], $u['email'] ?: null, $code, $u['name'], $channels, $u['id'], $c->user['userId']) : [];
+        $errors = $res['errors'] ?? [];
+        unset($res['errors']);
+        $sent = array_intersect_key($res, array_flip($channels));
+        self::audit($c, $u['id'], $channels ? 'SEND_OTP' : 'GENERATE_OTP');
+        return ['code' => $code, 'phone' => $u['phone'], 'name' => $u['name'], 'expiresIn' => $ttl, 'sent' => $sent, 'errors' => $errors];
+    }
+
+    // ── Passerelle SMS (teeeotp) ─────────────────────────────────────────────
+
+    private static function smsOverview(): array
+    {
+        return [
+            'configured' => \Koligo\Services\Sms::configured(),
+            'source' => \Koligo\Services\Sms::keySource(),
+            'keyHint' => \Koligo\Services\Sms::keyHint(),
+            'host' => (string)parse_url(\Koligo\Services\Sms::baseUrl(), PHP_URL_HOST),
+            'gateway' => \Koligo\Services\Sms::me(),
+            'logs' => \Koligo\Services\Sms::recent(30),
+        ];
+    }
+
+    /** GET /admin/sms-status : etat de la cle, quota du projet chez teeeotp et derniers envois (etat releve aupres de la passerelle). */
+    public static function smsStatus(Ctx $c): array
+    {
+        \Koligo\Services\Sms::refresh(5);
+        return self::smsOverview();
+    }
+
+    /** POST /admin/sms-config { apiKey } : enregistre la cle du projet KoliGo (chaine vide = effacer). La cle n'est jamais renvoyee. */
+    public static function smsConfig(Ctx $c): array
+    {
+        $key = trim((string)$c->input('apiKey', ''));
+        if ($key !== '' && !preg_match('/^[A-Za-z0-9_\-]{12,160}$/', $key)) {
+            throw new HttpError('Clé invalide : lettres, chiffres, tirets, 12 caractères minimum');
+        }
+        \Koligo\Services\Sms::saveKey($key);
+        self::audit($c, $c->user['userId'], $key === '' ? 'SMS_KEY_CLEAR' : 'SMS_KEY_SET');
+        return self::smsOverview();
+    }
+
+    /** POST /admin/sms-test { phone } : envoie un SMS de test et dit pourquoi il echoue le cas echeant. */
+    public static function smsTest(Ctx $c): array
+    {
+        RateLimit::hit('admin-sms-test:' . $c->user['userId'], 10, 600);
+        $r = \Koligo\Services\Sms::send((string)$c->input('phone', ''), 'KoliGo : SMS de test de la passerelle.', 'TEST', 300, null, $c->user['userId']);
+        return $r + ['overview' => self::smsOverview()];
+    }
+
+    /** POST /admin/sms-refresh : releve l'etat des derniers envois aupres de la passerelle. */
+    public static function smsRefresh(Ctx $c): array
+    {
+        \Koligo\Services\Sms::refresh(10);
+        return self::smsOverview();
+    }
+
     /** POST /admin/users/:id/lock-pin : le PIN actuel ne fonctionne plus (le titulaire doit passer par « PIN oublie » ou le support). */
     public static function lockPin(Ctx $c): array
     {
@@ -488,7 +562,8 @@ final class AdminController
 
     public static function getSettings(Ctx $c): array
     {
-        return Db::all('SELECT * FROM `PlatformSetting`');
+        // Les secrets (jetons, cle de la passerelle SMS) ne sortent jamais par cette liste.
+        return Db::all("SELECT * FROM `PlatformSetting` WHERE `key` NOT IN ('fcm_access_token', 'teeeotp_api_key')");
     }
 
     public static function updateSetting(Ctx $c): array

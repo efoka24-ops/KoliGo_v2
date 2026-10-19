@@ -67,14 +67,43 @@ final class Notify
         return $ok;
     }
 
-    public static function otp(string $phone, ?string $email, string $code, ?string $name): bool
+    /** Envoie un SMS via teeeotp (voir Sms). Vrai si la passerelle a accepte le message (pas une preuve de livraison). */
+    public static function sms(string $phone, string $text): bool
     {
+        return Sms::send($phone, $text, 'SMS')['ok'];
+    }
+
+    /**
+     * @param list<string>|null $only canaux a utiliser parmi email, sms, whatsApp (null = tous)
+     * @return array{email: bool, whatsApp: bool, sms: bool, errors: array<string,string>} statut de chaque canal, best-effort ;
+     *         errors['sms'] = code d'erreur de la passerelle quand l'envoi SMS a ete tente et a echoue
+     */
+    public static function otp(string $phone, ?string $email, string $code, ?string $name, ?array $only = null, ?string $userId = null, ?string $by = null): array
+    {
+        $use = static fn(string $ch): bool => $only === null || in_array($ch, $only, true);
         $hello = $name ? "Bonjour $name ! " : '';
-        if ($email) {
-            self::email($email, "[KoliGo] Code de verification : $code",
+        $viaEmail = false;
+        if ($email && $use('email')) {
+            $viaEmail = self::email($email, "[KoliGo] Code de verification : $code",
                 '<p>' . htmlspecialchars($hello) . 'Votre code : <b style="font-size:28px;letter-spacing:6px">' . $code . '</b></p><p>Valide 5 minutes.</p>');
         }
-        return self::whatsapp($phone, "{$hello}Votre code de verification *KoliGo* : *$code*\n\nValide 5 minutes. Ne le partagez a personne.");
+        $errors = [];
+        $viaSms = false;
+        if ($use('sms')) {
+            // Texte court, sans accent : un seul SMS facture. La validite est celle du code : un code expire n'arrive jamais en retard.
+            $r = Sms::send($phone, "KoliGo : votre code est $code. Valable 5 min. Ne le partagez a personne.", 'OTP', 300, $userId, $by);
+            $viaSms = $r['ok'];
+            if (!$r['ok'] && $r['error']) {
+                $errors['sms'] = $r['error'];
+            }
+        }
+        $text = "{$hello}Votre code de verification *KoliGo* : *$code*\n\nValide 5 minutes. Ne le partagez a personne.";
+        return [
+            'email' => $viaEmail,
+            'sms' => $viaSms,
+            'whatsApp' => $use('whatsApp') && self::whatsapp($phone, $text),
+            'errors' => $errors,
+        ];
     }
 
     public static function xaf(int $n): string

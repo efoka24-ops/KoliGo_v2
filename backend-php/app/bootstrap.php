@@ -9,7 +9,7 @@ use Koligo\Router;
 // autoloader (plusieurs classes partagent un fichier, ex. Http/HttpError/Out).
 foreach ([
     'Env', 'Db', 'Jwt', 'Http', 'Router', 'Auth', 'RateLimit', 'Rel',
-    'Services/Pricing', 'Services/Distance', 'Services/Sungku', 'Services/Smtp', 'Services/Notify', 'Services/Notifier', 'Services/Moderation',
+    'Services/Pricing', 'Services/Distance', 'Services/Sungku', 'Services/Smtp', 'Services/Notify', 'Services/Notifier', 'Services/Sms', 'Services/Moderation',
     'Services/Accounts', 'Services/AdminLogin', 'Services/Uploads', 'Services/Kyc', 'Services/Cgu',
     'Services/Incidents', 'Services/KycChecks', 'Services/Annonces', 'Services/FixedRoutes', 'Services/AppVersions', 'Services/Deliveries', 'Services/Payments', 'Services/Invoices', 'Setup',
     'Controllers/AuthController', 'Controllers/DeliveryController', 'Controllers/WalletController',

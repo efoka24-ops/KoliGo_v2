@@ -8,6 +8,7 @@ import KGButton from '../../components/KGButton';
 import KGInput from '../../components/KGInput';
 import KenteStripe from '../../components/KenteStripe';
 import Icon from '../../components/Icon';
+import { tr } from '../../i18n/tr';
 
 const NUMPAD = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [null, 0, 'del']];
 
@@ -18,8 +19,10 @@ const NUMPAD = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [null, 0, 'del']];
 
 export default function ForgotPinScreen({ navigation, route }) {
   const [step, setStep]               = useState(1);
-  const [email, setEmail]             = useState('');
+  const [identifier, setIdentifier]   = useState('');
   const [emailHint, setEmailHint]     = useState('');
+  const [phoneHint, setPhoneHint]     = useState('');
+  const [delivery, setDelivery]       = useState(null); // ce qui a réellement été envoyé : { sms, email }
   const [phoneInternal, setPhoneInternal] = useState(''); // returned by backend, used for verify/reset
   const [otp, setOtp]                 = useState(['', '', '', '']);
   const [newPin, setNewPin]           = useState(['', '', '', '']);
@@ -28,7 +31,12 @@ export default function ForgotPinScreen({ navigation, route }) {
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState(null);
 
-  const emailTrimmed = email.trim().toLowerCase();
+  const idTrimmed = identifier.trim();
+  const isEmail = idTrimmed.includes('@');
+  const phone9 = idTrimmed.replace(/\D/g, '').replace(/^237(?=\d{9}$)/, '');
+  // Numéro ou e-mail : le serveur accepte les deux. Un compte créé sans e-mail se récupère par son numéro.
+  const ident = isEmail ? { email: idTrimmed.toLowerCase() } : { phone: '+237' + phone9 };
+  const idValid = isEmail ? /^\S+@\S+\.\S+$/.test(idTrimmed) : /^6\d{8}$/.test(phone9);
 
   const pressDigit = (n) => {
     if (step === 2) {
@@ -66,18 +74,20 @@ export default function ForgotPinScreen({ navigation, route }) {
 
   const handleSendOtp = async () => {
     setError(null);
-    if (!emailTrimmed || !emailTrimmed.includes('@')) {
-      setError('Adresse email invalide.');
+    if (!idValid) {
+      setError(tr('Entre un numéro valide (6XXXXXXXX) ou une adresse e-mail.'));
       return;
     }
     setLoading(true);
     try {
-      const res = await apiFetch('/auth/forgot-pin', { method: 'POST', body: JSON.stringify({ email: emailTrimmed }) });
-      setEmailHint(res?.emailHint || emailTrimmed);
+      const res = await apiFetch('/auth/forgot-pin', { method: 'POST', body: JSON.stringify(ident) });
+      setEmailHint(res?.emailHint || '');
+      setPhoneHint(res?.phoneRef || '');
+      setDelivery({ sms: res?.sms === true, email: res?.email === true });
       if (res?._phone) setPhoneInternal(res._phone);
       setStep(2);
     } catch (err) {
-      setError(err.message || 'Email introuvable — vérifie l\'adresse.');
+      setError(err.message || tr('Compte introuvable — vérifie le numéro ou l\'adresse.'));
     } finally {
       setLoading(false);
     }
@@ -89,7 +99,7 @@ export default function ForgotPinScreen({ navigation, route }) {
     if (code.length < 4) return;
     setLoading(true);
     try {
-      await apiFetch('/auth/otp/verify', { method: 'POST', body: JSON.stringify({ email: emailTrimmed, code }) });
+      await apiFetch('/auth/otp/verify', { method: 'POST', body: JSON.stringify({ ...ident, code }) });
       setStep(3);
     } catch (err) {
       setError(err.message || 'Code invalide ou expiré.');
@@ -117,7 +127,7 @@ export default function ForgotPinScreen({ navigation, route }) {
     try {
       await apiFetch('/auth/reset-pin', {
         method: 'POST',
-        body: JSON.stringify({ email: emailTrimmed, otp: otp.join(''), newPin: pinCode }),
+        body: JSON.stringify({ ...ident, otp: otp.join(''), newPin: pinCode }),
       });
       setStep(4);
     } catch (err) {
@@ -157,26 +167,24 @@ export default function ForgotPinScreen({ navigation, route }) {
                 Réinitialiser le PIN
               </Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink55, lineHeight: 20 }}>
-                Saisis l'adresse{' '}
-                <Text style={{ fontFamily: `${fonts.ui}-Bold`, color: '#0E2116' }}>email</Text>
-                {' '}associée à ton compte. Tu recevras un code de vérification.
+                {tr('Saisis le numéro de téléphone ou l’adresse e-mail de ton compte. Tu recevras un code de vérification par SMS (ou par e-mail).')}
               </Text>
             </View>
 
             <KGInput
-              label="Adresse email"
-              value={email}
-              onChangeText={v => { setEmail(v); setError(null); }}
+              label={tr('Numéro ou adresse e-mail')}
+              value={identifier}
+              onChangeText={v => { setIdentifier(v); setError(null); }}
               icon="bell"
               keyboardType="email-address"
               autoCapitalize="none"
-              placeholder="exemple@gmail.com"
+              placeholder="6XXXXXXXX"
             />
 
             {error && <ErrorBox msg={error} />}
 
             <View style={{ flex: 1, minHeight: 16 }} />
-            <KGButton kind="primary" size="lg" icon={loading ? undefined : 'arrow'} onPress={handleSendOtp} disabled={loading || !emailTrimmed.includes('@')}>
+            <KGButton kind="primary" size="lg" icon={loading ? undefined : 'arrow'} onPress={handleSendOtp} disabled={loading || !idValid}>
               {loading ? <ActivityIndicator color="#fff" /> : 'Envoyer le code'}
             </KGButton>
 
@@ -196,9 +204,12 @@ export default function ForgotPinScreen({ navigation, route }) {
                 Code de vérification
               </Text>
               <Text style={{ fontFamily: `${fonts.ui}-Regular`, fontSize: 14, color: colors.ink55, lineHeight: 21 }}>
-                Un code a été envoyé à{' '}
-                <Text style={{ fontFamily: `${fonts.ui}-Bold`, color: '#0E2116' }}>{emailHint}</Text>.
-                {'\n'}Vérifie ta boîte de réception.
+                {delivery?.sms
+                  ? <>{tr('Un SMS avec ton code a été envoyé au')} <Text style={{ fontFamily: `${fonts.ui}-Bold`, color: '#0E2116' }}>{phoneHint}</Text>. {tr('Il peut arriver en moins d’une minute.')}</>
+                  : delivery?.email
+                    ? <>{tr('Un code a été envoyé par e-mail à')} <Text style={{ fontFamily: `${fonts.ui}-Bold`, color: '#0E2116' }}>{emailHint}</Text>. {tr('Pense à vérifier les spams.')}</>
+                    : tr("Le code n'a pas pu être envoyé pour le moment. Reviens en arrière et réessaie dans quelques minutes.")}
+                {delivery?.sms && delivery?.email ? <>{'\n'}{tr('Un e-mail a aussi été envoyé à')} {emailHint}.</> : null}
               </Text>
             </View>
 

@@ -64,7 +64,7 @@ try {
     ck('suppression de la version active refusee', true);
 }
 AppVersions::delete($v['id']);
-ck('suppression d\'une ancienne version', count(AppVersions::all()) === 2);
+ck('suppression d\'une ancienne version', count(AppVersions::all()) === 3);
 
 echo PHP_EOL . "$pass ok, $fail echec" . PHP_EOL;
 exit($fail ? 1 : 0);

@@ -466,3 +466,17 @@ CREATE TABLE IF NOT EXISTS `AppVersion` (
   `createdAt` DATETIME NOT NULL,
   `activatedAt` DATETIME NULL
 ) {{OPTS}};
+
+-- Journal des SMS envoyes par la passerelle teeeotp (sans le texte : il contient des codes). status : SUBMITTED, QUEUED, SENDING, SENT, DELIVERED, FAILED, EXPIRED.
+CREATE TABLE IF NOT EXISTS `SmsLog` (
+  `id` VARCHAR(40) NOT NULL PRIMARY KEY,
+  `phone` VARCHAR(30) NOT NULL,
+  `purpose` VARCHAR(20) NOT NULL,
+  `providerId` VARCHAR(80) NULL,
+  `status` VARCHAR(12) NOT NULL,
+  `error` VARCHAR(20) NULL,
+  `userId` VARCHAR(40) NULL,
+  `createdBy` VARCHAR(40) NULL,
+  `createdAt` DATETIME NOT NULL,
+  `updatedAt` DATETIME NOT NULL
+) {{OPTS}};

@@ -37,7 +37,7 @@ export default function SignupScreen({ navigation, route }) {
       const fullPhone = '+237' + normalized;
       const res = await authService.sendOtp(fullPhone, email.trim(), name.trim());
       // Present only outside production — see backend authService.sendOtp.
-      setPendingUser({ name: name.trim(), shopName: shopName.trim(), phone: fullPhone, email: email.trim(), gender, devCode: res?.devCode });
+      setPendingUser({ name: name.trim(), shopName: shopName.trim(), phone: fullPhone, email: email.trim(), gender, devCode: res?.devCode, emailSent: res?.email, smsSent: res?.sms, smsError: res?.smsError });
       navigation.navigate('Otp');
     } catch (e) {
       showToast(e?.response?.data?.error || 'Erreur réseau', 'error');
@@ -86,7 +86,7 @@ export default function SignupScreen({ navigation, route }) {
           keyboardType="email-address"
           autoCapitalize="none"
           placeholder={tr("vous@exemple.cm")}
-          hint="On t'envoie le code OTP et les confirmations ici"
+          hint={tr("Le code OTP est envoyé par SMS et par e-mail ; les confirmations arrivent à cette adresse")}
         />
         <KGInput
           label={tr("Téléphone")}

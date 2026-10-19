@@ -47,12 +47,12 @@ final class Accounts
             'id' => Db::id(), 'phone' => $phone, 'code' => $code,
             'expiresAt' => gmdate('Y-m-d H:i:s', time() + self::OTP_TTL), 'createdAt' => Db::now(),
         ]);
-        $viaWhatsApp = Notify::otp($phone, $email, $code, $name);
+        $channels = Notify::otp($phone, $email, $code, $name);
 
         // Le code est renvoye au client pour que l'application le remplisse seule.
         // Contrepartie : l'OTP ne prouve plus que l'appelant controle ce numero.
         // OTP_RETURN_CODE=false retablit cette garantie.
-        $out = ['sent' => true, 'whatsApp' => $viaWhatsApp];
+        $out = ['sent' => true, 'email' => $channels['email'], 'whatsApp' => $channels['whatsApp'], 'sms' => $channels['sms'], 'smsError' => $channels['errors']['sms'] ?? null];
         // Jamais pour un numero deja inscrit : reset-pin accepte ce meme code, donc
         // le renvoyer permettrait de reinitialiser le PIN (admin compris) de n'importe
         // quel compte connaissant son numero. Il ne sert qu'a l'inscription.
@@ -204,12 +204,15 @@ final class Accounts
             'id' => Db::id(), 'phone' => $user['phone'], 'code' => $code,
             'expiresAt' => gmdate('Y-m-d H:i:s', time() + self::OTP_TTL), 'createdAt' => Db::now(),
         ]);
-        Notify::otp($user['phone'], $user['email'], $code, $user['name']);
+        $channels = Notify::otp($user['phone'], $user['email'], $code, $user['name'], null, $user['id']);
 
         $dest = $user['email'] ?? '';
         [$u, $d] = array_pad(explode('@', $dest, 2), 2, '');
         return [
             'sent' => true,
+            'sms' => $channels['sms'],
+            'email' => $channels['email'],
+            'smsError' => $channels['errors']['sms'] ?? null,
             'emailHint' => $dest ? substr($u, 0, 2) . '***@' . $d : '',
             'phoneRef' => substr($user['phone'], 0, 3) . '***' . substr($user['phone'], -2),
             '_phone' => $user['phone'],

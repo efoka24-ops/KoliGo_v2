@@ -140,6 +140,10 @@ return function (Router $r): void {
         $adm = [$jwt, $role('ADMIN')];
         $r->get("$a/stats", [Admin::class, 'stats'], ...$adm);
         $r->get("$a/push-status", [NotifC::class, 'adminPushStatus'], ...$adm);
+        $r->get("$a/sms-status", [Admin::class, 'smsStatus'], ...$adm);
+        $r->post("$a/sms-config", [Admin::class, 'smsConfig'], ...$adm);
+        $r->post("$a/sms-test", [Admin::class, 'smsTest'], ...$adm);
+        $r->post("$a/sms-refresh", [Admin::class, 'smsRefresh'], ...$adm);
         $r->get("$a/notifications", [NotifC::class, 'adminHistory'], ...$adm);
         $r->post("$a/notifications", [NotifC::class, 'adminBroadcast'], ...$adm);
         $r->get("$a/kyc-checks", [Admin::class, 'kycChecks'], ...$adm);
@@ -173,6 +177,7 @@ return function (Router $r): void {
         $r->patch("$a/users/:id/block", [Admin::class, 'blockUser'], ...$adm);
         $r->post("$a/users/:id/reset-pin", [Admin::class, 'resetPin'], ...$adm);
         $r->post("$a/users/:id/lock-pin", [Admin::class, 'lockPin'], ...$adm);
+        $r->post("$a/users/:id/otp", [Admin::class, 'sendUserOtp'], ...$adm);
         $r->patch("$a/users/:id/kyc", [Admin::class, 'reviewKyc'], ...$adm);
         $r->get("$a/kyc-doc/:docId", [Admin::class, 'serveKycDoc'], ...$adm);
         $r->get("$a/deliveries", [Admin::class, 'listDeliveries'], ...$adm);

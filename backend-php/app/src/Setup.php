@@ -59,7 +59,7 @@ final class Setup
     ];
 
     /** A incrementer quand le schema ou les reglages de reference changent : declenche une migration au prochain appel. */
-    public const SCHEMA_VERSION = 21;
+    public const SCHEMA_VERSION = 22;
 
     /**
      * Migration automatique et rejouable : evite d'avoir a relancer _setup.php (dont le jeton est supprime apres
@@ -206,6 +206,14 @@ final class Setup
             Db::insert('AppVersion', [
                 'id' => Db::id(), 'version' => '1.0.21', 'versionCode' => 22, 'downloadUrl' => '/landing/koligo-v1.0.21.apk',
                 'notes' => 'Notifications sur le téléphone, mise à jour guidée, annonces Flash et Boost, vérification KYC automatique.',
+                'forceUpdate' => 1, 'isCurrent' => 0, 'createdAt' => $now,
+            ]);
+        }
+        // 1.0.22 (codes par SMS, bouton Publier fixe, paiements Boost) : dans l'historique, NON activee ; l'administrateur l'active quand il veut.
+        if (!Db::one('SELECT id FROM `AppVersion` WHERE versionCode = 23')) {
+            Db::insert('AppVersion', [
+                'id' => Db::id(), 'version' => '1.0.22', 'versionCode' => 23, 'downloadUrl' => '/landing/koligo-v1.0.22.apk',
+                'notes' => 'Code de vérification par SMS, « PIN oublié » par numéro ou e-mail, bouton Publier toujours visible, suivi des paiements Boost.',
                 'forceUpdate' => 1, 'isCurrent' => 0, 'createdAt' => $now,
             ]);
         }

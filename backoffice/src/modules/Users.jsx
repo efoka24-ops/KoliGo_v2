@@ -4,6 +4,7 @@ import { useI18n } from '../i18n/I18nContext.jsx';
 import { Pill, Avatar, Skeleton } from '../components/ui.jsx';
 import { adminApi } from '../api.js';
 import KycReview from '../components/KycReview.jsx';
+import { smsErrorText } from './SmsPanel.jsx';
 
 const ROLE_FILTERS = [
   { key:'all',      label:'all',      role: undefined      },
@@ -56,6 +57,19 @@ export default function Users() {
     onSuccess: () => setPinMsg({ ok: true, text: 'PIN verrouillé : l’ancien PIN ne fonctionne plus. La personne doit utiliser « PIN oublié » ou demander une réinitialisation.' }),
     onError: (e) => setPinMsg({ ok: false, text: e.response?.data?.error || e.message }),
   });
+  const [otpChannels, setOtpChannels] = useState({ sms: true, whatsApp: false, email: false });
+  const [otpRes, setOtpRes] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const sendOtp = useMutation({
+    mutationFn: ({ id, channels }) => adminApi.sendUserOtp(id, channels),
+    onSuccess: (r) => { setCopied(false); setOtpRes({ ok: true, ...r }); },
+    onError: (e) => setOtpRes({ ok: false, text: e.response?.data?.error || e.message }),
+  });
+  const copyOtp = async (code) => {
+    try { await navigator.clipboard.writeText(code); setCopied(true); } catch { window.prompt('Copiez le code :', code); }
+  };
+  const chosenChannels = () => Object.keys(otpChannels).filter(k => otpChannels[k]);
+  const CH_LABEL = { sms: 'SMS', whatsApp: 'WhatsApp', email: 'E-mail' };
   const isAdminUser = (u) => String(u.roles || u.role || '').includes('ADMIN');
 
   const rows = data?.items ?? [];
@@ -101,7 +115,7 @@ export default function Users() {
               const deliveryCount = u.deliveryCount ?? u.deliveries ?? '—';
 
               return (
-                <tr key={id} onClick={() => { setPinMsg(null); setDrawer(u); }} style={{ cursor:'pointer' }}>
+                <tr key={id} onClick={() => { setPinMsg(null); setOtpRes(null); setDrawer(u); }} style={{ cursor:'pointer' }}>
                   <td><div className="usr"><Avatar tone="g">{name.charAt(0)}</Avatar><div className="nm">{name}</div></div></td>
                   <td><Pill tone="b">{roleLabel}</Pill></td>
                   <td className="mono-sm muted">{phone}</td>
@@ -173,6 +187,51 @@ export default function Users() {
                 )}
                 {pinMsg && <div style={{ marginTop: 10, padding: 10, borderRadius: 8, fontSize: 13, background: pinMsg.ok ? '#EFF8F1' : '#FDECEC', color: pinMsg.ok ? '#0A5C2F' : '#C00' }}>{pinMsg.text}</div>}
               </div>
+
+              {!isAdminUser(drawer) && (
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>Code OTP</div>
+                  <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 10, fontSize: 13 }}>
+                    {Object.keys(CH_LABEL).map(k => (
+                      <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                        <input type="checkbox" checked={otpChannels[k]}
+                          disabled={(k === 'email' && !drawer.email)}
+                          onChange={e => setOtpChannels(c => ({ ...c, [k]: e.target.checked }))} />
+                        {CH_LABEL[k]}{k === 'email' && !drawer.email ? ' (aucun e-mail)' : ''}
+                      </label>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button className="btn sm" disabled={sendOtp.isPending}
+                      onClick={() => { setOtpRes(null); sendOtp.mutate({ id: drawer.id, channels: [] }); }}>Générer seulement</button>
+                    <button className="btn sm" disabled={sendOtp.isPending || chosenChannels().length === 0}
+                      onClick={() => { setOtpRes(null); sendOtp.mutate({ id: drawer.id, channels: chosenChannels() }); }}>
+                      {sendOtp.isPending ? 'Envoi…' : 'Générer et envoyer'}</button>
+                  </div>
+                  {otpRes && (otpRes.ok ? (
+                    <div style={{ marginTop: 10, padding: 12, borderRadius: 8, background: '#EFF8F1', color: '#0A5C2F', fontSize: 13 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 26, letterSpacing: 6 }}>{otpRes.code}</span>
+                        <button className="btn sm" onClick={() => copyOtp(otpRes.code)}>{copied ? 'Copié ✓' : 'Copier'}</button>
+                      </div>
+                      <div style={{ marginTop: 6 }}>
+                        Pour {otpRes.name} ({otpRes.phone}) · valable {Math.round(otpRes.expiresIn / 60)} min · affiché une seule fois.
+                      </div>
+                      {Object.keys(otpRes.sent || {}).length > 0 && (
+                        <div style={{ marginTop: 6 }}>
+                          {Object.keys(CH_LABEL).filter(k => k in otpRes.sent).map(k => (
+                            <span key={k} style={{ marginRight: 12, color: otpRes.sent[k] ? '#0A5C2F' : '#C00' }}>
+                              {CH_LABEL[k]} : {otpRes.sent[k] ? 'accepté par la passerelle' : (k === 'sms' ? `échec — ${smsErrorText(otpRes.errors?.sms)}` : 'échec')}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: 10, padding: 10, borderRadius: 8, fontSize: 13, background: '#FDECEC', color: '#C00' }}>{otpRes.text}</div>
+                  ))}
+                </div>
+              )}
 
               {['PENDING', 'VERIFIED', 'REJECTED'].includes(drawer.kycStatus) && (
                 <KycReview userId={drawer.id} readOnly={drawer.kycStatus !== 'PENDING'} onDecided={() => { qc.invalidateQueries({ queryKey: ['admin-users'] }); qc.invalidateQueries({ queryKey: ['admin-user'] }); qc.invalidateQueries({ queryKey: ['admin-analytics'] }); setDrawer(null); }} />

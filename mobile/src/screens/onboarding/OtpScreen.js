@@ -14,10 +14,16 @@ export default function OtpScreen({ navigation }) {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  // Délai avant un nouvel envoi : le serveur limite le nombre de codes par numéro, inutile de le dépasser.
+  const [wait, setWait] = useState(30);
+  useEffect(() => {
+    if (wait <= 0) return undefined;
+    const id = setTimeout(() => setWait((w) => w - 1), 1000);
+    return () => clearTimeout(id);
+  }, [wait]);
 
   const phone = pendingUser?.phone ?? '+237 6•• ••• •12';
   const email = pendingUser?.email;
-  const dest = email ?? phone;
 
   // Code handed back by the backend so the screen can complete on its own.
   // Undefined when OTP_RETURN_CODE=false, in which case this screen behaves
@@ -57,6 +63,7 @@ export default function OtpScreen({ navigation }) {
   };
 
   const handleResend = async () => {
+    if (wait > 0) return;
     setResending(true);
     try {
       const res = await authService.sendOtp(phone, email, pendingUser?.name);
@@ -65,8 +72,9 @@ export default function OtpScreen({ navigation }) {
       setCode('');
       autoSubmitted.current = false;
       setDevCode(res?.devCode);
-      setPendingUser(u => ({ ...(u ?? {}), devCode: res?.devCode }));
-      showToast(email ? `Code renvoyé à ${email}` : 'Code renvoyé');
+      setPendingUser(u => ({ ...(u ?? {}), devCode: res?.devCode, emailSent: res?.email, smsSent: res?.sms, smsError: res?.smsError }));
+      setWait(30);
+      showToast(res?.sms ? tr('Code renvoyé par SMS') : res?.email ? tr('Code renvoyé par e-mail') : tr("Le code n'a pas pu être envoyé. Réessaie dans un instant."), res?.sms || res?.email ? undefined : 'error');
     } catch {
       showToast(tr("Erreur réseau"), 'error');
     } finally {
@@ -82,19 +90,44 @@ export default function OtpScreen({ navigation }) {
         onPress={() => handleVerify()}
       />
     }>
-      <ScreenHeader title={t('verification')} subtitle={email ? `Code envoyé à ${email}` : phone} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('verification')} subtitle={email ? `${phone} · ${email}` : phone} onBack={() => navigation.goBack()} />
       <View style={{ paddingHorizontal: 18, paddingTop: 6, gap: 20 }}>
 
-        {/* Email delivery info */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.green50, borderRadius: 12, padding: 14 }}>
-          <Ionicons name="mail" size={18} color={colors.green} />
-          <View style={{ flex: 1 }}>
-            <Text style={[type.h3, { color: colors.greenDark }]}>{tr("Vérifiez votre boîte mail")}</Text>
-            <Text style={[type.lead, { marginTop: 2 }]}>
-              {tr("Code envoyé à")} <Text style={{ fontWeight: '700', color: colors.ink }}>{dest}</Text>
-            </Text>
-          </View>
-        </View>
+        {/* Ce qui a réellement été envoyé : jamais un canal annoncé sans confirmation du serveur */}
+        {(() => {
+          const smsOk = pendingUser?.smsSent === true;
+          const emailOk = !!email && pendingUser?.emailSent === true;
+          const failed = !smsOk && !emailOk && pendingUser?.smsSent === false;
+          const smsReason = pendingUser?.smsError === 'rate_limited' ? tr('Trop de demandes pour ce numéro : attends quelques minutes avant de réessayer.')
+            : pendingUser?.smsError === 'invalid_phone' ? tr('Ce numéro ne semble pas valide.')
+            : tr('Le service SMS est momentanément indisponible.');
+          const title = smsOk ? tr('Vérifie tes SMS') : emailOk ? tr('Vérifie ta boîte mail') : failed ? tr('Code non envoyé') : tr('Vérification en cours');
+          return (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: failed ? '#FEF0E3' : colors.green50, borderRadius: 12, padding: 14 }}>
+              <Ionicons name={failed ? 'warning' : smsOk ? 'chatbubble-ellipses' : 'mail'} size={18} color={failed ? '#C4611A' : colors.green} />
+              <View style={{ flex: 1 }}>
+                <Text style={[type.h3, { color: failed ? '#C4611A' : colors.greenDark }]}>{title}</Text>
+                {smsOk ? (
+                  <Text style={[type.lead, { marginTop: 2 }]}>
+                    {tr('Un SMS avec ton code a été envoyé au')} <Text style={{ fontWeight: '700', color: colors.ink }}>{phone}</Text>. {tr('Il peut arriver en moins d’une minute.')}
+                  </Text>
+                ) : pendingUser?.smsSent === false ? (
+                  <Text style={[type.lead, { marginTop: 2 }]}>{smsReason}</Text>
+                ) : null}
+                {emailOk ? (
+                  <Text style={[type.lead, { marginTop: 2 }]}>
+                    {tr('Un e-mail a aussi été envoyé à')} <Text style={{ fontWeight: '700', color: colors.ink }}>{email}</Text>. {tr('Pense à vérifier les spams.')}
+                  </Text>
+                ) : email && pendingUser?.emailSent === false ? (
+                  <Text style={[type.lead, { marginTop: 2 }]}>{tr("L'e-mail n'a pas pu être envoyé.")}</Text>
+                ) : null}
+                {failed ? (
+                  <Text style={[type.lead, { marginTop: 6 }]}>{tr('Appuie sur « Renvoyer le code » dans un instant, ou contacte le support si cela continue.')}</Text>
+                ) : null}
+              </View>
+            </View>
+          );
+        })()}
 
         {devCode ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#EFF8F1', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.green }}>
@@ -114,10 +147,10 @@ export default function OtpScreen({ navigation }) {
         <Numpad onKey={onKey} />
 
         <Text
-          style={[type.eyebrow, { textAlign: 'center', color: colors.green }]}
-          onPress={resending ? undefined : handleResend}
+          style={[type.eyebrow, { textAlign: 'center', color: wait > 0 ? colors.ink35 : colors.green }]}
+          onPress={resending || wait > 0 ? undefined : handleResend}
         >
-          {resending ? 'Envoi...' : '↺  Renvoyer le code'}
+          {resending ? tr('Envoi...') : wait > 0 ? `${tr('Renvoyer le code dans')} ${wait} s` : tr('↺  Renvoyer le code')}
         </Text>
       </View>
     </Screen>
