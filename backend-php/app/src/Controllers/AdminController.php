@@ -227,6 +227,42 @@ final class AdminController
         return $r + ['overview' => self::smsOverview()];
     }
 
+    // ── E-mail (diagnostic) ──────────────────────────────────────────────────
+
+    private static function emailOverview(): array
+    {
+        $smtp = \Koligo\Services\Smtp::configured();
+        return [
+            'method' => $smtp ? 'smtp' : 'mail',
+            'smtpConfigured' => $smtp,
+            'host' => $smtp ? (string)\Koligo\Env::get('SMTP_HOST', '') : null,
+            'port' => $smtp ? (string)\Koligo\Env::get('SMTP_PORT', '587') : null,
+            'secure' => $smtp ? (string)\Koligo\Env::get('SMTP_SECURE', '') : null,
+            'passwordSet' => (\Koligo\Env::get('SMTP_PASS', '') ?? '') !== '',
+            'from' => (string)\Koligo\Env::get('MAIL_FROM', 'noreply@trugroup.cm'),
+            'disabled' => \Koligo\Env::bool('MAIL_DISABLED'),
+        ];
+    }
+
+    /** GET /admin/email-status : comment le serveur envoie ses e-mails (aucun mot de passe renvoye). */
+    public static function emailStatus(Ctx $c): array
+    {
+        return self::emailOverview();
+    }
+
+    /** POST /admin/email-test { to } : envoie un e-mail de test et renvoie l'erreur reelle du serveur SMTP le cas echeant. */
+    public static function emailTest(Ctx $c): array
+    {
+        RateLimit::hit('admin-email-test:' . $c->user['userId'], 10, 600);
+        $to = trim((string)$c->input('to', ''));
+        if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            throw new HttpError('Adresse e-mail invalide');
+        }
+        \Koligo\Services\Smtp::$lastError = null;
+        $ok = \Koligo\Services\Notify::email($to, '[KoliGo] E-mail de test', '<p>Ceci est un e-mail de test envoyé depuis le back-office KoliGo.</p>');
+        return ['ok' => $ok, 'error' => $ok ? null : (\Koligo\Services\Smtp::$lastError ?: (\Koligo\Env::bool('MAIL_DISABLED') ? 'envoi désactivé (MAIL_DISABLED)' : 'refusé par le serveur')), 'overview' => self::emailOverview()];
+    }
+
     /** POST /admin/sms-refresh : releve l'etat des derniers envois aupres de la passerelle. */
     public static function smsRefresh(Ctx $c): array
     {

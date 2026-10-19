@@ -144,6 +144,8 @@ return function (Router $r): void {
         $r->post("$a/sms-config", [Admin::class, 'smsConfig'], ...$adm);
         $r->post("$a/sms-test", [Admin::class, 'smsTest'], ...$adm);
         $r->post("$a/sms-refresh", [Admin::class, 'smsRefresh'], ...$adm);
+        $r->get("$a/email-status", [Admin::class, 'emailStatus'], ...$adm);
+        $r->post("$a/email-test", [Admin::class, 'emailTest'], ...$adm);
         $r->get("$a/notifications", [NotifC::class, 'adminHistory'], ...$adm);
         $r->post("$a/notifications", [NotifC::class, 'adminBroadcast'], ...$adm);
         $r->get("$a/kyc-checks", [Admin::class, 'kycChecks'], ...$adm);

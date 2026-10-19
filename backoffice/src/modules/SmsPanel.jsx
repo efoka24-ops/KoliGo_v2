@@ -123,3 +123,42 @@ export default function SmsPanel() {
     </div>
   );
 }
+
+/** E-mail : comment le serveur envoie, et test d'envoi avec l'erreur réelle. */
+export function EmailPanel() {
+  const [to, setTo] = useState('');
+  const [msg, setMsg] = useState(null);
+  const st = useQuery({ queryKey: ['admin-email-status'], queryFn: adminApi.emailStatus });
+  const test = useMutation({
+    mutationFn: (t) => adminApi.emailTest(t),
+    onSuccess: (r) => setMsg(r.ok
+      ? { ok: true, text: 'E-mail accepté par le serveur d\'envoi. S\'il n\'arrive pas, regardez les spams : « accepté » ne garantit pas la réception.' }
+      : { ok: false, text: `E-mail refusé : ${r.error}` }),
+    onError: (e) => setMsg({ ok: false, text: e.response?.data?.error || e.message }),
+  });
+  const d = st.data;
+  return (
+    <div className="card pad" style={{ marginBottom: 16, display: 'grid', gap: 12 }}>
+      <div>
+        <div style={{ fontWeight: 800, fontSize: 15 }}>E-mail</div>
+        <div className="muted" style={{ fontSize: 12.5 }}>Codes de vérification et messages envoyés par e-mail.</div>
+      </div>
+      {d && (
+        <div style={{ padding: '10px 12px', borderRadius: 8, fontSize: 13, background: d.smtpConfigured && !d.disabled ? '#EFF8F1' : '#FFF6E5', color: d.smtpConfigured && !d.disabled ? '#0A5C2F' : '#8A5A00' }}>
+          {d.disabled ? <b>Envoi d'e-mails DÉSACTIVÉ (MAIL_DISABLED).</b>
+            : d.smtpConfigured
+              ? <>Envoi par <b>SMTP</b> : {d.host}:{d.port} ({d.secure || 'tls'}) · mot de passe {d.passwordSet ? 'renseigné' : <b>ABSENT</b>} · expéditeur {d.from}</>
+              : <><b>Aucun SMTP configuré</b> : le serveur utilise la fonction mail() de l'hébergeur. Elle accepte les messages sans les authentifier, et Gmail les rejette ou les classe en spam sans avertir. Expéditeur {d.from}</>}
+        </div>
+      )}
+      {msg && <div style={{ padding: 10, borderRadius: 8, fontSize: 13, background: msg.ok ? '#EFF8F1' : '#FDECEC', color: msg.ok ? '#0A5C2F' : '#B42318' }}>{msg.text}</div>}
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <label style={{ flex: '1 1 260px' }}>
+          <div className="k">Envoyer un e-mail de test à</div>
+          <input type="email" value={to} onChange={(e) => setTo(e.target.value)} placeholder="prenom@exemple.com" style={{ width: '100%', padding: 9 }} />
+        </label>
+        <button className="btn" disabled={test.isPending || !/^\S+@\S+\.\S+$/.test(to)} onClick={() => { setMsg(null); test.mutate(to.trim()); }}>{test.isPending ? 'Envoi…' : 'Envoyer le test'}</button>
+      </div>
+    </div>
+  );
+}

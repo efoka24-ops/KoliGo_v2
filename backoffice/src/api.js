@@ -74,6 +74,8 @@ export const adminApi = {
   smsConfig:       (apiKey)      => api.post('/admin/sms-config', { apiKey }).then(r => r.data),
   smsTest:         (phone)       => api.post('/admin/sms-test', { phone }).then(r => r.data),
   smsRefresh:      ()            => api.post('/admin/sms-refresh').then(r => r.data),
+  emailStatus:     ()            => api.get('/admin/email-status').then(r => r.data),
+  emailTest:       (to)          => api.post('/admin/email-test', { to }).then(r => r.data),
   blockUser:       (id, blocked) => api.patch(`/admin/users/${id}/block`, { blocked }).then(r => r.data),
   reviewKyc:       (id, status, reason) => api.patch(`/admin/users/${id}/kyc`, { status, reason }).then(r => r.data),
   kycDocUrl:       (docId)       => `${BASE}/admin/kyc-doc/${docId}`,

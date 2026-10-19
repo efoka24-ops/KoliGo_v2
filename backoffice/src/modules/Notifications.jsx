@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '../components/ui.jsx';
 import { adminApi } from '../api.js';
-import SmsPanel from './SmsPanel.jsx';
+import SmsPanel, { EmailPanel } from './SmsPanel.jsx';
 
 const AUDIENCES = [
   { key: 'ALL', label: 'Tout le monde (vendeurs et livreurs)' },
@@ -52,6 +52,7 @@ export default function Notifications() {
       </div>
 
       <SmsPanel />
+      <EmailPanel />
 
       <div className="card pad" style={{ display: 'grid', gap: 12, maxWidth: 640 }}>
         <label>
