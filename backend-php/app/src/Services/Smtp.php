@@ -31,7 +31,7 @@ final class Smtp
     }
 
     /** @return bool vrai si le serveur SMTP a accepte le message */
-    public static function send(string $to, string $subject, string $html, string $from, ?string $fromName = 'KoliGo'): bool
+    public static function send(string $to, string $subject, string $html, string $from, ?string $fromName = 'KoliGo', ?string $text = null): bool
     {
         self::$lastError = null;
         $to = self::clean($to);
@@ -84,11 +84,19 @@ final class Smtp
                 'Subject: =?UTF-8?B?' . base64_encode(self::clean($subject)) . '?=',
                 'Message-ID: <' . bin2hex(random_bytes(12)) . '@' . $ehlo . '>',
                 'MIME-Version: 1.0',
-                'Content-Type: text/html; charset=UTF-8',
-                'Content-Transfer-Encoding: base64',
+                'Auto-Submitted: auto-generated',
+                'X-Auto-Response-Suppress: OOF, AutoReply',
             ];
             // Corps en base64 : pas de ligne commencant par un point, pas de caractere special a echapper.
-            $msg = implode("\r\n", $headers) . "\r\n\r\n" . chunk_split(base64_encode($html), 76, "\r\n") . "\r\n.\r\n";
+            if ($text !== null) {
+                [$ctype, $body] = MailTemplate::multipart($html, $text);
+                $headers[] = 'Content-Type: ' . $ctype;
+                $msg = implode("\r\n", $headers) . "\r\n\r\n" . $body . "\r\n.\r\n";
+            } else {
+                $headers[] = 'Content-Type: text/html; charset=UTF-8';
+                $headers[] = 'Content-Transfer-Encoding: base64';
+                $msg = implode("\r\n", $headers) . "\r\n\r\n" . chunk_split(base64_encode($html), 76, "\r\n") . "\r\n.\r\n";
+            }
             fwrite($fp, $msg);
             self::expect($fp, [250]);
             @fwrite($fp, "QUIT\r\n");

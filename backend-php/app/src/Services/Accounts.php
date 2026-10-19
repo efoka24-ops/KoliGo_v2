@@ -119,7 +119,9 @@ final class Accounts
 
         if ($email) {
             Notify::email($email, "Bienvenue sur KoliGo, $name !",
-                '<p>Bonjour <b>' . htmlspecialchars($name) . '</b>, votre compte ' . ($role === 'DELIVERER' ? 'Livreur' : 'Vendeur') . ' est créé.</p>');
+                MailTemplate::paragraph('Bonjour ' . $name . ',')
+                . MailTemplate::paragraph('Votre compte ' . ($role === 'DELIVERER' ? 'Livreur' : 'Vendeur') . ' KoliGo est créé. Vous pouvez dès maintenant vous connecter avec votre numéro et votre code PIN.')
+                . MailTemplate::note('Bienvenue dans la communauté KoliGo.'), 'Votre compte est créé');
         }
         return self::issueTokens(Db::one('SELECT * FROM `User` WHERE id = ?', [$id]));
     }

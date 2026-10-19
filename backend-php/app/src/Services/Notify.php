@@ -11,27 +11,32 @@ use Koligo\Env;
  */
 final class Notify
 {
-    /** @return bool vrai si l'agent de messagerie du serveur a accepte le message (pas une preuve de livraison) */
-    public static function email(string $to, string $subject, string $bodyHtml): bool
+    /**
+     * @param string $bodyHtml fragment HTML du message (voir MailTemplate : paragraph, code, note, button) ; la mise en page,
+     *                         l'en-tete et la version texte sont ajoutes ici
+     * @return bool vrai si l'agent de messagerie du serveur a accepte le message (pas une preuve de livraison)
+     */
+    public static function email(string $to, string $subject, string $bodyHtml, ?string $preheader = null, ?string $title = null): bool
     {
         if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL) || Env::bool('MAIL_DISABLED')) {
             return false;
         }
         $from = Env::get('MAIL_FROM', 'noreply@trugroup.cm');
-        $html = '<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto">'
-            . '<h2 style="color:#178A3C">KoliGo</h2>' . $bodyHtml
-            . '<p style="color:#888;font-size:12px">KoliGo · La livraison collaborative au Cameroun</p></div>';
+        $title ??= preg_replace('/^\[KoliGo\]\s*/u', '', $subject) ?? $subject;
+        $html = MailTemplate::wrap($title, $bodyHtml, $preheader);
+        $text = MailTemplate::plainText($title, $bodyHtml);
         // SMTP authentifie quand il est configure (fiable) ; sinon repli sur mail() de l'hebergeur.
         if (Smtp::configured()) {
-            $ok = Smtp::send($to, $subject, $html, (string)$from);
+            $ok = Smtp::send($to, $subject, $html, (string)$from, 'KoliGo', $text);
             if (!$ok) {
                 error_log('[mail] SMTP : ' . Smtp::$lastError);
             }
             return $ok;
         }
-        $headers = "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\nFrom: KoliGo <$from>\r\n";
+        [$ctype, $body] = MailTemplate::multipart($html, $text);
+        $headers = "MIME-Version: 1.0\r\nContent-Type: $ctype\r\nFrom: KoliGo <$from>\r\nAuto-Submitted: auto-generated\r\n";
         try {
-            $ok = @mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $html, $headers);
+            $ok = @mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $body, $headers);
             error_log('[mail] mail() ' . ($ok ? 'accepte' : 'REFUSE') . ' pour ' . preg_replace('/^(.).*(@.*)$/', '$1***$2', $to)
                 . ' from=' . $from . ' sendmail_path=' . (string)ini_get('sendmail_path') . ' smtp=' . (string)ini_get('SMTP'));
             return (bool)$ok;
@@ -39,6 +44,18 @@ final class Notify
             error_log('[mail] ' . $e->getMessage());
             return false;
         }
+    }
+
+    /** E-mail du code de verification : le code est la premiere chose que l'on voit, y compris dans l'apercu de la messagerie. */
+    public static function codeEmail(string $to, string $code, ?string $name, int $minutes, string $title = 'Votre code de vérification'): bool
+    {
+        $body = ($name ? MailTemplate::paragraph("Bonjour $name,") : '')
+            . MailTemplate::paragraph('Voici votre code de vérification KoliGo :')
+            . MailTemplate::code($code)
+            . MailTemplate::paragraph("Il est valable $minutes minutes.")
+            . MailTemplate::note("Ne le partagez avec personne : l'équipe KoliGo ne vous le demandera jamais.")
+            . MailTemplate::note("Si vous n'êtes pas à l'origine de cette demande, ignorez simplement ce message.");
+        return self::email($to, "$code est votre code KoliGo", $body, "Votre code de vérification : $code (valable $minutes minutes)", $title);
     }
 
     public static function whatsapp(string $phone, string $text): bool
@@ -84,8 +101,7 @@ final class Notify
         $hello = $name ? "Bonjour $name ! " : '';
         $viaEmail = false;
         if ($email && $use('email')) {
-            $viaEmail = self::email($email, "[KoliGo] Code de verification : $code",
-                '<p>' . htmlspecialchars($hello) . 'Votre code : <b style="font-size:28px;letter-spacing:6px">' . $code . '</b></p><p>Valide 5 minutes.</p>');
+            $viaEmail = self::codeEmail($email, $code, $name, 5);
         }
         $errors = [];
         $viaSms = false;

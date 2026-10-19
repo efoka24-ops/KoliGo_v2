@@ -259,7 +259,7 @@ final class AdminController
             throw new HttpError('Adresse e-mail invalide');
         }
         \Koligo\Services\Smtp::$lastError = null;
-        $ok = \Koligo\Services\Notify::email($to, '[KoliGo] E-mail de test', '<p>Ceci est un e-mail de test envoyé depuis le back-office KoliGo.</p>');
+        $ok = \Koligo\Services\Notify::email($to, '[KoliGo] E-mail de test', \Koligo\Services\MailTemplate::paragraph('Ceci est un e-mail de test envoyé depuis le back-office KoliGo. Voici le rendu d\'un code de vérification (exemple) :') . \Koligo\Services\MailTemplate::code('1234') . \Koligo\Services\MailTemplate::note('Aucune action n\'est nécessaire.'), 'Test d\'envoi du back-office');
         return ['ok' => $ok, 'error' => $ok ? null : (\Koligo\Services\Smtp::$lastError ?: (\Koligo\Env::bool('MAIL_DISABLED') ? 'envoi désactivé (MAIL_DISABLED)' : 'refusé par le serveur')), 'overview' => self::emailOverview()];
     }
 

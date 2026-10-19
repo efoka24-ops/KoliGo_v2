@@ -67,9 +67,7 @@ final class AdminLogin
                 'id' => Db::id(), 'phone' => self::bucket($email), 'code' => $code,
                 'expiresAt' => gmdate('Y-m-d H:i:s', time() + self::CODE_TTL), 'createdAt' => Db::now(),
             ]);
-            Notify::email($email, '[KoliGo] Votre code de connexion au back-office',
-                '<p>Votre code de connexion : <b style="font-size:24px;letter-spacing:4px">' . $code . '</b></p>'
-                . '<p>Il est valable 10 minutes. Si vous n\'êtes pas à l\'origine de cette demande, ignorez ce message.</p>');
+            Notify::codeEmail($email, $code, null, 10, 'Connexion au back-office');
         }
         return ['step' => 'code'];
     }
