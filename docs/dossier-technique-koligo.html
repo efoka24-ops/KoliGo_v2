@@ -1,0 +1,501 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0"><title>Dossier technique KoliGo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap">
+<style>
+/* Mise en page : colonne de lecture avec sommaire fixe ; couleurs de la marque KoliGo (vert, orange, jaune) et ses polices (Plus Jakarta Sans, DM Sans, JetBrains Mono). */
+:root {
+  --bg: #F2F6F1; --surface: #FFFFFF; --ink: #0E2116; --muted: #526357; --line: #D9E3D9;
+  --accent: #178A3C; --accent-soft: #E3F2E7; --warm: #C4611A; --warm-soft: #FBEBDD; --code-bg: #EAF0E9;
+  --font-display: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0A130E; --surface: #111F17; --ink: #E5EFE7; --muted: #9DB0A2; --line: #223428;
+  --accent: #4CC46C; --accent-soft: #14301E; --warm: #EE9455; --warm-soft: #33210F; --code-bg: #16261C; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0A130E; --surface: #111F17; --ink: #E5EFE7; --muted: #9DB0A2; --line: #223428;
+  --accent: #4CC46C; --accent-soft: #14301E; --warm: #EE9455; --warm-soft: #33210F; --code-bg: #16261C; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 16px/1.65 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0; }
+.top { max-width: 1180px; margin: 0 auto; padding: 36px 0 20px; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.top h1 { font: 800 clamp(30px, 5vw, 46px)/1.1 var(--font-display); letter-spacing: -.02em; margin: 12px 0 10px; text-wrap: balance; }
+.top h1 em { font-style: normal; color: var(--accent); }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font: 400 13px var(--font-mono); color: var(--muted); }
+.stripe { display: flex; height: 5px; max-width: 1180px; margin: 0 auto; border-radius: 3px; overflow: hidden; }
+.stripe i { flex: 1; } .stripe i:nth-child(1){background:#C4611A} .stripe i:nth-child(2){background:#178A3C} .stripe i:nth-child(3){background:#E8B923} .stripe i:nth-child(4){background:#7BD389}
+.layout { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 40px; padding-block: 28px 80px; }
+nav.toc { position: sticky; top: 16px; align-self: start; display: flex; flex-direction: column; gap: 2px; font: 500 14px var(--font-body); }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-radius: 8px; }
+nav.toc a:hover, nav.toc a:focus-visible { background: var(--accent-soft); color: var(--ink); outline: none; }
+main { min-width: 0; }
+section { padding-block: 8px 28px; border-top: 1px solid var(--line); }
+section:first-child { border-top: 0; }
+h2 { font: 800 28px/1.2 var(--font-display); letter-spacing: -.015em; margin: 28px 0 14px; text-wrap: balance; display: flex; gap: 14px; align-items: baseline; }
+h2 .n { font: 600 13px var(--font-mono); color: var(--accent); }
+h3 { font: 700 18px/1.3 var(--font-display); margin: 30px 0 10px; text-wrap: balance; }
+p, li { max-width: 72ch; } p { margin: 0 0 14px; } ul { margin: 0 0 16px; padding-left: 20px; } li { margin-bottom: 6px; }
+.lead { font-size: 18px; line-height: 1.6; max-width: 70ch; }
+code { font: 500 .88em var(--font-mono); background: var(--code-bg); padding: 1px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+pre.code { background: var(--code-bg); padding: 14px; border-radius: 10px; overflow-x: auto; font: 400 13px/1.5 var(--font-mono); }
+.scroll { overflow-x: auto; max-width: 100%; }
+table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 18px; }
+th { text-align: left; font: 700 12px var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: var(--accent-soft); padding: 10px 12px; }
+td { padding: 10px 12px; border-top: 1px solid var(--line); vertical-align: top; line-height: 1.5; }
+td:first-child { font-weight: 600; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 22px 0 22px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+.tile b { font: 800 30px/1 var(--font-display); color: var(--accent); font-variant-numeric: tabular-nums; }
+.tile span { font-size: 13px; line-height: 1.45; color: var(--muted); }
+.fig { margin: 18px 0 26px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px 12px; }
+.fig .scroll { padding-bottom: 6px; }
+.fig pre.mermaid { margin: 0; text-align: center; background: transparent; }
+.arch { width: 100%; min-width: 640px; height: auto; display: block; color: var(--muted); }
+.arch .pn { fill: none; stroke: var(--line); stroke-dasharray: 5 5; }
+.arch .bx { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+.arch .bx.api { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+.arch text { font-family: var(--font-body); }
+.arch .ti { font-size: 14px; font-weight: 700; fill: var(--ink); }
+.arch .ti.big { font-size: 17px; font-family: var(--font-display); font-weight: 800; }
+.arch .su { font-size: 12px; fill: var(--muted); }
+.arch .lb { font-size: 11.5px; fill: var(--muted); }
+.arch .pt { font: 600 11px var(--font-mono); letter-spacing: .1em; fill: var(--muted); }
+.arch .ar { stroke: var(--muted); stroke-width: 1.6; fill: none; }
+.arch .ar.da { stroke-dasharray: 5 4; stroke: var(--warm); }
+figcaption { font-size: 13px; color: var(--muted); margin-top: 10px; max-width: 80ch; border-top: 1px solid var(--line); padding-top: 10px; }
+.note { border-radius: 10px; padding: 14px 16px; margin: 18px 0; font-size: 15px; max-width: 76ch; }
+.note.warn { background: var(--warm-soft); border: 1px solid var(--warm); }
+.gloss { display: grid; grid-template-columns: max-content 1fr; gap: 8px 20px; max-width: 76ch; margin: 0 0 18px; }
+.gloss dt { font-weight: 700; } .gloss dd { margin: 0; color: var(--muted); }
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  nav.toc { position: static; flex-direction: row; flex-wrap: wrap; gap: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  nav.toc a { border: 1px solid var(--line); background: var(--surface); }
+  h2 { font-size: 24px; }
+  .gloss { grid-template-columns: minmax(0, 1fr); gap: 2px; } .gloss dd { margin-bottom: 8px; }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+<header class="top">
+  <div class="eyebrow">Dossier technique · Version 1.0.22</div>
+  <h1>Koli<em>Go</em> : architecture, modèles et flux</h1>
+  <div class="meta"><span>Document du 21/10/2026</span><span>Branche php-backend</span><span>Schéma de données v22</span><span>Production : koligo.trugroup.cm</span></div>
+</header>
+<div class="stripe"><i></i><i></i><i></i><i></i></div>
+<div class="layout">
+  <nav class="toc" aria-label="Sommaire"><a href="#synthese">Synthèse</a><a href="#acteurs">Acteurs et cas d'usage</a><a href="#architecture">Architecture d'ensemble</a><a href="#serveur">Architecture du serveur</a><a href="#mobile">Application mobile</a><a href="#backoffice">Back-office</a><a href="#donnees">Modèle de données</a><a href="#etats">Machines à états</a><a href="#flux">Flux métier</a><a href="#tarification">Tarification et règles métier</a><a href="#securite">Sécurité</a><a href="#integrations">Intégrations externes</a><a href="#deploiement">Déploiement et exploitation</a><a href="#risques">Dette technique et risques</a><a href="#annexes">Annexes</a></nav>
+  <main><section id="synthese"><h2><span class="n">01</span>Synthèse</h2>
+<p class="lead">KoliGo est une plateforme de livraison collaborative au Cameroun. Un vendeur en ligne publie une course avec trois prix croissants, un livreur de proximité l'accepte, et le destinataire paie en Mobile Money à la livraison en donnant un code unique. Une place de marché d'annonces (Flash gratuites 24 h, Boost payantes) complète le service.</p>
+<div class="tiles">
+  <div class="tile"><b>3</b><span>interfaces : application Android, back-office web, site vitrine</span></div>
+  <div class="tile"><b>176</b><span>routes déclarées dans l'API (<code>routes.php</code>)</span></div>
+  <div class="tile"><b>37</b><span>tables, schéma versionné (v22)</span></div>
+  <div class="tile"><b>8 + 22</b><span>contrôleurs et services PHP</span></div>
+  <div class="tile"><b>6</b><span>services externes : paiement, push, SMS, e-mail, cartes, WhatsApp</span></div>
+  <div class="tile"><b>1.0.22</b><span>version de l'application (build 23)</span></div>
+</div>
+<p>Ce dossier décrit l'architecture telle qu'elle est dans le code au <time>21/10/2026</time> (branche <code>php-backend</code>). Les chiffres viennent des fichiers du dépôt. Ce qui n'a pas pu être vérifié depuis le code, comme la configuration réelle du serveur de production, est signalé comme tel.</p>
+<div class="scroll"><table class=""><thead><tr><th>Composant</th><th>Technologie</th><th>Emplacement</th></tr></thead><tbody><tr><td>Application mobile</td><td>Expo SDK 51, React Native 0.74, React Navigation, i18next, Zustand, TanStack Query</td><td><code>mobile/</code></td></tr><tr><td>API</td><td>PHP 8.1 sans Composer, PDO (MySQL en production, SQLite en local)</td><td><code>backend-php/</code></td></tr><tr><td>Back-office</td><td>React 18, React Router, TanStack Query, Vite</td><td><code>backoffice/</code>, servi sur <code>/admin/</code></td></tr><tr><td>Site vitrine</td><td>HTML statique, lien de téléchargement piloté par l'API</td><td><code>backend-php/landing/</code></td></tr><tr><td>Ancien serveur</td><td>Node.js, Express, Prisma. Remplacé par le PHP, conservé dans le dépôt.</td><td><code>backend/</code></td></tr><tr><td>Hébergement</td><td>Mutualisé Camoo, déploiement par FTP, domaine <code>koligo.trugroup.cm</code></td><td>production</td></tr></tbody></table></div>
+</section>
+<section id="acteurs"><h2><span class="n">02</span>Acteurs et cas d'usage</h2>
+<p>Quatre rôles interagissent. Le destinataire n'a pas besoin de l'application : il donne un code et un numéro Mobile Money au livreur.</p>
+<figure class="fig"><div class="scroll"><pre class="mermaid">flowchart LR
+  V["Vendeur&lt;br/&gt;publie des courses&lt;br/&gt;et des annonces"]
+  L["Livreur&lt;br/&gt;accepte, collecte, livre"]
+  A["Destinataire&lt;br/&gt;donne un code&lt;br/&gt;et paie en Mobile Money"]
+  AD["Administrateur&lt;br/&gt;pilote la plateforme"]
+  K(("KoliGo"))
+  V --&gt;|"course avec 3 prix"| K
+  K --&gt;|"course disponible"| L
+  L --&gt;|"code + numéro de paiement"| K
+  A -.-&gt;|"remet le code au livreur"| L
+  K --&gt;|"débit Mobile Money"| A
+  AD --&gt;|"back-office"| K</pre></div><figcaption>Les rôles et leurs échanges avec la plateforme. Le destinataire n'utilise pas l'application.</figcaption></figure>
+<div class="scroll"><table class=""><thead><tr><th>Rôle</th><th>Peut faire</th><th>Contrôles</th></tr></thead><tbody><tr><td>Vendeur</td><td>Publier une course avec trois prix, répondre aux demandes de nouveau prix, annuler, publier des annonces Flash ou Boost, suivre ses incidents</td><td>KYC validé, suspension après 3 incidents confirmés</td></tr><tr><td>Livreur</td><td>Voir les courses disponibles, accepter, confirmer la conformité du colis, signaler son arrivée, encaisser avec le code de l'acheteur, retirer ses gains</td><td>KYC validé, type de livreur (temporaire ou permanent), véhicule</td></tr><tr><td>Destinataire</td><td>Recevoir le colis, donner son code et son numéro Mobile Money</td><td>Aucun compte</td></tr><tr><td>Administrateur</td><td>KYC, tarification, utilisateurs et PIN, annonces, incidents, paiements Boost, versions de l'application, notifications, SMS</td><td>Connexion par e-mail et mot de passe, journal des actions (<code>AdminAction</code>)</td></tr></tbody></table></div>
+</section>
+<section id="architecture"><h2><span class="n">03</span>Architecture d'ensemble</h2>
+<p>Une seule API PHP sert tous les clients. Elle parle à une base MySQL et à six services externes. Aucun service externe ne reçoit de données dont il n'a pas besoin : Sungku reçoit un montant et un numéro, teeeotp un numéro et un texte court, Firebase un jeton d'appareil et un message.</p>
+<figure class="fig"><div class="scroll"><svg class="arch" viewBox="0 0 980 620" role="img" aria-label="Architecture d'ensemble : trois clients appellent une API PHP qui utilise MySQL, des fichiers et six services externes"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs><rect class="pn" x="20" y="20" width="250" height="580" rx="14"/><text class="pt" x="145" y="46" text-anchor="middle">CLIENTS</text><rect class="pn" x="320" y="20" width="340" height="580" rx="14"/><text class="pt" x="490" y="46" text-anchor="middle">HÉBERGEMENT MUTUALISÉ · KOLIGO.TRUGROUP.CM</text><rect class="pn" x="710" y="20" width="250" height="580" rx="14"/><text class="pt" x="835" y="46" text-anchor="middle">SERVICES EXTERNES</text><rect class="bx" x="40" y="110" width="210" height="80" rx="10"/><text class="ti" x="145" y="148" text-anchor="middle">Application Android</text><text class="su" x="145" y="165" text-anchor="middle">Expo, React Native</text><line class="ar" x1="250" y1="150" x2="345" y2="150" marker-end="url(#ah)"/><text class="lb" x="297" y="142" text-anchor="middle">HTTPS · JWT</text><rect class="bx" x="40" y="230" width="210" height="80" rx="10"/><text class="ti" x="145" y="268" text-anchor="middle">Back-office web</text><text class="su" x="145" y="285" text-anchor="middle">React, Vite, /admin/</text><line class="ar" x1="250" y1="270" x2="345" y2="270" marker-end="url(#ah)"/><text class="lb" x="297" y="262" text-anchor="middle">JWT admin</text><rect class="bx" x="40" y="350" width="210" height="80" rx="10"/><text class="ti" x="145" y="388" text-anchor="middle">Site vitrine</text><text class="su" x="145" y="405" text-anchor="middle">/landing/</text><line class="ar" x1="250" y1="390" x2="345" y2="390" marker-end="url(#ah)"/><text class="lb" x="297" y="382" text-anchor="middle">GET app-version</text><rect class="bx api" x="345" y="70" width="290" height="400" rx="12"/><text class="ti big" x="490" y="104" text-anchor="middle">API PHP 8.1</text><text class="su" x="490" y="140" text-anchor="middle">Router et surcharge de méthode</text><text class="su" x="490" y="164" text-anchor="middle">Intergiciels : JWT, rôle, limites</text><text class="su" x="490" y="188" text-anchor="middle">8 contrôleurs</text><text class="su" x="490" y="212" text-anchor="middle">22 services métier</text><text class="su" x="490" y="236" text-anchor="middle">Migration automatique du schéma</text><rect class="bx" x="345" y="510" width="135" height="72" rx="10"/><text class="ti" x="412.5" y="544" text-anchor="middle">MySQL</text><text class="su" x="412.5" y="561" text-anchor="middle">37 tables</text><rect class="bx" x="500" y="510" width="135" height="72" rx="10"/><text class="ti" x="567.5" y="544" text-anchor="middle">Fichiers</text><text class="su" x="567.5" y="561" text-anchor="middle">hors accès web</text><line class="ar" x1="412" y1="470" x2="412" y2="510" marker-end="url(#ah)"/><line class="ar" x1="567" y1="470" x2="567" y2="510" marker-end="url(#ah)"/><rect class="bx" x="730" y="74" width="210" height="60" rx="10"/><text class="ti" x="835" y="102" text-anchor="middle">Sungku</text><text class="su" x="835" y="119" text-anchor="middle">Orange Money, MTN MoMo</text><line class="ar" x1="635" y1="96" x2="730" y2="96" marker-end="url(#ah)"/><text class="lb" x="682" y="88" text-anchor="middle">dépôts</text><rect class="bx" x="730" y="158" width="210" height="60" rx="10"/><text class="ti" x="835" y="186" text-anchor="middle">Firebase FCM</text><text class="su" x="835" y="203" text-anchor="middle">notifications push</text><line class="ar" x1="635" y1="180" x2="730" y2="180" marker-end="url(#ah)"/><text class="lb" x="682" y="172" text-anchor="middle">push</text><rect class="bx" x="730" y="242" width="210" height="60" rx="10"/><text class="ti" x="835" y="270" text-anchor="middle">teeeotp</text><text class="su" x="835" y="287" text-anchor="middle">passerelle SMS Android</text><line class="ar" x1="635" y1="264" x2="730" y2="264" marker-end="url(#ah)"/><text class="lb" x="682" y="256" text-anchor="middle">SMS</text><rect class="bx" x="730" y="326" width="210" height="60" rx="10"/><text class="ti" x="835" y="354" text-anchor="middle">SMTP ewodi.net</text><text class="su" x="835" y="371" text-anchor="middle">e-mails</text><line class="ar" x1="635" y1="348" x2="730" y2="348" marker-end="url(#ah)"/><text class="lb" x="682" y="340" text-anchor="middle">e-mails</text><rect class="bx" x="730" y="410" width="210" height="60" rx="10"/><text class="ti" x="835" y="438" text-anchor="middle">Nominatim, OSRM</text><text class="su" x="835" y="455" text-anchor="middle">géocodage, distances</text><line class="ar" x1="635" y1="432" x2="730" y2="432" marker-end="url(#ah)"/><text class="lb" x="682" y="424" text-anchor="middle">distances</text><rect class="bx" x="730" y="494" width="210" height="60" rx="10"/><text class="ti" x="835" y="522" text-anchor="middle">Infobip WhatsApp</text><text class="su" x="835" y="539" text-anchor="middle">optionnel</text><line class="ar" x1="635" y1="516" x2="730" y2="516" marker-end="url(#ah)"/><text class="lb" x="682" y="508" text-anchor="middle">messages</text><line class="ar da" x1="730" y1="106" x2="635" y2="106" marker-end="url(#ah)"/><text class="lb" x="682" y="122" text-anchor="middle">webhook signé</text></svg></div><figcaption>Vue d'ensemble : les trois clients, l'API sur l'hébergement mutualisé, la base et les fichiers, et les six services externes. Le trait pointillé est l'appel entrant de Sungku. Les notifications Firebase arrivent ensuite sur le téléphone.</figcaption></figure>
+<h3>Principes de conception</h3>
+<ul>
+  <li><b>Une API, plusieurs clients.</b> Les routes existent avec et sans le préfixe <code>/api</code>, pour rester compatibles avec l'ancien serveur Node.</li>
+  <li><b>Hébergement contraint, code adapté.</b> Pas de Composer, pas de tâche planifiée garantie, Apache refuse PUT, PATCH et DELETE, et un pare-feu bloque le texte <code>data:image</code> dans les corps de requête. Le code contourne chacune de ces limites (voir la section suivante).</li>
+  <li><b>La base est la source de vérité.</b> Les transitions d'état sont des <code>UPDATE … WHERE status = …</code> atomiques : un rejeu ou deux requêtes simultanées ne produisent qu'un effet.</li>
+  <li><b>Un service externe en panne ne bloque pas le métier.</b> Les notifications, SMS et e-mails sont « au mieux » : leur échec est journalisé, pas propagé.</li>
+</ul>
+</section>
+<section id="serveur"><h2><span class="n">04</span>Architecture du serveur</h2>
+<p>Le serveur est une application PHP 8.1 sans bibliothèque externe. Une requête traverse quatre couches.</p>
+<figure class="fig"><div class="scroll"><pre class="mermaid">flowchart LR
+  R["Requête HTTP&lt;br/&gt;public_html/index.php"] --&gt; RT["Router&lt;br/&gt;correspondance méthode + chemin"]
+  RT --&gt; MW["Intergiciels&lt;br/&gt;JWT, rôle, limite de débit"]
+  MW --&gt; CT["Contrôleur&lt;br/&gt;lit la requête, renvoie du JSON"]
+  CT --&gt; SV["Service&lt;br/&gt;règles métier"]
+  SV --&gt; DBL["Db (PDO)&lt;br/&gt;MySQL ou SQLite"]
+  SV --&gt; EXT["Services externes"]</pre></div><figcaption>Chemin d'une requête. Les contrôleurs restent fins : les règles métier vivent dans les services.</figcaption></figure>
+<div class="scroll"><table class=""><thead><tr><th>Couche</th><th>Fichiers</th><th>Rôle</th></tr></thead><tbody><tr><td>Entrée</td><td><code>public_html/index.php</code>, <code>.htaccess</code></td><td>Point unique, réécriture d'URL, surcharge de méthode</td></tr><tr><td>Noyau</td><td><code>Router</code>, <code>Http</code>, <code>Db</code>, <code>Env</code>, <code>Jwt</code>, <code>Auth</code>, <code>RateLimit</code>, <code>Setup</code></td><td>Routage, JSON, PDO, configuration, jetons, limites, migrations</td></tr><tr><td>Contrôleurs (8)</td><td>Admin, Annonce, Auth, Delivery, Notification, Payment, Public, Wallet</td><td>Traduisent HTTP vers appels de services</td></tr><tr><td>Services (22)</td><td>Accounts, AdminLogin, Annonces, AppVersions, Cgu, Deliveries, Distance, FixedRoutes, Incidents, Invoices, Kyc, KycChecks, MailTemplate, Moderation, Notifier, Notify, Payments, Pricing, Sms, Smtp, Sungku, Uploads</td><td>Règles métier et clients des services externes</td></tr><tr><td>Données</td><td><code>app/database/schema.sql</code>, <code>geo.json</code>, <code>cgu_default.php</code></td><td>Schéma, 17 villes et 270 quartiers, texte des CGU</td></tr></tbody></table></div>
+<h3>Contraintes de l'hébergement et réponses</h3>
+<div class="scroll"><table class=""><thead><tr><th>Contrainte</th><th>Conséquence</th><th>Réponse dans le code</th></tr></thead><tbody><tr><td>Apache rejette PUT, PATCH, DELETE avant PHP</td><td>Les clients ne peuvent pas utiliser ces verbes</td><td>Les clients envoient <code>POST</code> avec un en-tête de surcharge de méthode, relu par le routeur</td></tr><tr><td>Pare-feu : 403 sur le texte <code>data:image</code></td><td>Les photos en data URI sont refusées</td><td>L'application envoie le base64 brut, sans préfixe</td></tr><tr><td>Pas de Composer</td><td>Pas de bibliothèques</td><td>Clients HTTP, SMTP et JWT écrits à la main, liste de classes explicite dans <code>bootstrap.php</code></td></tr><tr><td>Aucune tâche planifiée garantie</td><td>Pas de travail périodique fiable</td><td>Travail « paresseux » après réponse : <code>register_shutdown_function</code> puis <code>fastcgi_finish_request</code>, déclenché par l'activité (KYC, revérification des paiements)</td></tr><tr><td>Redirection http vers https</td><td>Un POST redirigé perd son corps</td><td>Les URL des services externes sont forcées en https</td></tr><tr><td>Déploiement par FTP, parfois instable</td><td>Déploiements partiels possibles</td><td>Envoi fichier par fichier avec reprise, vérification de la taille côté serveur</td></tr></tbody></table></div>
+<h3>Migration automatique</h3>
+<p><code>Setup::ensureSchema()</code> compare <code>SCHEMA_VERSION</code> (actuellement 22) à la valeur stockée dans <code>PlatformSetting</code>. Si elle est plus ancienne, le schéma est rejoué (<code>CREATE TABLE IF NOT EXISTS</code>, ajout de colonnes, index) et les données de référence sont mises à jour. Un déploiement de code suffit : il n'y a pas de commande de migration à lancer.</p>
+</section>
+<section id="mobile"><h2><span class="n">05</span>Application mobile</h2>
+<p>Application Android construite avec Expo SDK 51 (React Native 0.74), compilée en APK par Gradle. Le code est dans <code>mobile/src</code>.</p>
+<figure class="fig"><div class="scroll"><pre class="mermaid">flowchart TB
+  APPJS["App.js&lt;br/&gt;SafeArea, thème, navigation"] --&gt; I18N["I18nProvider&lt;br/&gt;français, anglais, fulfulde"]
+  I18N --&gt; CTX["AppProvider&lt;br/&gt;session, rôle, notifications, configuration"]
+  CTX --&gt; ROOT["RootNavigator"]
+  ROOT --&gt; UG{"Version imposée&lt;br/&gt;par le serveur ?"}
+  UG --&gt;|"oui"| UPD["UpdateGate&lt;br/&gt;écran bloquant"]
+  UG --&gt;|"non"| MG{"Maintenance ?"}
+  MG --&gt;|"oui"| MNT["MaintenanceGate"]
+  MG --&gt;|"non"| ONB["Parcours d'accueil&lt;br/&gt;langue, inscription, code, PIN, KYC"]
+  ONB --&gt; VT["Onglets Vendeur&lt;br/&gt;Accueil, Historique, Chat, Profil"]
+  ONB --&gt; DT["Onglets Livreur&lt;br/&gt;Accueil, Disponibles, Portefeuille, Chat, Profil"]
+  CTX -.-&gt; SVC["Services&lt;br/&gt;api, push, géolocalisation"]</pre></div><figcaption>Démarrage de l'application : deux portes (mise à jour imposée, maintenance) avant le parcours d'accueil puis les onglets du rôle actif.</figcaption></figure>
+<div class="scroll"><table class=""><thead><tr><th>Domaine</th><th>Choix</th><th>Détail</th></tr></thead><tbody><tr><td>Navigation</td><td>React Navigation 6</td><td>Une pile racine (49 écrans déclarés) et deux navigateurs à onglets, un par rôle</td></tr><tr><td>État</td><td>Contexte React + Zustand</td><td><code>AppContext</code> : session, rôle actif, notifications (relève toutes les 20 s), configuration et version (toutes les 60 s)</td></tr><tr><td>Réseau</td><td>Axios + <code>apiFetch</code></td><td>Jeton d'accès, renouvellement par jeton de rafraîchissement, surcharge de méthode, délai de 15 s</td></tr><tr><td>Stockage sûr</td><td>expo-secure-store</td><td>Jetons et paramètres de session ; biométrie par expo-local-authentication</td></tr><tr><td>Notifications</td><td>expo-notifications + Firebase</td><td>Jeton FCM de l'appareil enregistré sur le profil ; relève de secours si le push n'est pas disponible</td></tr><tr><td>Langues</td><td>i18next, react-i18next</td><td>Clé = texte français ; dictionnaires anglais séparés ; fulfulde presque vide (3 textes sur 668)</td></tr><tr><td>Cartes et position</td><td>react-native-maps, expo-location</td><td>Position du livreur pendant la course</td></tr><tr><td>Images</td><td>expo-image-picker, expo-image-manipulator</td><td>Photos des colis, annonces, pièces KYC, envoyées en base64 brut</td></tr></tbody></table></div>
+<h3>Écrans par domaine</h3>
+<div class="scroll"><table class=""><thead><tr><th>Dossier</th><th>Contenu</th></tr></thead><tbody><tr><td><code>screens/onboarding</code></td><td>Langue, bienvenue, inscription, code de vérification, PIN, connexion, PIN oublié, KYC, localisation, choix du rôle, paiement</td></tr><tr><td><code>screens/vendor</code></td><td>Publier une course (trois prix), détail, codes, factures, incidents</td></tr><tr><td><code>screens/deliverer</code></td><td>Courses disponibles, confirmation de conformité, attente et encaissement, portefeuille</td></tr><tr><td><code>screens/ads</code></td><td>Fil d'annonces, détail, publier une annonce, mes annonces</td></tr><tr><td><code>screens/shared</code></td><td>Notifications, changement de PIN, chat, profil</td></tr><tr><td><code>screens/client</code></td><td>Suivi côté destinataire</td></tr></tbody></table></div>
+</section>
+<section id="backoffice"><h2><span class="n">06</span>Back-office</h2>
+<p>Application web React 18 compilée par Vite et déposée dans <code>/admin/</code>. Elle appelle les routes <code>/admin/*</code> de la même API avec un jeton d'administrateur. Connexion par e-mail et mot de passe, avec code par e-mail à la première connexion.</p>
+<figure class="fig"><div class="scroll"><pre class="mermaid">flowchart LR
+  LG["Connexion&lt;br/&gt;e-mail + mot de passe"] --&gt; APPX["App.jsx&lt;br/&gt;routes protégées"]
+  APPX --&gt; OPS["Exploitation&lt;br/&gt;Tableau de bord, Livraisons, Colis, Utilisateurs"]
+  APPX --&gt; FIN["Argent&lt;br/&gt;Finance, Portefeuilles, Factures, Tarification, Trajets fixes"]
+  APPX --&gt; CONF["Confiance&lt;br/&gt;Sécurité et KYC, Vérifications KYC, Incidents, Support, Messages"]
+  APPX --&gt; MKT["Contenu&lt;br/&gt;Annonces, CGU, Zones, Contenu du site"]
+  APPX --&gt; SYS["Système&lt;br/&gt;Notifications et SMS, Versions de l'app, Paramètres, Archivage"]</pre></div><figcaption>Les modules du back-office regroupés par métier.</figcaption></figure>
+<div class="scroll"><table class=""><thead><tr><th>Module</th><th>Fonction</th></tr></thead><tbody><tr><td>Utilisateurs</td><td>Fiche, KYC, réinitialiser ou verrouiller le PIN, suspendre, générer et envoyer un code OTP</td></tr><tr><td>Vérifications KYC</td><td>Historique des contrôles automatiques, relance, mode AUTO, SUGGEST ou OFF</td></tr><tr><td>Tarification</td><td>Commission, plancher des offres, frais d'annulation, délais, seuils d'incidents, zones et gabarits</td></tr><tr><td>Annonces</td><td>Modération, signalements, tarifs Boost, suivi des paiements Boost, validation manuelle sur preuve</td></tr><tr><td>Notifications</td><td>Messages aux utilisateurs, passerelle SMS (clé, test, journal), diagnostic e-mail</td></tr><tr><td>Versions de l'app</td><td>Historique des APK, version active, mise à jour obligatoire ou facultative, retour arrière</td></tr><tr><td>CGU</td><td>Publication des conditions, texte recommandé, versions</td></tr></tbody></table></div>
+</section>
+<section id="donnees"><h2><span class="n">07</span>Modèle de données</h2>
+<p>MySQL (InnoDB, utf8mb4) en production, SQLite en local et en test, avec le même fichier de schéma. Les identifiants sont des chaînes générées par l'application. Les dates sont en UTC. Les montants sont des entiers en francs CFA (XAF), sans décimales.</p>
+<h3>Comptes et argent</h3>
+<figure class="fig"><div class="scroll"><pre class="mermaid">erDiagram
+  User ||--o| Wallet : possede
+  User ||--o{ KycDocument : fournit
+  User ||--o{ Delivery : "publie (vendorId)"
+  User ||--o{ Delivery : "livre (delivererId)"
+  Wallet ||--o{ Transaction : mouvements
+  Wallet ||--o{ Withdrawal : retraits
+  Wallet ||--o{ TopUp : recharges
+  User {
+    string id PK
+    string phone UK
+    string roles
+    string activeRole
+    string kycStatus
+    bool isBlocked
+  }
+  Wallet {
+    string id PK
+    string userId FK
+    int balanceXAF
+    int debtXAF
+  }</pre></div><figcaption>Un utilisateur a un portefeuille, des pièces KYC, et peut publier ou livrer des courses. Les montants du portefeuille évoluent par transactions, retraits et recharges.</figcaption></figure>
+<h3>Une course et ce qui s'y rattache</h3>
+<figure class="fig"><div class="scroll"><pre class="mermaid">erDiagram
+  Delivery ||--o| EscrowEntry : sequestre
+  Delivery ||--o{ DeliveryPayment : "paiement du destinataire"
+  Delivery ||--o{ GpsLocation : trace
+  Delivery ||--o{ Message : chat
+  Delivery ||--o{ Rating : notes
+  Delivery ||--o{ Issue : litiges
+  Delivery ||--o{ GabaritRevision : "correction de taille"
+  Delivery {
+    string id PK
+    string vendorId FK
+    string delivererId FK
+    string status
+    int priceXAF
+    string deliverCode
+  }</pre></div><figcaption>Tous les liens de ce schéma sont des clés étrangères déclarées dans le schéma SQL.</figcaption></figure>
+<figure class="fig"><div class="scroll"><pre class="mermaid">erDiagram
+  Delivery ||..o{ PriceRequest : "nouveau prix"
+  Delivery ||..o{ DeliveryEvent : historique
+  Delivery ||..o{ OfferDecline : "refus de livreurs"
+  User ||..o{ Incident : "incidents du vendeur"
+  PriceRequest {
+    string id PK
+    string deliveryId
+    string status
+    int feeXAF
+  }
+  DeliveryEvent {
+    string id PK
+    string deliveryId
+    string type
+    string actorId
+  }</pre></div><figcaption>Liens logiques par identifiant, sans clé étrangère : la demande de nouveau prix, l'historique des événements, les refus de livreurs et les incidents.</figcaption></figure>
+<h3>Annonces, notifications, KYC et exploitation</h3>
+<figure class="fig"><div class="scroll"><pre class="mermaid">erDiagram
+  User ||..o{ Annonce : "publie (vendorId)"
+  Annonce ||--o{ AnnoncePhoto : photos
+  Annonce ||--o{ AnnoncePayment : "paiement Boost"
+  Annonce ||--o{ AnnonceReport : signalements
+  User ||..o{ Notification : recoit
+  Broadcast ||..o{ Notification : diffuse
+  User ||..o{ KycCheck : "verification automatique"
+  User ||..o{ AdminAction : "cible d'une action"
+  City ||--o{ Neighborhood : quartiers
+  Annonce {
+    string id PK
+    string vendorId
+    string type
+    int durationHours
+    string status
+    datetime expiresAt
+  }
+  AnnoncePayment {
+    string id PK
+    string adId
+    int amountXAF
+    string externalRef
+    string paymentId
+    string status
+    string gatewayInfo
+  }
+  KycCheck {
+    string id PK
+    string userId
+    string decision
+    string findings
+  }</pre></div><figcaption>Les annonces et leurs paiements, les notifications, les contrôles KYC et le référentiel géographique.</figcaption></figure>
+<h3>Les 37 tables par domaine</h3>
+<div class="scroll"><table class=""><thead><tr><th>Domaine</th><th>Tables</th></tr></thead><tbody><tr><td>Comptes et sécurité</td><td><code>User</code>, <code>OtpCode</code>, <code>RateLimit</code>, <code>KycDocument</code>, <code>KycCheck</code>, <code>AdminAction</code></td></tr><tr><td>Courses</td><td><code>Delivery</code>, <code>DeliveryEvent</code>, <code>PriceRequest</code>, <code>GabaritRevision</code>, <code>OfferDecline</code>, <code>GpsLocation</code>, <code>Message</code>, <code>Rating</code>, <code>Issue</code>, <code>Incident</code></td></tr><tr><td>Argent</td><td><code>Wallet</code>, <code>Transaction</code>, <code>EscrowEntry</code>, <code>Withdrawal</code>, <code>TopUp</code>, <code>DeliveryPayment</code></td></tr><tr><td>Annonces</td><td><code>Annonce</code>, <code>AnnoncePhoto</code>, <code>AnnoncePayment</code>, <code>AnnonceReport</code></td></tr><tr><td>Tarification et géographie</td><td><code>PlatformSetting</code>, <code>FixedRoute</code>, <code>City</code>, <code>Neighborhood</code>, <code>RouteCache</code></td></tr><tr><td>Communication</td><td><code>Notification</code>, <code>Broadcast</code>, <code>SmsLog</code></td></tr><tr><td>Exploitation</td><td><code>AppVersion</code>, <code>CguVersion</code>, <code>DbArchive</code></td></tr></tbody></table></div>
+<p><code>PlatformSetting</code> est une table clé-valeur qui porte la configuration modifiable au back-office (commission, délais, seuils, mode maintenance) et quelques états techniques (version du schéma, jeton Firebase en cache, clé de la passerelle SMS).</p>
+</section>
+<section id="etats"><h2><span class="n">08</span>Machines à états</h2>
+<p>Chaque objet à cycle de vie suit un petit automate. Les transitions sont conditionnelles en base (<code>WHERE status = …</code>) : une transition impossible n'a aucun effet.</p>
+<h3>Course</h3>
+<figure class="fig"><div class="scroll"><pre class="mermaid">stateDiagram-v2
+  [*] --&gt; EN_ATTENTE : publication, séquestre bloqué
+  EN_ATTENTE --&gt; ACCEPTE : un livreur accepte un niveau de prix
+  EN_ATTENTE --&gt; ANNULE : le vendeur annule
+  ACCEPTE --&gt; EN_ROUTE : conformité confirmée au retrait
+  ACCEPTE --&gt; ANNULE : annulation, refus du colis, délai dépassé
+  EN_ROUTE --&gt; LIVRE : paiement du destinataire confirmé
+  LIVRE --&gt; [*]
+  ANNULE --&gt; [*]</pre></div><figcaption>Statuts de <code>Delivery.status</code>. Le passage à LIVRE se fait seulement après confirmation du paiement par Sungku.</figcaption></figure>
+<h3>Demande de nouveau prix</h3>
+<figure class="fig"><div class="scroll"><pre class="mermaid">stateDiagram-v2
+  [*] --&gt; PENDING : le livreur constate un écart au retrait
+  PENDING --&gt; ACCEPTED : le vendeur accepte
+  PENDING --&gt; REFUSED : le vendeur refuse, frais versés au livreur
+  PENDING --&gt; EXPIRED : délai de réponse dépassé
+  ACCEPTED --&gt; [*]
+  REFUSED --&gt; [*]
+  EXPIRED --&gt; [*]</pre></div><figcaption>La même logique s'applique à la correction de taille (<code>GabaritRevision</code>). Un refus ou une expiration annule la course.</figcaption></figure>
+<h3>Paiement Mobile Money</h3>
+<figure class="fig"><div class="scroll"><pre class="mermaid">stateDiagram-v2
+  [*] --&gt; PENDING : demande envoyée à Sungku
+  PENDING --&gt; SUCCESS : confirmation reçue ou vérifiée
+  PENDING --&gt; FAILED : refus prouvé
+  SUCCESS --&gt; [*]
+  FAILED --&gt; [*]</pre></div><figcaption>Un échec n'est conclu que s'il est prouvé. Un délai d'attente ou une erreur réseau laisse le paiement en PENDING, car l'argent a peut-être bougé.</figcaption></figure>
+<h3>Annonce</h3>
+<figure class="fig"><div class="scroll"><pre class="mermaid">stateDiagram-v2
+  [*] --&gt; BROUILLON : Boost créé, paiement attendu
+  [*] --&gt; ACTIVE : Flash publiée
+  [*] --&gt; SUSPENDUE : mot surveillé détecté
+  BROUILLON --&gt; ACTIVE : paiement confirmé
+  ACTIVE --&gt; SUSPENDUE : suspendue par l'administrateur
+  SUSPENDUE --&gt; ACTIVE : rétablie par l'administrateur
+  SUSPENDUE --&gt; SUPPRIMEE : retirée par l'administrateur
+  ACTIVE --&gt; EXPIREE : durée écoulée
+  ACTIVE --&gt; SUPPRIMEE : retirée
+  EXPIREE --&gt; [*]
+  SUPPRIMEE --&gt; [*]</pre></div><figcaption>Statuts de <code>Annonce.status</code>. L'expiration est appliquée à la lecture (<code>status = ACTIVE AND expiresAt &gt; maintenant</code>), sans tâche planifiée.</figcaption></figure>
+<h3>Vérification d'identité (KYC)</h3>
+<figure class="fig"><div class="scroll"><pre class="mermaid">stateDiagram-v2
+  [*] --&gt; NONE
+  NONE --&gt; PENDING : pièces et selfie envoyés
+  PENDING --&gt; VERIFIED : contrôle automatique ou administrateur
+  PENDING --&gt; REJECTED : contrôle automatique ou administrateur
+  REJECTED --&gt; PENDING : nouvel envoi
+  VERIFIED --&gt; PENDING : réouverture par l'administrateur</pre></div><figcaption>Statuts de <code>User.kycStatus</code>.</figcaption></figure>
+</section>
+<section id="flux"><h2><span class="n">09</span>Flux métier</h2>
+<h3>Inscription et code de vérification</h3>
+<figure class="fig"><div class="scroll"><pre class="mermaid">sequenceDiagram
+  actor U as Utilisateur
+  participant APP as Application
+  participant API as API
+  participant DB as Base
+  participant TEE as teeeotp
+  participant MAIL as SMTP
+  U-&gt;&gt;APP: nom, téléphone, e-mail
+  APP-&gt;&gt;API: POST /auth/otp/send
+  API-&gt;&gt;DB: OtpCode, 5 min
+  par SMS
+    API-&gt;&gt;TEE: POST /v1/sms (ttl 300 s)
+    TEE--&gt;&gt;API: 202 id
+    API-&gt;&gt;DB: SmsLog SUBMITTED
+  and E-mail
+    API-&gt;&gt;MAIL: message HTML et texte
+  end
+  API--&gt;&gt;APP: résultat par canal
+  APP--&gt;&gt;U: affiche les canaux partis
+  U-&gt;&gt;APP: saisit le code
+  APP-&gt;&gt;API: POST /auth/otp/verify
+  API-&gt;&gt;DB: code valide, essais limités
+  API--&gt;&gt;APP: ok
+  APP-&gt;&gt;API: POST /auth/signup (PIN)
+  API--&gt;&gt;APP: jetons d'accès et de rafraîchissement</pre></div><figcaption>Le serveur répond avec le résultat réel de chaque canal. Le code peut aussi être généré et envoyé à un utilisateur précis depuis le back-office.</figcaption></figure>
+<h3>Publication et négociation du prix</h3>
+<figure class="fig"><div class="scroll"><pre class="mermaid">sequenceDiagram
+  actor V as Vendeur
+  actor L as Livreur
+  participant API as API
+  participant DB as Base
+  V-&gt;&gt;API: POST /deliveries avec 3 prix croissants
+  API-&gt;&gt;DB: Delivery EN_ATTENTE, séquestre bloqué
+  API--&gt;&gt;V: course publiée
+  L-&gt;&gt;API: GET /deliveries/available
+  L-&gt;&gt;API: POST /deliveries/:id/accept (niveau choisi)
+  API-&gt;&gt;DB: ACCEPTE si encore EN_ATTENTE
+  Note over L,API: au retrait, le colis ne correspond pas
+  L-&gt;&gt;API: demande de nouveau prix (motif, photo)
+  API-&gt;&gt;DB: PriceRequest PENDING
+  API--&gt;&gt;V: notification
+  alt le vendeur accepte
+    V-&gt;&gt;API: accepter
+    API-&gt;&gt;DB: prix mis à jour, séquestre ajusté
+  else refus ou délai dépassé
+    V-&gt;&gt;API: refuser
+    API-&gt;&gt;DB: course ANNULE, frais d'annulation au livreur
+  end</pre></div><figcaption>Le vendeur fixe trois prix. Si le colis diffère de la description, le livreur propose un nouveau prix que le vendeur accepte ou refuse.</figcaption></figure>
+<h3>Livraison avec code unique et paiement</h3>
+<figure class="fig"><div class="scroll"><pre class="mermaid">sequenceDiagram
+  actor L as Livreur
+  actor A as Destinataire
+  participant API as API
+  participant SUN as Sungku
+  participant OP as Orange ou MTN
+  participant DB as Base
+  L-&gt;&gt;API: POST /deliveries/:id/pickup (conformité)
+  API-&gt;&gt;DB: EN_ROUTE
+  L-&gt;&gt;API: POST /deliveries/:id/arrive
+  A--&gt;&gt;L: donne son code et son numéro Mobile Money
+  L-&gt;&gt;API: POST /deliveries/:id/charge (code, numéro)
+  API-&gt;&gt;DB: DeliveryPayment PENDING
+  API-&gt;&gt;SUN: POST /api/partners/deposits
+  SUN-&gt;&gt;OP: demande de débit
+  OP--&gt;&gt;A: confirmation par code secret
+  A-&gt;&gt;OP: valide
+  SUN--&gt;&gt;API: webhook signé, statut CONFIRMED
+  API-&gt;&gt;DB: SUCCESS, course LIVRE, gains crédités
+  API--&gt;&gt;L: notification et solde mis à jour</pre></div><figcaption>Le destinataire n'utilise pas l'application. La course n'est clôturée qu'à la confirmation de paiement.</figcaption></figure>
+<h3>Confirmation d'un paiement : trois chemins</h3>
+<p>Le webhook est le chemin normal. Comme il peut ne pas arriver, deux rattrapages existent, qui passent par le même code de traitement idempotent.</p>
+<figure class="fig"><div class="scroll"><pre class="mermaid">flowchart LR
+  W["Webhook Sungku&lt;br/&gt;signature HMAC vérifiée"] --&gt; H["Payments::handleWebhook&lt;br/&gt;transition conditionnelle"]
+  P["Consultation de l'écran&lt;br/&gt;payment-status"] --&gt; RC["Payments::reconcile&lt;br/&gt;interroge Sungku"]
+  S["Revérification automatique&lt;br/&gt;1 fois par minute au plus"] --&gt; RC
+  M["Validation manuelle admin&lt;br/&gt;référence opérateur + audit"] --&gt; H2["Annonce Boost seulement"]
+  RC --&gt; H
+  H --&gt; E["Effet : course livrée,&lt;br/&gt;annonce en ligne ou crédit"]
+  H2 --&gt; E</pre></div><figcaption>Les trois chemins de confirmation et la validation manuelle, réservée aux paiements Boost.</figcaption></figure>
+<h3>Vérification KYC automatique</h3>
+<figure class="fig"><div class="scroll"><pre class="mermaid">sequenceDiagram
+  actor U as Utilisateur
+  participant API as API
+  participant KC as KycChecks
+  participant DB as Base
+  actor AD as Administrateur
+  U-&gt;&gt;API: POST /auth/kyc (CNI, selfie)
+  API-&gt;&gt;DB: KycDocument, statut PENDING
+  API-&gt;&gt;KC: enqueue
+  API--&gt;&gt;U: réponse immédiate
+  Note over API,KC: après l'envoi de la réponse
+  KC-&gt;&gt;KC: qualité, doublons, CNI
+  KC-&gt;&gt;DB: KycCheck, décision APPROVE, REJECT ou REVIEW
+  alt mode AUTO et décision tranchée
+    KC-&gt;&gt;DB: statut VERIFIED ou REJECTED, notification
+  else REVIEW ou mode SUGGEST
+    AD-&gt;&gt;API: décision manuelle
+  end
+  AD-&gt;&gt;API: relancer un contrôle</pre></div><figcaption>Il n'y a ni reconnaissance faciale ni lecture de texte : le contrôle automatique vérifie la qualité des images, les doublons et le numéro de CNI.</figcaption></figure>
+<h3>Annonce Boost</h3>
+<figure class="fig"><div class="scroll"><pre class="mermaid">sequenceDiagram
+  actor V as Vendeur
+  participant API as API
+  participant SUN as Sungku
+  participant DB as Base
+  V-&gt;&gt;API: POST /ads (type BOOST, numéro de paiement)
+  API-&gt;&gt;DB: Annonce BROUILLON, AnnoncePayment PENDING
+  API-&gt;&gt;SUN: dépôt Mobile Money
+  V-&gt;&gt;API: GET /ads/:id/payment-status (relève)
+  SUN--&gt;&gt;API: webhook CONFIRMED
+  API-&gt;&gt;DB: paiement SUCCESS, annonce ACTIVE avec date d'expiration
+  API--&gt;&gt;V: notification : annonce en ligne</pre></div><figcaption>Un Boost est payé avant la mise en ligne et n'est pas remboursable. Une annonce Flash est gratuite et dure 24 heures.</figcaption></figure>
+</section>
+<section id="tarification"><h2><span class="n">10</span>Tarification et règles métier</h2>
+<p>Le vendeur propose trois prix croissants. Le livreur choisit un niveau, ou demande un nouveau prix au retrait si le colis diffère. Les valeurs ci-dessous sont les valeurs par défaut ; toutes se modifient au back-office, sauf mention.</p>
+<div class="scroll"><table class=""><thead><tr><th>Règle</th><th>Valeur par défaut</th><th>Où la changer</th></tr></thead><tbody><tr><td>Commission de la plateforme</td><td>3 % du prix, prélevée sur la part du livreur</td><td>Tarification</td></tr><tr><td>Plancher des prix proposés</td><td>500 F</td><td>Tarification</td></tr><tr><td>Frais d'annulation (refus du nouveau prix)</td><td>500 F, versés au livreur</td><td>Tarification</td></tr><tr><td>Délai de réponse du vendeur</td><td>10 minutes</td><td>Tarification</td></tr><tr><td>Incidents avant suspension</td><td>3 incidents confirmés, sur toute la durée</td><td>Tarification</td></tr><tr><td>Trajets à prix fixe</td><td>Par couple départ-arrivée, avec supplément au-delà d'un poids léger</td><td>Trajets fixes</td></tr><tr><td>Annonce Flash</td><td>Gratuite, 24 heures</td><td>Annonces, tarifs et limites</td></tr><tr><td>Annonce Boost</td><td>Payante, durée au choix, non remboursable</td><td>Annonces, tarifs et limites</td></tr></tbody></table></div>
+<p>Le calcul historique (base, kilomètres, poids, zone) est conservé comme estimation indicative. La distance vient de OSRM, avec géocodage Nominatim, et chaque paire de lieux est mise en cache (<code>RouteCache</code>). Une distance estimée sans appel externe est marquée comme telle.</p>
+<p>Un incident signalé par un livreur (poids, taille, valeur, objet interdit, objet dangereux) peut être confirmé ou contesté. Au seuil, le vendeur est suspendu ; il peut faire appel, et l'administrateur peut lever la suspension.</p>
+</section>
+<section id="securite"><h2><span class="n">11</span>Sécurité</h2>
+<div class="scroll"><table class=""><thead><tr><th>Sujet</th><th>Mécanisme</th></tr></thead><tbody><tr><td>Authentification</td><td>Téléphone ou e-mail et PIN. PIN stocké haché. Jeton d'accès et jeton de rafraîchissement signés en HS256 (seul algorithme accepté). Administrateur : e-mail, mot de passe de 6 à 12 chiffres, code par e-mail à la première connexion.</td></tr><tr><td>Autorisation</td><td>Intergiciels JWT puis rôle (<code>requireRole</code>). Un administrateur ne peut pas agir sur un autre administrateur ni sur lui-même pour les PIN et codes.</td></tr><tr><td>Limites de débit</td><td>Table <code>RateLimit</code> : envoi de codes, vérification, connexion, tests SMS et e-mail, par adresse IP et par identifiant.</td></tr><tr><td>Codes de vérification</td><td>4 chiffres, 5 minutes, 3 essais ; un SMS expiré n'est jamais envoyé en retard (<code>ttlSeconds</code>).</td></tr><tr><td>Webhook de paiement</td><td>Signature <code>sha256=HMAC(horodatage + "." + corps brut)</code> avec un secret partagé, comparaison à temps constant. Traitement idempotent.</td></tr><tr><td>Argent</td><td>Transitions conditionnelles en base, séquestre par course, un échec de paiement n'est jamais conclu sans preuve.</td></tr><tr><td>Secrets</td><td>Fichier <code>.env.php</code> hors du dépôt, clé Firebase dans <code>app/storage</code> (accès web refusé), clé SMS en base ou en variable d'environnement, jamais renvoyée par l'API.</td></tr><tr><td>Données sensibles</td><td>Pièces KYC et photos servies par des routes authentifiées, jamais par une URL publique. Le texte des SMS n'est pas conservé.</td></tr><tr><td>Traçabilité</td><td><code>AdminAction</code> (PIN, OTP, suspension, clé SMS, validation manuelle de paiement), <code>DeliveryEvent</code>, <code>SmsLog</code>, <code>KycCheck</code>.</td></tr><tr><td>Modération</td><td>Mots surveillés sur les annonces (mise en attente), signalements, suspension.</td></tr></tbody></table></div>
+<aside class="note warn"><b>Points à surveiller.</b> Tant que <code>OTP_RETURN_CODE</code> est actif, le code d'un numéro non inscrit est renvoyé à l'application, ce qui contourne la preuve de possession du numéro : à désactiver quand les SMS sont fiables. Les secrets partagés en clair dans des conversations (accès FTP, base, SMTP, clé Firebase, clé SMS, mot de passe administrateur) doivent être renouvelés.</aside>
+</section>
+<section id="integrations"><h2><span class="n">12</span>Intégrations externes</h2>
+<div class="scroll"><table class=""><thead><tr><th>Service</th><th>Usage</th><th>Interface</th><th>Si le service est indisponible</th></tr></thead><tbody><tr><td><b>Sungku</b><br>vers pawaPay, Orange Money et MTN MoMo</td><td>Dépôts Mobile Money : course, Boost, recharge</td><td><code>POST /api/partners/deposits</code>, <code>GET …/deposits/{id}</code>, clé API. Webhook entrant signé (<code>X-Sungku-*</code>).</td><td>Paiement laissé PENDING, rattrapé par revérification</td></tr><tr><td><b>Firebase Cloud Messaging</b></td><td>Notifications sur le téléphone</td><td>API HTTP v1, jeton OAuth obtenu avec un compte de service (JWT RS256), mis en cache environ 50 minutes</td><td>Notification visible dans l'application (relève toutes les 20 s)</td></tr><tr><td><b>teeeotp</b><br>passerelle SMS TRU GROUP</td><td>Codes de vérification et SMS</td><td><code>POST /v1/sms</code>, <code>GET /v1/sms/{id}</code>, <code>GET /v1/me</code>, clé <code>X-Api-Key</code>. Un téléphone Android avec SIM envoie les messages.</td><td>Erreur codifiée, journal <code>SmsLog</code>, canal e-mail en parallèle</td></tr><tr><td><b>SMTP ewodi.net</b></td><td>E-mails (codes, bienvenue, livraisons)</td><td>Port 587, STARTTLS, authentification. Messages texte et HTML.</td><td>Repli sur <code>mail()</code> de l'hébergeur</td></tr><tr><td><b>Nominatim et OSRM</b></td><td>Géocodage et distances par la route</td><td>HTTP, cache en base</td><td>Distance estimée, marquée comme telle</td></tr><tr><td><b>Infobip WhatsApp</b></td><td>Messages WhatsApp, si configuré</td><td>API HTTP, clé</td><td>Ignoré en silence</td></tr></tbody></table></div>
+<h3>Notifications : trois canaux</h3>
+<figure class="fig"><div class="scroll"><pre class="mermaid">flowchart LR
+  EV["Événement métier&lt;br/&gt;course acceptée, paiement, KYC"] --&gt; N["Notifier::send"]
+  N --&gt; IN["Table Notification&lt;br/&gt;centre de notifications"]
+  N --&gt; PUSH["FCM v1&lt;br/&gt;téléphone verrouillé"]
+  IN --&gt; POLL["Relève de l'application&lt;br/&gt;toutes les 20 s"]
+  EV --&gt; OTP["Notify::otp&lt;br/&gt;codes de vérification"]
+  OTP --&gt; SMS["SMS via teeeotp"]
+  OTP --&gt; EM["E-mail SMTP"]
+  OTP --&gt; WAP["WhatsApp, optionnel"]</pre></div><figcaption>Les notifications sont toujours enregistrées en base, puis poussées au téléphone si possible. Les codes de vérification suivent un chemin séparé, par SMS, e-mail et WhatsApp.</figcaption></figure>
+</section>
+<section id="deploiement"><h2><span class="n">13</span>Déploiement et exploitation</h2>
+<figure class="fig"><div class="scroll"><pre class="mermaid">flowchart LR
+  DEV["Poste de développement&lt;br/&gt;branche php-backend"] --&gt; GIT["Dépôt Git"]
+  DEV --&gt;|"tests locaux SQLite"| T["Contrôles"]
+  DEV --&gt;|"ftp-deploy.sh, fichier par fichier"| PROD["Production Camoo"]
+  DEV --&gt;|"gradlew assembleRelease"| APK["APK signé"]
+  APK --&gt;|"envoi avec reprise"| LAND["/landing/koligo-vX.apk"]
+  PROD --&gt; MIG["ensureSchema&lt;br/&gt;migration au premier appel"]
+  BOX["Back-office&lt;br/&gt;Versions de l'app"] --&gt;|"activer une version"| CHK["GET /public/app-version"]
+  CHK --&gt; PHONE["Téléphones&lt;br/&gt;écran de mise à jour"]
+  CHK --&gt; LAND</pre></div><figcaption>Du poste de développement à la production, et la boucle de mise à jour imposée aux téléphones.</figcaption></figure>
+<h3>Mise à jour imposée aux applications installées</h3>
+<p>La table <code>AppVersion</code> garde l'historique des APK. Une seule version est active. Au démarrage puis toutes les 60 secondes, l'application envoie son numéro de build ; si celui-ci diffère de la version active, elle affiche un écran bloquant (mise à jour obligatoire) ou une simple invitation (facultative). Activer une ancienne version provoque un retour arrière : Android refuse d'installer un build plus ancien par-dessus un plus récent, l'utilisateur doit donc désinstaller puis réinstaller. La page de téléchargement du site suit la version active.</p>
+<h3>Observabilité</h3>
+<div class="scroll"><table class=""><thead><tr><th>Besoin</th><th>Outil</th></tr></thead><tbody><tr><td>Paiements Boost en attente</td><td>Back-office, Annonces, Paiements Boost : statut, dernière réponse brute de Sungku, dernier appel de confirmation reçu, revérification et validation manuelle</td></tr><tr><td>SMS</td><td>Back-office, Notifications : clé, quota du projet, journal avec état relevé chez teeeotp et raison des échecs</td></tr><tr><td>E-mail</td><td>Back-office, Notifications : mode d'envoi et test avec l'erreur réelle du serveur SMTP</td></tr><tr><td>Notifications push</td><td>Route <code>/admin/push-status</code> : clé Firebase présente, jeton obtenu, appareils enregistrés</td></tr><tr><td>KYC</td><td>Historique des contrôles automatiques et relance</td></tr><tr><td>Erreurs serveur</td><td>Journal PHP dans <code>app/storage/logs</code> (non lisible depuis le web)</td></tr></tbody></table></div>
+<h3>Tests</h3>
+<p>Le dépôt contient <code>tests/api_test.php</code> (API complète en local), <code>kyc_checks_test.php</code> (29 contrôles du moteur KYC), <code>app_versions_test.php</code> (16 contrôles de la gestion des versions) et un faux serveur Sungku. Un test de fumée contre la production existe (<code>smoke_prod.php</code>). Aucun test automatisé ne couvre l'application mobile ni le back-office.</p>
+</section>
+<section id="risques"><h2><span class="n">14</span>Dette technique et risques</h2>
+<div class="scroll"><table class=""><thead><tr><th>Sujet</th><th>Risque</th><th>Piste</th></tr></thead><tbody><tr><td>Déploiement FTP</td><td>Instable, déploiements partiels possibles, pas de retour arrière automatique du code serveur</td><td>Hébergement avec SSH ou intégration continue, déploiement atomique</td></tr><tr><td>Pas de tâche planifiée</td><td>Les travaux différés dépendent de l'activité des utilisateurs</td><td>Tâche cron si l'hébergeur la permet, sinon service externe qui appelle une route</td></tr><tr><td>SMS par un téléphone Android</td><td>Un téléphone éteint ou hors ligne bloque tous les SMS ; une seule SIM, quelques centaines de SMS par jour</td><td>Second téléphone, ou agrégateur SMS pour un nom d'expéditeur « KoliGo »</td></tr><tr><td>Délivrabilité des e-mails</td><td>SPF neutre (<code>?all</code>), aucun enregistrement DMARC : risque de spam</td><td>SPF avec <code>~all</code>, DMARC, vérifier la signature DKIM</td></tr><tr><td>Secrets</td><td>Plusieurs secrets ont été partagés en clair</td><td>Renouveler : FTP, base, SMTP, Firebase, teeeotp, mot de passe administrateur</td></tr><tr><td>Code de vérification renvoyé</td><td><code>OTP_RETURN_CODE</code> contourne la preuve du numéro</td><td>Désactiver une fois les SMS fiables</td></tr><tr><td>Tests</td><td>Pas de test mobile ni back-office ; la suite de non-régression complète n'est pas versionnée</td><td>Versionner la suite, ajouter des tests de bout en bout</td></tr><tr><td>Traduction</td><td>Le fulfulde est presque vide (3 textes sur 668)</td><td>Page « Traductions » au back-office avec relecture par un locuteur</td></tr><tr><td>Ancien serveur Node</td><td>Code mort dans le dépôt</td><td>Archiver ou supprimer</td></tr><tr><td>Une seule base, pas de réplication</td><td>Une panne de l'hébergeur arrête tout</td><td>Sauvegardes régulières hors hébergeur</td></tr></tbody></table></div>
+<p>Je n'ai pas pu vérifier depuis le code : la politique de sauvegarde de la base en production, la configuration exacte du serveur (versions de PHP et de MySQL, limites mémoire), ni la présence d'un monitoring externe.</p>
+</section>
+<section id="annexes"><h2><span class="n">15</span>Annexes</h2>
+<h3>Groupes de routes</h3>
+<div class="scroll"><table class=""><thead><tr><th>Préfixe</th><th>Contenu</th><th>Accès</th></tr></thead><tbody><tr><td><code>/public/*</code></td><td>Villes, tarifs, devis, distance, configuration, CGU, version de l'application, annonces publiques</td><td>Libre (annonces : jeton facultatif)</td></tr><tr><td><code>/auth/*</code></td><td>Codes, inscription, connexion, rafraîchissement, PIN oublié, KYC, connexion administrateur</td><td>Libre ou jeton</td></tr><tr><td><code>/user/*</code>, <code>/notifications</code></td><td>Profil, PIN, notifications</td><td>Jeton</td></tr><tr><td><code>/deliveries/*</code></td><td>Publier, lister, accepter, retrait, arrivée, encaissement, prix, incidents, chat, notes</td><td>Jeton, rôle vendeur ou livreur</td></tr><tr><td><code>/ads/*</code></td><td>Annonces du vendeur, paiement Boost, signalements</td><td>Jeton</td></tr><tr><td><code>/wallet/*</code>, <code>/payment/*</code></td><td>Portefeuille, recharges, retraits, webhook Sungku</td><td>Jeton (webhook : signature)</td></tr><tr><td><code>/admin/*</code></td><td>Tout le back-office</td><td>Jeton, rôle administrateur</td></tr></tbody></table></div>
+<h3>Glossaire</h3>
+<dl class="gloss">
+  <dt>XAF, F</dt><dd>Franc CFA, sans décimales.</dd>
+  <dt>Séquestre (escrow)</dt><dd>Montant bloqué à la publication d'une course et libéré à la livraison ou à l'annulation.</dd>
+  <dt>Gabarit</dt><dd>Taille déclarée du colis, qui influe sur le prix.</dd>
+  <dt>Flash, Boost</dt><dd>Annonces gratuites de 24 heures, annonces payantes de durée choisie.</dd>
+  <dt>KYC</dt><dd>Vérification d'identité : CNI et selfie.</dd>
+  <dt>Webhook</dt><dd>Appel envoyé par un service externe à notre serveur pour annoncer un résultat.</dd>
+  <dt>Idempotent</dt><dd>Qui peut être rejoué sans produire d'effet supplémentaire.</dd>
+  <dt>Surcharge de méthode</dt><dd>Envoyer POST en indiquant la méthode voulue dans un en-tête, quand l'hébergeur refuse PUT, PATCH et DELETE.</dd>
+</dl>
+<h3>Spécifications du dépôt</h3>
+<ul>
+  <li><code>specs/001-koligo-monorepo</code>, <code>002-tarification-gabarits-colis</code>, <code>003-annonces-flash-boost</code>, <code>004-prix-propose-negociation</code></li>
+  <li><code>backend-php/README.md</code> : installation locale, déploiement, contraintes de l'hébergement</li>
+  <li><code>docs/traduction-fulfulde.csv</code> : textes à traduire</li>
+</ul>
+</section></main>
+</div><script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script><script>mermaid.initialize({startOnLoad:true,theme:"neutral"});</script></body></html>

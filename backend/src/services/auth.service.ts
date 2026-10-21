@@ -4,6 +4,7 @@ import { generate4DigitCode } from '../utils/codes';
 import { signAccess, signRefresh, verifyRefresh } from '../utils/jwt';
 import { emailService } from './email.service';
 import { infobipService } from './infobip.service';
+import { teeeotpService } from './teeeotp.service';
 
 const ROUNDS = parseInt(process.env.BCRYPT_ROUNDS ?? '12', 10);
 const OTP_TTL_MS = 5 * 60 * 1000;
@@ -17,15 +18,19 @@ export const authService = {
     // Always visible in terminal — never sent to client
     console.log(`\n\x1b[42m\x1b[30m  OTP CODE  \x1b[0m  📱 ${phone}  →  \x1b[1m\x1b[33m${code}\x1b[0m\n`);
 
-    // Fire both channels in parallel — neither blocks the other
-    const [, whatsAppSent] = await Promise.allSettled([
+    // Fire every channel in parallel — none blocks the others
+    const [emailSent, whatsAppSent, smsSent] = await Promise.allSettled([
       // Email channel
       emailService.sendOtp(email ?? (process.env.SMTP_USER ?? 'infos@trugroup.cm'), code, name),
       // WhatsApp channel (Infobip) — sends to the phone directly
       infobipService.sendOtpWhatsApp(phone, code, name),
+      // SMS channel (teeeotp) — Android SIM gateway, see TEEEOTP_* env vars
+      teeeotpService.sendOtpSms(phone, code, name),
     ]);
 
     const viaWhatsApp = whatsAppSent.status === 'fulfilled' && whatsAppSent.value === true;
+    const viaSms = smsSent.status === 'fulfilled' && smsSent.value === true;
+    const viaEmail = emailSent.status === 'fulfilled' && emailSent.value === true;
 
     // The code travels back to the client so the app fills and submits it on
     // its own, with no typing. Set OTP_RETURN_CODE=false to stop returning it.
@@ -36,7 +41,7 @@ export const authService = {
     // someone else's address. Turning it off restores that guarantee, at the
     // cost of making the user read their inbox again.
     const returnCode = (process.env.OTP_RETURN_CODE ?? 'true').toLowerCase() !== 'false';
-    return { sent: true, whatsApp: viaWhatsApp, devCode: returnCode ? code : undefined };
+    return { sent: true, email: viaEmail, whatsApp: viaWhatsApp, sms: viaSms, devCode: returnCode ? code : undefined };
   },
 
   async verifyOtp(phone: string, code: string): Promise<boolean> {

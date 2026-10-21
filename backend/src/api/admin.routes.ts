@@ -18,6 +18,8 @@ router.get('/finance',                ctrl.getFinance);
 router.patch('/withdrawals/:id/pay',  ctrl.payWithdrawal);
 router.get('/settings',               ctrl.getSettings);
 router.patch('/settings',             ctrl.updateSetting);
+router.get('/site-content',           ctrl.getSiteContent);
+router.patch('/site-content',         ctrl.updateSiteContent);
 
 // Issues / Support
 router.get('/issues',                        ctrl.listIssues);

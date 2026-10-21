@@ -188,6 +188,66 @@ export const updateSetting = wrap(async (req: Request) =>
   })
 );
 
+const SITE_CONTENT_KEY = 'site_content_json';
+
+const DEFAULT_SITE_CONTENT = {
+  heroTitle: 'Livraison rapide et fiable',
+  heroSubtitle: 'KoliGo simplifie vos envois dans toute la ville.',
+  aboutTitle: 'A propos de nous',
+  aboutText: 'Nous aidons les vendeurs et livreurs a travailler plus vite avec une logistique moderne.',
+  team: [
+    { name: 'Marie N.', role: 'Operations', bio: 'Coordonne le reseau de livraison.' },
+    { name: 'Joel T.', role: 'Produit', bio: 'Ameliore l experience client.' },
+  ],
+  news: [
+    { title: 'Ouverture de nouvelles zones', summary: 'De nouveaux quartiers sont maintenant couverts.' },
+  ],
+};
+
+export const getSiteContent = wrap(async () => {
+  const setting = await prisma.platformSetting.findUnique({ where: { key: SITE_CONTENT_KEY } });
+  if (!setting) return DEFAULT_SITE_CONTENT;
+
+  try {
+    const parsed = JSON.parse(setting.value);
+    return { ...DEFAULT_SITE_CONTENT, ...parsed };
+  } catch {
+    return DEFAULT_SITE_CONTENT;
+  }
+});
+
+export const updateSiteContent = wrap(async (req: Request) => {
+  const payload = req.body ?? {};
+  if (typeof payload !== 'object' || Array.isArray(payload)) {
+    throw new Error('Payload invalide');
+  }
+
+  const current = await prisma.platformSetting.findUnique({ where: { key: SITE_CONTENT_KEY } });
+  let base = DEFAULT_SITE_CONTENT as any;
+  if (current?.value) {
+    try {
+      base = { ...DEFAULT_SITE_CONTENT, ...JSON.parse(current.value) };
+    } catch {
+      base = DEFAULT_SITE_CONTENT;
+    }
+  }
+
+  const merged = {
+    ...base,
+    ...payload,
+    team: Array.isArray(payload.team) ? payload.team : base.team,
+    news: Array.isArray(payload.news) ? payload.news : base.news,
+  };
+
+  await prisma.platformSetting.upsert({
+    where: { key: SITE_CONTENT_KEY },
+    update: { value: JSON.stringify(merged) },
+    create: { key: SITE_CONTENT_KEY, value: JSON.stringify(merged) },
+  });
+
+  return merged;
+});
+
 // ─── Cities & Neighborhoods ───────────────────────────────────────────────────
 
 export const listCities = wrap(async (req: Request) => {

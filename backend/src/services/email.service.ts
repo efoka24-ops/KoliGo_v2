@@ -55,13 +55,15 @@ function btn(text: string, href = '#') {
   return `<a href="${href}" style="display:inline-block;background:${GREEN};color:#fff;font-weight:700;font-size:14px;padding:13px 28px;border-radius:12px;text-decoration:none;margin-top:16px;">${text}</a>`;
 }
 
-async function send(to: string | string[], subject: string, html: string) {
+async function send(to: string | string[], subject: string, html: string): Promise<boolean> {
   const targets = Array.isArray(to) ? to : [to];
   try {
     await transporter.sendMail({ from: FROM, to: targets.join(', '), subject, html });
+    return true;
   } catch (e) {
     // Never crash the main flow — just log
     console.error('[EMAIL] Failed:', (e as Error).message);
+    return false;
   }
 }
 
@@ -79,9 +81,10 @@ export const emailService = {
       </div>
       <p style="color:#9A988E;font-size:12px;margin:16px 0 0;">Si vous n'avez pas demandé ce code, ignorez ce message.</p>
     `);
-    await send([to, ADMIN], `[KoliGo] Code de vérification : ${code}`, html);
+    const sent = await send([to, ADMIN], `[KoliGo] Code de vérification : ${code}`, html);
     // Also notify admin
     await send(ADMIN, `[Admin] OTP envoyé à ${to}`, layout('Admin · OTP', `<p>OTP <strong>${code}</strong> envoyé à <strong>${to}</strong></p>`));
+    return sent;
   },
 
   // ── Welcome ──────────────────────────────────────────────────────────────────
