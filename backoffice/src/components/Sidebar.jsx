@@ -69,6 +69,7 @@ export default function Sidebar({ onLogout, user }) {
       <Item to="/cgu"        id="siteContent" label="CGU" />
       <Item to="/zones"      id="zones"    label="Villes & Quartiers" />
       <Item to="/analytics"  id="analytics" />
+      <Item to="/usage" id="analytics" label="Suivi d'usage" />
       <Item to="/settings"   id="settings" />
       <Item to="/site-content" id="siteContent" label="Contenu du site" />
       <Item to="/reset"      id="reset"    label="Archivage / Reset" />

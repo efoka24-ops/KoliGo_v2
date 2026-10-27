@@ -23,6 +23,7 @@ import Invoices   from './modules/Invoices.jsx';
 import Pricing    from './modules/Pricing.jsx';
 import FixedRoutes from './modules/FixedRoutes.jsx';
 import Versions from './modules/Versions.jsx';
+import Usage from './modules/Usage.jsx';
 import KycChecks from './modules/KycChecks.jsx';
 import Ads from './modules/Ads.jsx';
 import Incidents from './modules/Incidents.jsx';
@@ -95,6 +96,7 @@ export default function App() {
           <Route path="/pricing"     element={<Pricing />} />
           <Route path="/fixed-routes" element={<FixedRoutes />} />
           <Route path="/versions" element={<Versions />} />
+          <Route path="/usage" element={<Usage />} />
           <Route path="/kyc-checks" element={<KycChecks />} />
           <Route path="/ads" element={<Ads />} />
           <Route path="/incidents" element={<Incidents />} />

@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "retentionDays": 90,
+  "events": [
+    { "module": "Core", "screen": "All", "name": "app_open", "source": "app", "trigger": "Ouverture de l'application, ou retour au premier plan après plus de 30 minutes", "params": ["cold_start"] },
+    { "module": "Core", "screen": "All", "name": "session_start", "source": "app", "trigger": "Premier événement d'une session (après 30 minutes d'inactivité)", "params": [] },
+    { "module": "Core", "screen": "All", "name": "app_background", "source": "app", "trigger": "L'application passe en arrière-plan", "params": ["session_seconds"] },
+    { "module": "Core", "screen": "All", "name": "screen_view", "source": "app", "trigger": "Un écran s'affiche (le nom de l'écran est dans la colonne écran)", "params": ["previous_screen"] },
+    { "module": "Core", "screen": "All", "name": "form_error", "source": "app", "trigger": "Un message d'erreur est montré à l'utilisateur (validation de formulaire, refus du serveur)", "params": ["message"] },
+    { "module": "Core", "screen": "All", "name": "api_error", "source": "app", "trigger": "Un appel au serveur échoue : réseau absent, délai dépassé ou erreur serveur", "params": ["endpoint", "status", "kind"] },
+    { "module": "Core", "screen": "Settings", "name": "consent_update", "source": "app", "trigger": "L'utilisateur active ou désactive le suivi d'usage dans les paramètres", "params": ["enabled"] },
+    { "module": "Core", "screen": "All", "name": "update_gate_shown", "source": "app", "trigger": "L'écran de mise à jour obligatoire s'affiche", "params": ["version", "downgrade"] },
+    { "module": "Core", "screen": "All", "name": "maintenance_shown", "source": "app", "trigger": "L'écran de maintenance s'affiche", "params": [] },
+
+    { "module": "Onboarding", "screen": "Language", "name": "language_selected", "source": "app", "trigger": "Choix ou changement de la langue de l'application", "params": ["lang"] },
+    { "module": "Onboarding", "screen": "Otp", "name": "otp_sent", "source": "app", "trigger": "Code de vérification demandé et accepté par le serveur", "params": ["sms", "email"] },
+    { "module": "Onboarding", "screen": "Otp", "name": "otp_send_failed", "source": "app", "trigger": "La demande de code de vérification échoue", "params": ["status"] },
+    { "module": "Onboarding", "screen": "Otp", "name": "otp_verified", "source": "app", "trigger": "Le code de vérification saisi est correct", "params": [] },
+    { "module": "Onboarding", "screen": "Otp", "name": "otp_failed", "source": "app", "trigger": "Le code saisi est refusé (incorrect, expiré, trop d'essais)", "params": ["status"] },
+    { "module": "Onboarding", "screen": "Pin", "name": "signup_success", "source": "app", "trigger": "Compte créé avec succès à la validation du PIN", "params": ["role"] },
+    { "module": "Onboarding", "screen": "Pin", "name": "signup_failed", "source": "app", "trigger": "La création du compte échoue", "params": ["status"] },
+    { "module": "Onboarding", "screen": "Signin", "name": "login_success", "source": "app", "trigger": "Connexion réussie avec le PIN", "params": [] },
+    { "module": "Onboarding", "screen": "Signin", "name": "login_failed", "source": "app", "trigger": "Connexion refusée (PIN incorrect, compte introuvable, trop d'essais)", "params": ["status"] },
+    { "module": "Onboarding", "screen": "All", "name": "logout", "source": "app", "trigger": "Déconnexion depuis l'application", "params": [] },
+    { "module": "Onboarding", "screen": "ForgotPin", "name": "pin_reset_requested", "source": "app", "trigger": "Code de réinitialisation du PIN demandé et accepté", "params": ["sms", "email"] },
+    { "module": "Onboarding", "screen": "ForgotPin", "name": "pin_reset_request_failed", "source": "app", "trigger": "La demande de réinitialisation du PIN échoue (compte introuvable)", "params": ["status"] },
+    { "module": "Onboarding", "screen": "ForgotPin", "name": "pin_reset_success", "source": "app", "trigger": "Nouveau PIN enregistré", "params": [] },
+    { "module": "Onboarding", "screen": "ForgotPin", "name": "pin_reset_failed", "source": "app", "trigger": "La réinitialisation du PIN échoue (code invalide ou expiré)", "params": ["status"] },
+    { "module": "Onboarding", "screen": "Kyc", "name": "kyc_submitted", "source": "app", "trigger": "Pièce d'identité et selfie envoyés", "params": [] },
+    { "module": "Onboarding", "screen": "Kyc", "name": "kyc_submit_failed", "source": "app", "trigger": "L'envoi des pièces d'identité échoue", "params": ["status"] },
+    { "module": "Onboarding", "screen": "Terms", "name": "cgu_accepted", "source": "app", "trigger": "L'utilisateur accepte les conditions d'utilisation", "params": [] },
+    { "module": "Onboarding", "screen": "RoleSelect", "name": "role_switched", "source": "app", "trigger": "Changement du rôle actif (vendeur ou livreur)", "params": ["role"] },
+
+    { "module": "Profil", "screen": "Settings", "name": "biometric_toggled", "source": "app", "trigger": "Activation ou désactivation de la biométrie", "params": ["enabled"] },
+    { "module": "Profil", "screen": "ChangePin", "name": "pin_changed", "source": "app", "trigger": "PIN modifié depuis les paramètres", "params": [] },
+    { "module": "Profil", "screen": "Notifications", "name": "notifications_read", "source": "app", "trigger": "Notifications marquées comme lues", "params": [] },
+
+    { "module": "Vendeur", "screen": "PostDelivery", "name": "delivery_published", "source": "app", "trigger": "Course publiée avec ses trois prix", "params": ["size", "deliverer_type"] },
+    { "module": "Vendeur", "screen": "PostDelivery", "name": "delivery_publish_failed", "source": "app", "trigger": "La publication de la course échoue", "params": ["status"] },
+    { "module": "Vendeur", "screen": "DeliveryDetail", "name": "delivery_cancelled", "source": "app", "trigger": "Le vendeur annule sa course", "params": [] },
+    { "module": "Vendeur", "screen": "DeliveryDetail", "name": "size_correction_answered", "source": "app", "trigger": "Le vendeur accepte ou refuse une correction de taille proposée par le livreur", "params": [] },
+    { "module": "Vendeur", "screen": "Incidents", "name": "incident_appealed", "source": "app", "trigger": "Le vendeur fait appel d'un incident", "params": [] },
+    { "module": "Vendeur", "screen": "Rating", "name": "delivery_rated", "source": "app", "trigger": "Note envoyée après une livraison", "params": ["stars"] },
+
+    { "module": "Livreur", "screen": "DeliveryDetail", "name": "delivery_accepted", "source": "app", "trigger": "Le livreur accepte une course", "params": [] },
+    { "module": "Livreur", "screen": "DeliveryDetail", "name": "delivery_accept_failed", "source": "app", "trigger": "L'acceptation de la course échoue (déjà prise, compte non validé)", "params": ["status"] },
+    { "module": "Livreur", "screen": "OfferDetail", "name": "offer_declined", "source": "app", "trigger": "Le livreur décline une course proposée", "params": [] },
+    { "module": "Livreur", "screen": "ConfirmCode", "name": "pickup_confirmed", "source": "app", "trigger": "Le livreur confirme la conformité du colis au retrait", "params": [] },
+    { "module": "Livreur", "screen": "ConfirmCode", "name": "pickup_failed", "source": "app", "trigger": "La confirmation au retrait échoue", "params": ["status"] },
+    { "module": "Livreur", "screen": "ConfirmCode", "name": "parcel_rejected", "source": "app", "trigger": "Le livreur refuse le colis (poids, taille, valeur, objet interdit ou dangereux)", "params": ["kind"] },
+    { "module": "Livreur", "screen": "ConfirmCode", "name": "size_correction_proposed", "source": "app", "trigger": "Le livreur propose une correction de taille au retrait", "params": [] },
+    { "module": "Livreur", "screen": "Waiting", "name": "arrival_confirmed", "source": "app", "trigger": "Le livreur signale son arrivée chez le destinataire", "params": [] },
+    { "module": "Livreur", "screen": "Waiting", "name": "buyer_charge_requested", "source": "app", "trigger": "Code du destinataire et numéro Mobile Money saisis : demande de paiement envoyée", "params": [] },
+    { "module": "Livreur", "screen": "Waiting", "name": "buyer_charge_failed", "source": "app", "trigger": "La demande de paiement au destinataire est refusée (code incorrect, numéro invalide)", "params": ["status"] },
+
+    { "module": "Annonces", "screen": "PostAd", "name": "ad_published", "source": "app", "trigger": "Annonce Flash ou Boost créée (le Boost attend son paiement)", "params": ["type", "days"] },
+    { "module": "Annonces", "screen": "PostAd", "name": "ad_publish_failed", "source": "app", "trigger": "La création de l'annonce échoue", "params": ["status"] },
+    { "module": "Annonces", "screen": "AdDetail", "name": "ad_contact_click", "source": "app", "trigger": "Un visiteur demande le contact du vendeur d'une annonce", "params": [] },
+    { "module": "Annonces", "screen": "AdDetail", "name": "ad_reported", "source": "app", "trigger": "Une annonce est signalée", "params": [] },
+    { "module": "Annonces", "screen": "MyAds", "name": "ad_withdrawn", "source": "app", "trigger": "Le vendeur retire son annonce", "params": [] },
+    { "module": "Annonces", "screen": "MyAds", "name": "ad_republished", "source": "app", "trigger": "Le vendeur republie une annonce expirée", "params": ["type", "days"] },
+
+    { "module": "Portefeuille", "screen": "Wallet", "name": "topup_requested", "source": "app", "trigger": "Recharge du portefeuille demandée", "params": ["amount_xaf"] },
+    { "module": "Portefeuille", "screen": "Wallet", "name": "topup_failed", "source": "app", "trigger": "La demande de recharge échoue", "params": ["status"] },
+    { "module": "Portefeuille", "screen": "Wallet", "name": "withdraw_requested", "source": "app", "trigger": "Retrait demandé", "params": ["amount_xaf", "provider"] },
+    { "module": "Portefeuille", "screen": "Wallet", "name": "withdraw_failed", "source": "app", "trigger": "La demande de retrait échoue (solde insuffisant, montant invalide)", "params": ["status"] },
+
+    { "module": "Paiement", "screen": "Serveur", "name": "payment_confirmed", "source": "server", "trigger": "Le fournisseur de paiement confirme un paiement (course, Boost ou recharge)", "params": ["kind"] },
+    { "module": "Paiement", "screen": "Serveur", "name": "payment_failed", "source": "server", "trigger": "Le fournisseur de paiement refuse ou abandonne un paiement", "params": ["kind"] },
+    { "module": "Livraison", "screen": "Serveur", "name": "delivery_delivered", "source": "server", "trigger": "Course clôturée : paiement confirmé et livreur crédité", "params": ["price_xaf", "minutes"] },
+    { "module": "Confiance", "screen": "Serveur", "name": "kyc_decided", "source": "server", "trigger": "Décision sur une vérification d'identité (automatique ou administrateur)", "params": ["decision"] }
+  ],
+  "funnels": [
+    { "id": "inscription", "label": "Inscription", "unit": "devices", "steps": [
+      { "label": "Écran d'inscription", "event": "screen_view", "screen": "Signup" },
+      { "label": "Code demandé", "event": "otp_sent" },
+      { "label": "Code vérifié", "event": "otp_verified" },
+      { "label": "Compte créé", "event": "signup_success" },
+      { "label": "Identité envoyée", "event": "kyc_submitted" }
+    ] },
+    { "id": "connexion", "label": "Connexion", "unit": "devices", "steps": [
+      { "label": "Écran de connexion", "event": "screen_view", "screen": "Signin" },
+      { "label": "Connexion réussie", "event": "login_success" }
+    ] },
+    { "id": "pin_oublie", "label": "PIN oublié", "unit": "devices", "steps": [
+      { "label": "Écran PIN oublié", "event": "screen_view", "screen": "ForgotPin" },
+      { "label": "Code demandé", "event": "pin_reset_requested" },
+      { "label": "Nouveau PIN enregistré", "event": "pin_reset_success" }
+    ] },
+    { "id": "course", "label": "Course, de la publication à la livraison", "unit": "events", "steps": [
+      { "label": "Course publiée", "event": "delivery_published" },
+      { "label": "Acceptée par un livreur", "event": "delivery_accepted" },
+      { "label": "Colis retiré", "event": "pickup_confirmed" },
+      { "label": "Arrivée signalée", "event": "arrival_confirmed" },
+      { "label": "Paiement demandé", "event": "buyer_charge_requested" },
+      { "label": "Livrée et payée", "event": "delivery_delivered" }
+    ] },
+    { "id": "boost", "label": "Annonce Boost", "unit": "events", "steps": [
+      { "label": "Écran de publication", "event": "screen_view", "screen": "PostAd" },
+      { "label": "Boost créé", "event": "ad_published", "where": { "type": "BOOST" } },
+      { "label": "Paiement confirmé", "event": "payment_confirmed", "where": { "kind": "ad" } }
+    ] }
+  ]
+}

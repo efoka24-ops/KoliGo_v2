@@ -33,5 +33,8 @@ final class Kyc
             'kycRejectionReason' => $status === 'REJECTED' ? $reason : null,
             'updatedAt' => Db::now(),
         ]);
+        if (in_array($status, ['VERIFIED', 'REJECTED'], true)) {
+            Analytics::server('kyc_decided', $userId, ['decision' => strtolower($status)]);
+        }
     }
 }

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useApp } from '../context/AppContext';
 import MaintenanceGate from '../components/MaintenanceGate';
 import UpdateGate from '../components/UpdateGate';
+import { track } from '../services/analytics';
 
 // Onboarding
 import LanguageScreen from '../screens/onboarding/LanguageScreen';
@@ -69,6 +70,9 @@ const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
   const { role, maintenance, refreshConfig, lang, update } = useApp();
+
+  useEffect(() => { if (update) track('update_gate_shown', { version: update.version, downgrade: !!update.downgrade }); }, [update?.version]);
+  useEffect(() => { if (maintenance) track('maintenance_shown'); }, [maintenance]);
 
   if (update) return <UpdateGate update={update} onRetry={refreshConfig} lang={lang} />;
   if (maintenance) return <MaintenanceGate onRetry={refreshConfig} lang={lang} />;

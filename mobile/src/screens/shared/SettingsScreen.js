@@ -8,6 +8,7 @@ import { useApp } from '../../context/AppContext';
 import { useTheme, THEME_OPTIONS } from '../../context/ThemeContext';
 import { useI18n } from '../../i18n';
 import KGTopBar from '../../components/KGTopBar';
+import { isAnalyticsEnabled, setAnalyticsEnabled } from '../../services/analytics';
 import KenteStripe from '../../components/KenteStripe';
 import Icon from '../../components/Icon';
 
@@ -48,6 +49,7 @@ export default function SettingsScreen({ navigation }) {
   const { theme, setTheme } = useTheme();
   const { biometricEnabled, enableBiometric, logout, user } = useApp();
   const [biometric, setBiometric] = useState(biometricEnabled);
+  const [usage, setUsage] = useState(isAnalyticsEnabled());
 
   const handleBiometricToggle = async (enabled) => {
     if (enabled) {
@@ -152,6 +154,20 @@ export default function SettingsScreen({ navigation }) {
               <Switch
                 value={biometric}
                 onValueChange={handleBiometricToggle}
+                trackColor={{ false: '#E8DCC8', true: colors.green }}
+                thumbColor="#fff"
+              />
+            }
+          />
+          <SettingRow
+            icon="bolt"
+            iconBg="#E8F1FB"
+            label={tr("Statistiques d'usage")}
+            sub={usage ? tr("Activées : elles nous aident à améliorer KoliGo. Aucune donnée personnelle.") : tr('Désactivées')}
+            right={
+              <Switch
+                value={usage}
+                onValueChange={(v) => { setUsage(v); setAnalyticsEnabled(v); }}
                 trackColor={{ false: '#E8DCC8', true: colors.green }}
                 thumbColor="#fff"
               />

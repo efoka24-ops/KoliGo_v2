@@ -12,6 +12,11 @@ final class Setup
 {
     private const INDEXES = [
         'idx_otp_phone' => ['OtpCode', 'phone'],
+        'idx_ae_occurred' => ['AnalyticsEvent', 'occurredAt'],
+        'idx_ae_name' => ['AnalyticsEvent', 'name'],
+        'idx_ae_device' => ['AnalyticsEvent', 'deviceId'],
+        'idx_ae_user' => ['AnalyticsEvent', 'userId'],
+        'idx_ae_session' => ['AnalyticsEvent', 'sessionId'],
         'idx_notif_user' => ['Notification', 'userId'],
         'idx_kyccheck_user' => ['KycCheck', 'userId'],
         'idx_annonce_status' => ['Annonce', 'status'],
@@ -59,7 +64,7 @@ final class Setup
     ];
 
     /** A incrementer quand le schema ou les reglages de reference changent : declenche une migration au prochain appel. */
-    public const SCHEMA_VERSION = 22;
+    public const SCHEMA_VERSION = 23;
 
     /**
      * Migration automatique et rejouable : evite d'avoir a relancer _setup.php (dont le jeton est supprime apres
@@ -215,6 +220,14 @@ final class Setup
                 'id' => Db::id(), 'version' => '1.0.22', 'versionCode' => 23, 'downloadUrl' => '/landing/koligo-v1.0.22.apk',
                 'notes' => 'Code de vérification par SMS, « PIN oublié » par numéro ou e-mail, bouton Publier toujours visible, suivi des paiements Boost.',
                 'forceUpdate' => 1, 'isCurrent' => 0, 'createdAt' => $now,
+            ]);
+        }
+        // 1.0.23 (suivi d'usage) : dans l'historique, NON activee ; l'administrateur l'active quand il veut.
+        if (!Db::one('SELECT id FROM `AppVersion` WHERE versionCode = 24')) {
+            Db::insert('AppVersion', [
+                'id' => Db::id(), 'version' => '1.0.23', 'versionCode' => 24, 'downloadUrl' => '/landing/koligo-v1.0.23.apk',
+                'notes' => 'Suivi d\'usage pour améliorer l\'application (désactivable dans les paramètres).',
+                'forceUpdate' => 0, 'isCurrent' => 0, 'createdAt' => $now,
             ]);
         }
         Cgu::ensureSeeded();

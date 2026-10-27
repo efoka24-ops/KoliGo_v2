@@ -480,3 +480,22 @@ CREATE TABLE IF NOT EXISTS `SmsLog` (
   `createdAt` DATETIME NOT NULL,
   `updatedAt` DATETIME NOT NULL
 ) {{OPTS}};
+
+-- Suivi d'usage : evenements de l'application et du serveur (voir tracking_plan.json). id = sha1(appareil + identifiant d'evenement) : un renvoi ne cree pas de doublon.
+CREATE TABLE IF NOT EXISTS `AnalyticsEvent` (
+  `id` VARCHAR(40) NOT NULL PRIMARY KEY,
+  `name` VARCHAR(60) NOT NULL,
+  `screen` VARCHAR(40) NULL,
+  `params` TEXT NULL,
+  `source` VARCHAR(8) NOT NULL DEFAULT 'app',
+  `deviceId` VARCHAR(40) NULL,
+  `sessionId` VARCHAR(40) NULL,
+  `userId` VARCHAR(40) NULL,
+  `role` VARCHAR(12) NULL,
+  `appVersion` VARCHAR(20) NULL,
+  `platform` VARCHAR(10) NULL,
+  `lang` VARCHAR(5) NULL,
+  `occurredAt` DATETIME NOT NULL,
+  `tms` BIGINT NULL,
+  `receivedAt` DATETIME NOT NULL
+) {{OPTS}};

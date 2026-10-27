@@ -7,6 +7,7 @@ import * as Location from 'expo-location';
 import { storage as SecureStore } from '../utils/storage';
 import { registerForPush, showLocal } from '../services/push';
 import { apiFetch, setAuthFailureHandler } from '../services/api';
+import { track, setAnalyticsRole, setAnalyticsLang } from '../services/analytics';
 import { setCurrentLang } from '../i18n/translations.js';
 import { useI18n } from '../i18n';
 import { getInitials } from '../utils/helpers';
@@ -129,7 +130,13 @@ export function AppProvider({ children, initialLang = 'fr' }) {
     }).finally(() => setSessionRestored(true));
   }, []);
 
+  // Le suivi d'usage sait quel rôle est actif (vendeur ou livreur) et dans quelle langue, sans jamais connaître l'identité.
+  useEffect(() => { setAnalyticsRole(user ? role : null); }, [user, role]);
+  useEffect(() => { setAnalyticsLang(lang); }, [lang]);
+
   const setLang = (l) => {
+    track('language_selected', { lang: l });
+    setAnalyticsLang(l);
     setCurrentLang(l);
     setLangState(l);
     SecureStore.setItem('kg_lang', l).catch(() => {});
@@ -140,12 +147,14 @@ export function AppProvider({ children, initialLang = 'fr' }) {
   };
 
   const enableBiometric = (enabled) => {
+    track('biometric_toggled', { enabled: !!enabled });
     setBiometricEnabled(enabled);
     biometricRef.current = enabled;
     SecureStore.setItem('kg_biometric', enabled ? '1' : '0').catch(() => {});
   };
 
   const showToast = (message, kind = 'success') => {
+    if (kind === 'error' && typeof message === 'string') track('form_error', { message });
     if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast({ message, kind });
     toastTimer.current = setTimeout(() => setToast(null), 2600);
@@ -219,6 +228,7 @@ export function AppProvider({ children, initialLang = 'fr' }) {
   // keepBiometric : déconnexion volontaire avec empreinte/Face ID activé → on garde le jeton de renouvellement
   // et le numéro, pour que la biométrie puisse rouvrir la session. Un échec d'authentification efface tout.
   const logout = useCallback((opts) => {
+    track('logout');
     setUser(null);
     setToken(null);
     setPendingUser(null);

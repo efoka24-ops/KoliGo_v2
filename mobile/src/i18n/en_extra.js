@@ -228,4 +228,7 @@ export const EN_EXTRA = {
   "Numéro ou adresse e-mail": "Phone number or e-mail address",
   "Un code a été envoyé par e-mail à": "A code was sent by e-mail to",
   "Le code n'a pas pu être envoyé pour le moment. Reviens en arrière et réessaie dans quelques minutes.": "The code could not be sent right now. Go back and try again in a few minutes.",
+  "Statistiques d'usage": "Usage statistics",
+  "Activées : elles nous aident à améliorer KoliGo. Aucune donnée personnelle.": "On: they help us improve KoliGo. No personal data.",
+  "Désactivées": "Off",
 };

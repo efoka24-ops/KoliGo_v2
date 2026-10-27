@@ -155,6 +155,12 @@ final class Payments
             return;
         }
 
+        // Statistique d'usage : une seule fois par paiement (cle = reference), meme si le webhook est rejoue.
+        $kind = str_starts_with($ref, 'KOLIGO-TOPUP-') ? 'topup' : (str_starts_with($ref, 'KOLIGO-DELIV-') ? 'delivery' : (str_starts_with($ref, 'KOLIGO-AD-') ? 'ad' : null));
+        if ($kind !== null) {
+            Analytics::server($settled ? 'payment_confirmed' : 'payment_failed', null, ['kind' => $kind], $ref . ($settled ? '|ok' : '|ko'));
+        }
+
         if (str_starts_with($ref, 'KOLIGO-TOPUP-')) {
             self::settleTopUp($ref, $settled, $paymentId);
         } elseif (str_starts_with($ref, 'KOLIGO-WITHDRAW-')) {

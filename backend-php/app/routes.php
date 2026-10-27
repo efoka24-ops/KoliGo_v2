@@ -6,6 +6,7 @@ use Koligo\Controllers\AdminController as Admin;
 use Koligo\Controllers\AuthController as AuthC;
 use Koligo\Controllers\DeliveryController as Del;
 use Koligo\Controllers\AnnonceController as AdC;
+use Koligo\Controllers\AnalyticsController as AnC;
 use Koligo\Controllers\NotificationController as NotifC;
 use Koligo\Controllers\PaymentController as Pay;
 use Koligo\Controllers\PublicController as Pub;
@@ -41,6 +42,7 @@ return function (Router $r): void {
         $r->get("$p/public/quote", [Pub::class, 'quote']);
         $r->get("$p/public/config", [Pub::class, 'config']);
         $r->get("$p/public/cgu", [Pub::class, 'cgu']);
+        $r->post("$p/analytics/events", [AnC::class, 'ingest'], [Auth::class, 'optionalJWT']);
         $r->get("$p/public/app-version", [Pub::class, 'appVersion']);
         $r->get("$p/public/distance", [Pub::class, 'distance']);
 
@@ -145,6 +147,9 @@ return function (Router $r): void {
         $r->post("$a/sms-test", [Admin::class, 'smsTest'], ...$adm);
         $r->post("$a/sms-refresh", [Admin::class, 'smsRefresh'], ...$adm);
         $r->get("$a/email-status", [Admin::class, 'emailStatus'], ...$adm);
+        $r->get("$a/usage/overview", [AnC::class, 'overview'], ...$adm);
+        $r->get("$a/usage/events", [AnC::class, 'events'], ...$adm);
+        $r->get("$a/usage/journey", [AnC::class, 'journey'], ...$adm);
         $r->post("$a/email-test", [Admin::class, 'emailTest'], ...$adm);
         $r->get("$a/notifications", [NotifC::class, 'adminHistory'], ...$adm);
         $r->post("$a/notifications", [NotifC::class, 'adminBroadcast'], ...$adm);

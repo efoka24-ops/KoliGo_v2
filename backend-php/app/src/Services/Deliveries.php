@@ -952,6 +952,7 @@ final class Deliveries
         }
 
         self::event((string)$d['id'], 'DELIVERED', (string)$d['delivererId'], ['earningXAF' => (int)$d['delivererEarning']]);
+        Analytics::server('delivery_delivered', (string)$d['delivererId'], ['price_xaf' => (int)$d['priceXAF'], 'minutes' => max(0, (int)round((time() - (int)strtotime($d['createdAt'] . ' UTC')) / 60))], (string)$d['id']);
         Notifier::send((string)$d['vendorId'], 'DELIVERY_DELIVERED', 'Colis livré', 'Votre colis a été livré à ' . $d['dropoffAddress'] . '.', ['deliveryId' => $d['id']]);
         Notifier::send((string)$d['delivererId'], 'EARNING', 'Gain reçu', 'Course livrée : ' . Notify::xaf((int)$d['delivererEarning']) . ' F crédités sur votre wallet.', ['deliveryId' => $d['id']]);
         $deliverer = Db::one('SELECT * FROM `User` WHERE id = ?', [$d['delivererId']]);
